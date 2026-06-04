@@ -333,6 +333,102 @@ async function autoCreateJiraProject(projectTitle) {
   }
 }
 
+// ── Helper: Automatically invite a user to Jira and add them to their spoke group ──────────────
+async function inviteAndSyncUserToJira(email, name, collegeId) {
+  try {
+    const jiraBase = getJiraBase();
+    const jiraAuth = getJiraAuth();
+
+    if (!jiraAuth.username || !jiraAuth.password) {
+      console.warn("Jira credentials not configured. Skipping Jira user synchronization.");
+      return { success: false, reason: "Credentials not configured" };
+    }
+
+    console.log(`[Jira Sync] Initiating synchronization for ${email} (${name}) with college group ${collegeId || 'None'}`);
+
+    let accountId = null;
+
+    // 1. Attempt to invite the user
+    try {
+      const inviteRes = await axios.post(
+        `${jiraBase}/rest/api/3/user`,
+        {
+          emailAddress: email,
+          displayName: name,
+          products: ["jira-software"]
+        },
+        { auth: jiraAuth, headers: jiraHeaders }
+      );
+      if (inviteRes.data && inviteRes.data.accountId) {
+        accountId = inviteRes.data.accountId;
+        console.log(`[Jira Sync] Successfully invited user. Account ID: ${accountId}`);
+      }
+    } catch (inviteErr) {
+      console.warn(`[Jira Sync] Direct invitation failed (user might already exist): ${inviteErr.response?.data?.errorMessages?.join(", ") || inviteErr.message}`);
+    }
+
+    // 2. Fallback: Search for the user to get their accountId if not retrieved
+    if (!accountId) {
+      console.log(`[Jira Sync] Searching for user by email: ${email}`);
+      try {
+        const searchRes = await axios.get(
+          `${jiraBase}/rest/api/3/user/search?query=${encodeURIComponent(email)}`,
+          { auth: jiraAuth, headers: jiraHeaders }
+        );
+        if (Array.isArray(searchRes.data) && searchRes.data.length > 0) {
+          const matched = searchRes.data.find(u => u.emailAddress?.toLowerCase() === email.toLowerCase()) || searchRes.data[0];
+          accountId = matched.accountId;
+          console.log(`[Jira Sync] User found via search. Account ID: ${accountId}`);
+        }
+      } catch (searchErr) {
+        console.error(`[Jira Sync] Search failed:`, searchErr.response?.data || searchErr.message);
+      }
+    }
+
+    if (!accountId) {
+      console.warn(`[Jira Sync] User account ID could not be resolved for ${email}. Skipping group placement.`);
+      return { success: false, reason: "Could not retrieve account ID" };
+    }
+
+    // 3. Add to college/spoke group if collegeId is provided
+    if (collegeId) {
+      const groupName = collegeId.trim();
+      console.log(`[Jira Sync] Adding user to spoke group: ${groupName}`);
+
+      // a. Auto-create the group first to ensure it exists
+      try {
+        await axios.post(
+          `${jiraBase}/rest/api/3/group`,
+          { name: groupName },
+          { auth: jiraAuth, headers: jiraHeaders }
+        );
+        console.log(`[Jira Sync] Spoke group '${groupName}' created or already exists.`);
+      } catch (groupCreateErr) {
+        // Safe to ignore if group already exists (409 conflict)
+        console.log(`[Jira Sync] Group creation check completed for '${groupName}': ${groupCreateErr.response?.data?.errorMessages?.join(", ") || groupCreateErr.message}`);
+      }
+
+      // b. Add user to the group
+      try {
+        await axios.post(
+          `${jiraBase}/rest/api/3/group/user?groupname=${encodeURIComponent(groupName)}`,
+          { accountId: accountId },
+          { auth: jiraAuth, headers: jiraHeaders }
+        );
+        console.log(`[Jira Sync] Successfully added user to Jira group '${groupName}'.`);
+      } catch (groupAddErr) {
+        console.error(`[Jira Sync] Failed to add user to group '${groupName}':`, groupAddErr.response?.data || groupAddErr.message);
+        return { success: true, accountId, warning: `Could not add to group: ${groupAddErr.message}` };
+      }
+    }
+
+    return { success: true, accountId };
+  } catch (err) {
+    console.error(`[Jira Sync] Synchronization error for ${email}:`, err.response?.data || err.message);
+    return { success: false, error: err.message };
+  }
+}
+
 // ── GET /users ────────────────────────────────────────────────────────────────
 app.get("/users", verifyToken, async (req, res) => {
   try {
@@ -615,7 +711,19 @@ app.post("/api/v1/users", verifyToken, async (req, res) => {
        RETURNING id, email, name, role, college_id`,
       [email.toLowerCase().trim(), name, role, pass, finalCollege]
     );
-    res.json(result.rows[0]);
+    
+    const newUser = result.rows[0];
+    let syncResult = null;
+    try {
+      syncResult = await inviteAndSyncUserToJira(newUser.email, newUser.name, newUser.college_id);
+    } catch (syncErr) {
+      console.error(`[Jira Sync Error] Failed to invite user during registration:`, syncErr);
+    }
+    
+    res.json({
+      ...newUser,
+      jiraSync: syncResult
+    });
   } catch (error) {
     console.error("Create user error:", error);
     res.status(500).json({ error: "Failed to create user. Ensure email is unique." });
@@ -653,7 +761,19 @@ app.put("/api/v1/users/:id", verifyToken, async (req, res) => {
     if (updateResult.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
     }
-    res.json(updateResult.rows[0]);
+    
+    const updatedUser = updateResult.rows[0];
+    let syncResult = null;
+    try {
+      syncResult = await inviteAndSyncUserToJira(updatedUser.email, updatedUser.name, updatedUser.college_id);
+    } catch (syncErr) {
+      console.error(`[Jira Sync Error] Failed to sync user during update:`, syncErr);
+    }
+    
+    res.json({
+      ...updatedUser,
+      jiraSync: syncResult
+    });
   } catch (error) {
     console.error("Update user error:", error);
     res.status(500).json({ error: "Failed to update user" });
@@ -774,13 +894,14 @@ app.post("/teams", verifyToken, async (req, res) => {
     const db = require('./db');
     const { name, members, collegeId } = req.body;
     const { role, collegeId: userCollegeId } = req.user;
+    const isCoordinator = role === 'College-SPOC' || role === 'Faculty' || role === 'Principal-Investigator';
 
-    if (role !== 'Super-admin' && role !== 'Admin' && role !== 'College-SPOC') {
+    if (role !== 'Super-admin' && role !== 'Admin' && !isCoordinator) {
       return res.status(403).json({ error: "Forbidden. Unauthorized to manage teams." });
     }
 
     let targetCollegeId = collegeId || null;
-    if (role === 'College-SPOC') {
+    if (isCoordinator) {
       targetCollegeId = userCollegeId;
     }
 
@@ -849,8 +970,9 @@ app.put("/teams/:id", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { name, members, collegeId } = req.body;
     const { role, collegeId: userCollegeId } = req.user;
+    const isCoordinator = role === 'College-SPOC' || role === 'Faculty' || role === 'Principal-Investigator';
 
-    if (role !== 'Super-admin' && role !== 'Admin' && role !== 'College-SPOC') {
+    if (role !== 'Super-admin' && role !== 'Admin' && !isCoordinator) {
       return res.status(403).json({ error: "Forbidden. Unauthorized to manage teams." });
     }
     
@@ -859,7 +981,7 @@ app.put("/teams/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "Team not found" });
     }
 
-    if (role === 'College-SPOC' && checkTeam.rows[0].college_id !== userCollegeId) {
+    if (isCoordinator && checkTeam.rows[0].college_id !== userCollegeId) {
       return res.status(403).json({ error: "Forbidden. You can only edit teams for your college." });
     }
     
@@ -896,8 +1018,9 @@ app.delete("/teams/:id", verifyToken, async (req, res) => {
     const db = require('./db');
     const { id } = req.params;
     const { role, collegeId: userCollegeId } = req.user;
+    const isCoordinator = role === 'College-SPOC' || role === 'Faculty' || role === 'Principal-Investigator';
 
-    if (role !== 'Super-admin' && role !== 'Admin' && role !== 'College-SPOC') {
+    if (role !== 'Super-admin' && role !== 'Admin' && !isCoordinator) {
       return res.status(403).json({ error: "Forbidden. Unauthorized to manage teams." });
     }
 
@@ -906,7 +1029,7 @@ app.delete("/teams/:id", verifyToken, async (req, res) => {
       return res.status(404).json({ error: "Team not found" });
     }
 
-    if (role === 'College-SPOC' && checkTeam.rows[0].college_id !== userCollegeId) {
+    if (isCoordinator && checkTeam.rows[0].college_id !== userCollegeId) {
       return res.status(403).json({ error: "Forbidden. You can only delete teams for your college." });
     }
 
@@ -1211,8 +1334,8 @@ app.get("/projects", verifyToken, async (req, res) => {
       return res.json(projects);
     }
 
-    // Spoke SPOC sees only projects assigned to their Spoke
-    if (role === "College-SPOC") {
+    // Spoke SPOC, Faculty or Principal-Investigator sees only projects assigned to their Spoke
+    if (role === "College-SPOC" || role === "Faculty" || role === "Principal-Investigator") {
       const filtered = projects.filter(p => p.spokeId === collegeId);
       return res.json(filtered);
     }

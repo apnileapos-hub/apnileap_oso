@@ -15,6 +15,8 @@ const fs = require('fs');
 
 // Ensure warnings are not treated as errors in CI environments
 process.env.CI = 'false';
+process.env.GENERATE_SOURCEMAP = 'false';
+process.env.NODE_OPTIONS = '--max-old-space-size=400';
 
 const root     = __dirname;
 const backend  = path.join(root, 'backend');

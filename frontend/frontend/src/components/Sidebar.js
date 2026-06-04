@@ -5,10 +5,10 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
   const isSpokeSpoc = user?.role === 'College-SPOC';
   const userCollegeId = user?.collegeId;
 
-  // Determine if a particular Spoke should be visible to this user
+  // Only Super-admin and College-SPOC can access Spoke Board directly
   const canViewSpoke = (spokeId) => {
     if (isSuperAdmin) return true;
-    if ((isSpokeSpoc || user?.role === 'Faculty' || user?.role === 'Principal-Investigator') && userCollegeId === spokeId) return true;
+    if (isSpokeSpoc && userCollegeId === spokeId) return true;
     return false;
   };
 

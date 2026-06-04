@@ -1809,6 +1809,87 @@ app.post("/projects/:id/assign-team", verifyToken, async (req, res) => {
   }
 });
 
+// ── DELETE /projects/:id/epics/:epicId ───────────────────────────────────────
+app.delete("/projects/:id/epics/:epicId", verifyToken, async (req, res) => {
+  try {
+    const { id, epicId } = req.params;
+    const { role, collegeId } = req.user;
+
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      project = projects.find(p => p.id === id);
+    }
+    if (!project) return res.status(404).json({ error: "Project not found." });
+
+    // Access: Super-admin, Admin, Faculty/PI of that spoke
+    const allowed = role === "Super-admin" || role === "Admin" ||
+      ((role === "Faculty" || role === "Principal-Investigator") && collegeId === project.spokeId);
+    if (!allowed) return res.status(403).json({ error: "Forbidden." });
+
+    if (!Array.isArray(project.epics)) project.epics = [];
+    project.epics = project.epics.filter(e => String(e.id) !== String(epicId));
+
+    const db = require('./db');
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (!isNaN(cleanId)) {
+      await db.query(
+        `UPDATE projects SET epics = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [JSON.stringify(project.epics), cleanId]
+      );
+    }
+    const all = readProjects();
+    const idx = all.findIndex(p => p.id === id);
+    if (idx !== -1) { all[idx] = project; writeProjects(all); }
+    res.json({ success: true, epics: project.epics });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── PATCH /projects/:id/status ────────────────────────────────────────────────
+app.patch("/projects/:id/status", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    const { role, collegeId } = req.user;
+
+    const VALID_STATUSES = ['pending_review', 'accepted', 'in_progress', 'completed', 'on_hold', 'rejected'];
+    if (!status || !VALID_STATUSES.includes(status.toLowerCase())) {
+      return res.status(400).json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` });
+    }
+
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      project = projects.find(p => p.id === id);
+    }
+    if (!project) return res.status(404).json({ error: "Project not found." });
+
+    // Access: Super-admin, Admin, or Faculty/PI of the same spoke
+    const allowed = role === "Super-admin" || role === "Admin" ||
+      ((role === "Faculty" || role === "Principal-Investigator") && collegeId === project.spokeId);
+    if (!allowed) return res.status(403).json({ error: "Forbidden." });
+
+    const newStatus = status.toUpperCase();
+    const db = require('./db');
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (!isNaN(cleanId)) {
+      await db.query(
+        `UPDATE projects SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+        [newStatus, cleanId]
+      );
+    }
+    project.status = status.toLowerCase();
+    const all = readProjects();
+    const idx = all.findIndex(p => p.id === id);
+    if (idx !== -1) { all[idx] = project; writeProjects(all); }
+    res.json({ success: true, status: project.status });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── POST /emails/simulate-meeting-email ──────────────────────────────────────
 app.post("/emails/simulate-meeting-email", async (req, res) => {
   try {

@@ -404,6 +404,58 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                     )
                   )}
                 </div>
+
+                {/* Link Work Items Section */}
+                {proj.jiraProjectKey && (
+                  <div style={{ borderTop: '1px solid var(--bg-card)', paddingTop: '14px', marginTop: '4px' }}>
+                    <h4 style={{ fontSize: '13px', color: 'var(--text-primary)', margin: '0 0 10px 0' }}>
+                      🔗 Link Work Items with Your Development Work
+                    </h4>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '0 0 10px 0', lineHeight: '1.5' }}>
+                      Add the Jira issue key in your branch names, commit messages, and chat discussions to automatically link your development work.
+                    </p>
+                    <div style={{
+                      background: 'var(--bg-primary)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '6px',
+                      padding: '10px 14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      fontFamily: 'monospace',
+                      fontSize: '13px'
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                        <path d="M1.5 2.5C1.5 1.948 1.948 1.5 2.5 1.5H13.5C14.052 1.5 14.5 1.948 14.5 2.5V10.5C14.5 11.052 14.052 11.5 13.5 11.5H8.5L5.5 14.5V11.5H2.5C1.948 11.5 1.5 11.052 1.5 10.5V2.5Z" stroke="var(--text-secondary)" strokeWidth="1.2"/>
+                      </svg>
+                      <span style={{ color: '#58a6ff', fontWeight: 'bold' }}>{proj.jiraProjectKey}-123</span>
+                      <span style={{ color: 'var(--text-secondary)' }}> -your-development-branch</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: '16px', marginTop: '10px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '10px', background: 'rgba(88,166,255,0.1)', border: '1px solid rgba(88,166,255,0.2)', color: '#58a6ff', fontWeight: '600' }}>
+                          Jira Key
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontFamily: 'monospace', fontWeight: '700' }}>
+                          {proj.jiraProjectKey}
+                        </span>
+                      </div>
+                      {proj.jiraProjectKey && !proj.jiraProjectKey.startsWith('APNI') && (
+                        <a
+                          href={`https://apnileapos.atlassian.net/jira/software/projects/${proj.jiraProjectKey}/boards`}
+                          target="_blank"
+                          rel="noreferrer"
+                          style={{ fontSize: '11px', color: '#58a6ff', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}
+                        >
+                          📋 Open Jira Board ↗
+                        </a>
+                      )}
+                      <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                        Use this key in branches, commits &amp; messages
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

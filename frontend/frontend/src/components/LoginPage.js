@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 const DEMO_EMAIL = 'admin@devcobra.io';
 const DEMO_PASS  = 'Admin@123';
@@ -11,6 +11,22 @@ export default function LoginPage({ onLogin }) {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const [modalType, setModalType] = useState(null); // 'terms' | 'privacy' | null
+  const [jiraBaseUrl, setJiraBaseUrl] = useState('devcobraaa.atlassian.net');
+  const [jiraProjectKey, setJiraProjectKey] = useState('SCRUM');
+
+  useEffect(() => {
+    const API = process.env.REACT_APP_API_URL || (window.location.port === '3000' ? 'http://localhost:5000' : '');
+    fetch(`${API}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.jiraProjectKey) setJiraProjectKey(data.jiraProjectKey);
+        if (data.jiraBaseUrl) {
+          const cleanUrl = data.jiraBaseUrl.replace(/^https?:\/\//, '');
+          setJiraBaseUrl(cleanUrl);
+        }
+      })
+      .catch(err => console.warn("Failed to load JIRA settings for login page", err));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,12 +124,12 @@ export default function LoginPage({ onLogin }) {
 
           <div className="login-project-badge">
             <span className="login-jira-dot" />
-            Connected to&nbsp;<strong>devcobraaa.atlassian.net</strong>&nbsp;· SCRUM
+            Connected to&nbsp;<strong>{jiraBaseUrl}</strong>&nbsp;· {jiraProjectKey}
           </div>
 
           <div className="login-stats-row">
             <div className="login-stat">
-              <div className="login-stat-value">SCRUM</div>
+              <div className="login-stat-value">{jiraProjectKey}</div>
               <div className="login-stat-label">Project Key</div>
             </div>
             <div className="login-stat-divider" />

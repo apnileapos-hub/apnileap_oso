@@ -2420,6 +2420,37 @@ const server = app.listen(PORT, () => {
   }, SWEEP_INTERVAL);
 });
 
+// ── GET /api/v1/download-report ───────────────────────────────────────────────
+app.get("/api/v1/download-report", (req, res) => {
+  const { file } = req.query;
+  if (!file) {
+    return res.status(400).json({ error: "File name is required" });
+  }
+
+  // Resolve file path to the parent directory or root workspace
+  const parentDir = path.join(__dirname, "..");
+  const allowedFiles = [
+    "ApniCart_Design_Document.docx", 
+    "APNILEAP_PROJECT (1).pdf",
+    "docx_content.txt",
+    "pdf_content.txt",
+    "pdf_extracted_details.txt"
+  ];
+
+  const matchedFile = allowedFiles.find(f => f.toLowerCase() === file.toLowerCase() || f.replace(/\s+/g, '_').toLowerCase() === file.replace(/\s+/g, '_').toLowerCase());
+
+  if (!matchedFile) {
+    return res.status(400).json({ error: "Invalid or unauthorized file download." });
+  }
+
+  const filePath = path.join(parentDir, matchedFile);
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: `File not found on server: ${matchedFile}` });
+  }
+
+  res.download(filePath, matchedFile);
+});
+
 // ── Error handler — catches port-in-use and other listen errors ───────────────
 server.on("error", (err) => {
   if (err.code === "EADDRINUSE") {

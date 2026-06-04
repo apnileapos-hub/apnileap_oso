@@ -469,8 +469,11 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                           <div style={{ flex: 1 }}>
                             <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>{proj.title} — Confluence Space</div>
                             <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '8px' }}>{proj.confluenceSpaceUrl}</div>
-                            <a href={proj.confluenceSpaceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', background: '#0052cc', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none' }}>
+                            <a href={proj.confluenceSpaceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', background: '#0052cc', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none', marginRight: '8px' }}>
                               Open in Confluence ↗
+                            </a>
+                            <a href={`${API}/api/v1/download-report?file=${proj.title?.toLowerCase().includes('apnicart') ? 'ApniCart_Design_Document.docx' : 'APNILEAP_PROJECT (1).pdf'}`} download style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', background: '#238636', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none' }}>
+                              📥 Download Report Directly
                             </a>
                           </div>
                         </div>

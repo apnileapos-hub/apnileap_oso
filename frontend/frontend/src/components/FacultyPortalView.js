@@ -418,10 +418,16 @@ export default function FacultyPortalView({ user }) {
                           </a>
                         )}
                         {proj.confluenceSpaceUrl && (
-                          <a href={proj.confluenceSpaceUrl} target="_blank" rel="noreferrer"
-                            style={{ fontSize: '12px', color: '#0052cc', textDecoration: 'none', fontWeight: '600', padding: '6px 14px', background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.2)', borderRadius: '6px' }}>
-                            📄 Open Confluence ↗
-                          </a>
+                          <>
+                            <a href={proj.confluenceSpaceUrl} target="_blank" rel="noreferrer"
+                              style={{ fontSize: '12px', color: '#0052cc', textDecoration: 'none', fontWeight: '600', padding: '6px 14px', background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.2)', borderRadius: '6px', marginRight: '8px' }}>
+                              📄 Open Confluence ↗
+                            </a>
+                            <a href={`${API}/api/v1/download-report?file=${proj.title?.toLowerCase().includes('apnicart') ? 'ApniCart_Design_Document.docx' : 'APNILEAP_PROJECT (1).pdf'}`} download
+                              style={{ fontSize: '12px', color: '#fff', textDecoration: 'none', fontWeight: '600', padding: '6px 14px', background: '#238636', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              📥 Download Report Directly
+                            </a>
+                          </>
                         )}
                       </div>
                     </div>

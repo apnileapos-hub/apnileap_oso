@@ -4,7 +4,7 @@ import axios from 'axios';
 const API = process.env.REACT_APP_API_URL || 
   (window.location.port === '3000' ? 'http://localhost:5000' : '');
 
-export default function CompanySimulatorView({ onRefresh }) {
+export default function CompanySimulatorView({ user, onRefresh }) {
   const [company, setCompany] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -48,6 +48,8 @@ export default function CompanySimulatorView({ onRefresh }) {
         funding,
         duration,
         epics
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` }
       });
       setSuccess(true);
       setCompany('');

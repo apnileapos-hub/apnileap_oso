@@ -1087,8 +1087,11 @@ app.get("/projects", verifyToken, async (req, res) => {
 });
 
 // ── POST /projects (Intake B2B Proposal) ──────────────────────────────────────
-app.post("/projects", async (req, res) => {
+app.post("/projects", verifyToken, async (req, res) => {
   try {
+    if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
+      return res.status(403).json({ error: "Forbidden. Only Administrators can create projects." });
+    }
     const { title, company, description, funding, duration, epics } = req.body;
     if (!title || !company) {
       return res.status(400).json({ error: "Title and Company are required." });
@@ -1230,10 +1233,10 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
 
     const project = projects[projIdx];
     
-    // Check permission: Super-admin or Spoke SPOC for this specific Spoke
+    // Check permission: Super-admin, Admin, or Faculty for this specific Spoke
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
-      if (req.user.role !== "College-SPOC" || req.user.collegeId !== project.spokeId) {
-        return res.status(403).json({ error: "Forbidden. You do not have permission to accept projects for this Spoke." });
+      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator") || req.user.collegeId !== project.spokeId) {
+        return res.status(403).json({ error: "Forbidden. Only Faculty Handlers or Administrators can accept projects." });
       }
     }
 
@@ -1259,10 +1262,10 @@ app.post("/projects/:id/decline", verifyToken, async (req, res) => {
 
     const project = projects[projIdx];
     
-    // Check permission: Super-admin or Spoke SPOC for this specific Spoke
+    // Check permission: Super-admin, Admin, or Faculty for this specific Spoke
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
-      if (req.user.role !== "College-SPOC" || req.user.collegeId !== project.spokeId) {
-        return res.status(403).json({ error: "Forbidden. You do not have permission to decline projects for this Spoke." });
+      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator") || req.user.collegeId !== project.spokeId) {
+        return res.status(403).json({ error: "Forbidden. Only Faculty Handlers or Administrators can decline projects." });
       }
     }
 
@@ -1546,6 +1549,59 @@ const auditRouter = require('./auditRouter').router;
 const rovoRouter = require('./rovoRouter');
 
 app.get('/api/realtime', realtime.handleRealtimeConnection);
+
+// ── Call Signaling Routes (SSE Broadcast) ────────────────────────────────────
+app.post("/api/v1/calls/initiate", verifyToken, (req, res) => {
+  const { id, meetingId, accessCode, title, type, initiator, participants, teamId } = req.body;
+  realtime.broadcast("CALL_INITIATED", { id, meetingId, accessCode, title, type, initiator, participants, teamId });
+  res.json({ success: true });
+});
+
+app.post("/api/v1/calls/cancel", verifyToken, (req, res) => {
+  const { meetingId } = req.body;
+  realtime.broadcast("CALL_CANCELLED", { meetingId });
+  res.json({ success: true });
+});
+
+app.post("/api/v1/calls/decline", verifyToken, (req, res) => {
+  const { meetingId, participant } = req.body;
+  realtime.broadcast("CALL_DECLINED", { meetingId, participant });
+  res.json({ success: true });
+});
+
+// ── Call Store Persistence Routes (PostgreSQL-based) ─────────────────────────
+app.get("/api/v1/calls/store", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const result = await db.query('SELECT data FROM calls_store WHERE id = 1');
+    if (result.rows.length > 0) {
+      return res.json(result.rows[0].data);
+    }
+    res.json({ meetings: [], callLogs: [] });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/v1/calls/store", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { meetings, callLogs } = req.body;
+    const storeData = { meetings: meetings || [], callLogs: callLogs || [] };
+    
+    await db.query(
+      `INSERT INTO calls_store (id, data) VALUES (1, $1)
+       ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data`,
+      [JSON.stringify(storeData)]
+    );
+    
+    realtime.broadcast("CALLS_STORE_UPDATED", storeData);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.use(gitRouter);
 app.use(auditRouter);
 app.use(rovoRouter);

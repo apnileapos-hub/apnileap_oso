@@ -17,6 +17,11 @@ const query = (text, params) => pool.query(text, params);
 // Auto-initialize tables
 const initDb = async () => {
   const createTablesQuery = `
+    CREATE TABLE IF NOT EXISTS calls_store (
+      id INT PRIMARY KEY DEFAULT 1,
+      data JSONB NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS meetings (
       id VARCHAR(255) PRIMARY KEY,
       title VARCHAR(255) NOT NULL,

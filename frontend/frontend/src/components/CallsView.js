@@ -1531,6 +1531,7 @@ const getAvatarColor = (name) => {
    MAIN CALLS VIEW
    ═══════════════════════════════════════════════════════════════════════════ */
 export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
+  const myName = user?.name || user?.email || 'You';
   const [users,         setUsers]         = useState([]);
   const [store,         setStore]         = useState(loadStore);
   const [screen,        setScreen]        = useState('main');
@@ -1590,6 +1591,99 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
     }
   }, [store.meetings, selectedMeeting]);
 
+  const fetchCallsStore = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API}/api/v1/calls/store`, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      if (res.data) {
+        setStore(res.data);
+      }
+    } catch (err) {
+      console.error("Failed to load calls store from backend:", err);
+    }
+  }, [user]);
+
+  const persistCallsStore = async (updatedStore) => {
+    try {
+      await axios.post(`${API}/api/v1/calls/store`, updatedStore, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+    } catch (err) {
+      console.error("Failed to persist calls store:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCallsStore();
+  }, [fetchCallsStore]);
+
+  useEffect(() => {
+    const handleStoreUpdated = (e) => {
+      setStore(e.detail);
+    };
+    const handleIncomingCall = (e) => {
+      const callData = e.detail;
+      if (callData.initiator !== myName) {
+        const isParticipant = callData.participants?.includes(myName) || callData.participants?.includes(user?.email);
+        const isInTeam = callData.teamId && teams.some(t => t.id === callData.teamId);
+        
+        if (isParticipant || isInTeam) {
+          setIncomingCall({
+            id: callData.id,
+            callerName: callData.initiator,
+            type: callData.type,
+            title: callData.title,
+            meetingId: callData.meetingId,
+            participants: callData.participants,
+            teamId: callData.teamId
+          });
+          setPendingMtg({
+            id: callData.id,
+            meetingId: callData.meetingId,
+            accessCode: callData.accessCode || '123456',
+            title: callData.title,
+            type: callData.type,
+            participants: callData.participants,
+            scheduledAt: new Date().toISOString(),
+            status: 'calling',
+            createdBy: callData.initiator
+          });
+        }
+      }
+    };
+    const handleCancelCall = (e) => {
+      const data = e.detail;
+      setIncomingCall(prev => {
+        if (prev && prev.meetingId === data.meetingId) {
+          setPendingMtg(null);
+          setScreen('main');
+          return null;
+        }
+        return prev;
+      });
+    };
+    const handleDeclineCall = (e) => {
+      const data = e.detail;
+      setPendingMtg(prev => {
+        if (prev && prev.meetingId === data.meetingId) {
+          console.log(`${data.participant} declined the call.`);
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('calls-store-updated', handleStoreUpdated);
+    window.addEventListener('incoming-call', handleIncomingCall);
+    window.addEventListener('cancel-call', handleCancelCall);
+    window.addEventListener('decline-call', handleDeclineCall);
+    return () => {
+      window.removeEventListener('calls-store-updated', handleStoreUpdated);
+      window.removeEventListener('incoming-call', handleIncomingCall);
+      window.removeEventListener('cancel-call', handleCancelCall);
+      window.removeEventListener('decline-call', handleDeclineCall);
+    };
+  }, [myName, teams, user]);
+
   useEffect(() => { saveStore(store); }, [store]);
   useEffect(() => {
     reqNotif();
@@ -1634,7 +1728,6 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
     }
   }, [teamChatText, teamChatIssue, selectedTeamChannel, user]);
 
-  const myName = user?.name || user?.email || 'You';
 
   const myMeetings       = store.meetings.filter(m => m.createdBy === myName || (m.participants || []).includes(myName));
   const upcomingMeetings = myMeetings.filter(m => (m.status === 'scheduled' || m.status === 'suspended') && new Date(m.scheduledAt) >= new Date()).sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt));
@@ -1719,7 +1812,9 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
   const saveMeeting = (m) => {
     setStore(prev => {
       const meetings = prev.meetings.some(x => x.id === m.id) ? prev.meetings.map(x => x.id === m.id ? m : x) : [...prev.meetings, m];
-      return { ...prev, meetings };
+      const newStore = { ...prev, meetings };
+      persistCallsStore(newStore);
+      return newStore;
     });
 
     // Notify invited participants!
@@ -1740,39 +1835,71 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
     setShowSchedule(false); setEditMeeting(null);
   };
 
-  const deleteMeeting = id => setStore(prev => ({ ...prev, meetings: prev.meetings.filter(m => m.id !== id) }));
+  const deleteMeeting = id => setStore(prev => {
+    const newStore = { ...prev, meetings: prev.meetings.filter(m => m.id !== id) };
+    persistCallsStore(newStore);
+    return newStore;
+  });
 
   /* ─── INITIATE call ─── */
-  const initiateCall = (meeting) => {
+  const initiateCall = async (meeting) => {
     setShowVoiceCall(false);
-    const mtg = { ...meeting, meetingId: meeting.meetingId || generateMeetingId(), accessCode: meeting.accessCode || generateAccessCode() };
+    const mtg = { ...meeting, id: meeting.id || Date.now(), meetingId: meeting.meetingId || generateMeetingId(), accessCode: meeting.accessCode || generateAccessCode() };
     setPendingMtg(mtg);
     setScreen('calling');
 
-    // Desktop notif to simulate Incoming Call on other side
-    reqNotif().then(ok => {
-      if (ok) {
-        const names = (mtg.participants || []).join(', ') || 'someone';
-        callingNotifRef.current = pushNotif(
-          '📞 Incoming Call',
-          `${myName} is calling — ${mtg.meetingId}`,
-          () => { window.focus(); }
-        );
-      }
-    });
+    try {
+      await axios.post(`${API}/api/v1/calls/initiate`, {
+        id: mtg.id,
+        meetingId: mtg.meetingId,
+        accessCode: mtg.accessCode,
+        title: mtg.title,
+        type: mtg.type,
+        initiator: myName,
+        participants: mtg.participants,
+        teamId: selectedTeamChannel?.id || null
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+    } catch (err) {
+      console.error("Failed to initiate call via backend:", err);
+    }
+  };
 
-    // After 2 seconds show incoming banner (simulates other person seeing the call)
-    setTimeout(() => {
-      setIncomingCall({ id: mtg.id, callerName: myName, type: mtg.type, title: mtg.title, meetingId: mtg.meetingId, participants: mtg.participants });
-    }, 2000);
+  const handleStartGroupCall = (callType) => {
+    if (!selectedTeamChannel) return;
+    const memberEmails = (selectedTeamChannel.members || []).map(m => typeof m === 'string' ? m : (m.email || m.displayName || ''));
+    const participants = memberEmails.filter(email => email !== user?.email && email !== user?.name);
+    initiateCall({
+      id: Date.now(),
+      meetingId: generateMeetingId(),
+      accessCode: generateAccessCode(),
+      title: `${selectedTeamChannel.name} Call`,
+      type: callType,
+      participants: participants,
+      scheduledAt: new Date().toISOString(),
+      status: 'calling',
+      createdBy: myName
+    });
   };
 
   /* ─── Caller cancels ─── */
-  const onCallingCancel = () => {
+  const onCallingCancel = async () => {
     callingNotifRef.current?.close();
+    const mid = pendingMtg?.meetingId;
     setIncomingCall(null);
     setPendingMtg(null);
     setScreen('main');
+
+    if (mid) {
+      try {
+        await axios.post(`${API}/api/v1/calls/cancel`, { meetingId: mid }, {
+          headers: { Authorization: `Bearer ${user?.token}` }
+        });
+      } catch (err) {
+        console.error("Failed to cancel call:", err);
+      }
+    }
   };
 
   /* ─── Incoming Call: accept → join options ─── */
@@ -1783,10 +1910,21 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
     // pendingMtg already set when caller initiated
   };
 
-  const onIncomingDecline = () => {
+  const onIncomingDecline = async () => {
+    const mid = incomingCall?.meetingId;
     setIncomingCall(null);
-    // Cancel the calling screen too
-    onCallingCancel();
+    setScreen('main');
+    setPendingMtg(null);
+
+    if (mid) {
+      try {
+        await axios.post(`${API}/api/v1/calls/decline`, { meetingId: mid, participant: myName }, {
+          headers: { Authorization: `Bearer ${user?.token}` }
+        });
+      } catch (err) {
+        console.error("Failed to decline call:", err);
+      }
+    }
   };
 
   /* ─── Open join options ─── */
@@ -1811,7 +1949,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
       setStore(prev => {
         const meetings = prev.meetings.map(m => m.id === pendingMtg.id ? { ...m, status: 'live' } : m);
         const updatedStore = { ...prev, meetings };
-        saveStore(updatedStore);
+        persistCallsStore(updatedStore);
         return updatedStore;
       });
     }
@@ -1834,25 +1972,33 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
       actualDuration: elapsed || 0,
       joinMode: joinOptions?.mode || 'normal',
     };
-    setStore(prev => ({
-      ...prev,
-      callLogs: [log, ...prev.callLogs],
-      meetings: prev.meetings.map(m => m.id === activeMeeting.id ? { ...m, status: 'completed', _actualDuration: elapsed } : m),
-    }));
+    setStore(prev => {
+      const newStore = {
+        ...prev,
+        callLogs: [log, ...prev.callLogs],
+        meetings: prev.meetings.map(m => m.id === activeMeeting.id ? { ...m, status: 'completed', _actualDuration: elapsed } : m),
+      };
+      persistCallsStore(newStore);
+      return newStore;
+    });
     setActiveMeeting(null); setJoinOptions(null); setScreen('main'); setPendingMtg(null);
   }, [activeMeeting, myName, joinOptions]);
 
   /* ─── Suspend meeting — saves elapsed time ─── */
   const suspendMeeting = useCallback((elapsed) => {
     if (!activeMeeting) return;
-    setStore(prev => ({
-      ...prev,
-      meetings: prev.meetings.map(m =>
-        m.id === activeMeeting.id
-          ? { ...m, status: 'suspended', _suspendedElapsed: elapsed, _suspendedAt: new Date().toISOString() }
-          : m
-      ),
-    }));
+    setStore(prev => {
+      const newStore = {
+        ...prev,
+        meetings: prev.meetings.map(m =>
+          m.id === activeMeeting.id
+            ? { ...m, status: 'suspended', _suspendedElapsed: elapsed, _suspendedAt: new Date().toISOString() }
+            : m
+        ),
+      };
+      persistCallsStore(newStore);
+      return newStore;
+    });
     setActiveMeeting(null); setJoinOptions(null); setScreen('main'); setPendingMtg(null);
   }, [activeMeeting]);
 
@@ -1913,7 +2059,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
     setStore(prev => {
       const meetings = prev.meetings.map(m => m.meetingId === meeting.meetingId ? { ...m, status: 'live' } : m);
       const updatedStore = { ...prev, meetings };
-      saveStore(updatedStore);
+      persistCallsStore(updatedStore);
       return updatedStore;
     });
     const updatedMtg = { ...meeting, status: 'live' };
@@ -2300,8 +2446,8 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
               </div>
               {/* Call controls */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button onClick={() => setShowVoiceCall(true)} style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }} title="Audio Call">📞</button>
-                <button onClick={() => openJoinOptions({ id: Date.now(), meetingId: generateMeetingId(), accessCode: generateAccessCode(), title: selectedTeamChannel.name, type: 'video', participants: [], scheduledAt: new Date().toISOString(), status: 'scheduled', createdBy: myName })} style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }} title="Video Call">📹</button>
+                <button onClick={() => handleStartGroupCall('voice')} style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }} title="Audio Call">📞</button>
+                <button onClick={() => handleStartGroupCall('video')} style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }} title="Video Call">📹</button>
               </div>
             </div>
 

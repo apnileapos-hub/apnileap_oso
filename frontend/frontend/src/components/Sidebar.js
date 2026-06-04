@@ -240,40 +240,42 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
             </div>
 
             {/* 5. Copilot Ribbon icon (B2B Ingestion Portal) */}
-            <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <div 
-                onClick={() => onNavigate('simulator')}
-                title="B2B Ingestion Simulator"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  background: activeCategory === 'copilot' ? '#292a2c' : 'transparent',
-                  transition: 'background 0.2s'
-                }}
-                onMouseEnter={(e) => { if (activeCategory !== 'copilot') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                onMouseLeave={(e) => { if (activeCategory !== 'copilot') e.currentTarget.style.background = 'transparent'; }}
-              >
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                  <defs>
-                    <linearGradient id="ribbonGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                      <stop offset="0%" stopColor="#3fb950" />
-                      <stop offset="30%" stopColor="#58a6ff" />
-                      <stop offset="70%" stopColor="#bc8cff" />
-                      <stop offset="100%" stopColor="#ff7b72" />
-                    </linearGradient>
-                  </defs>
-                  <path d="M4 16c-1.5-1.5-2.5-3.5-2.5-5.5S2.5 6.5 4 5s3.5-2.5 5.5-2.5 3.5 1 5 2.5l7 7c1.5 1.5 2.5 3.5 2.5 5.5s-1 3.5-2.5 5-3.5 2.5-5.5 2.5-3.5-1-5-2.5l-7-7z" stroke="url(#ribbonGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-                </svg>
+            {(isSuperAdmin || user?.role === 'Admin') && (
+              <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <div 
+                  onClick={() => onNavigate('simulator')}
+                  title="B2B Ingestion Simulator"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    background: activeCategory === 'copilot' ? '#292a2c' : 'transparent',
+                    transition: 'background 0.2s'
+                  }}
+                  onMouseEnter={(e) => { if (activeCategory !== 'copilot') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={(e) => { if (activeCategory !== 'copilot') e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <defs>
+                      <linearGradient id="ribbonGrad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+                        <stop offset="0%" stopColor="#3fb950" />
+                        <stop offset="30%" stopColor="#58a6ff" />
+                        <stop offset="70%" stopColor="#bc8cff" />
+                        <stop offset="100%" stopColor="#ff7b72" />
+                      </linearGradient>
+                    </defs>
+                    <path d="M4 16c-1.5-1.5-2.5-3.5-2.5-5.5S2.5 6.5 4 5s3.5-2.5 5.5-2.5 3.5 1 5 2.5l7 7c1.5 1.5 2.5 3.5 2.5 5.5s-1 3.5-2.5 5-3.5 2.5-5.5 2.5-3.5-1-5-2.5l-7-7z" stroke="url(#ribbonGrad)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+                  </svg>
+                </div>
+                {activeCategory === 'copilot' && (
+                  <div style={{ position: 'absolute', left: 0, top: '8px', width: '3px', height: '24px', background: '#7f85f5', borderRadius: '0 4px 4px 0' }} />
+                )}
               </div>
-              {activeCategory === 'copilot' && (
-                <div style={{ position: 'absolute', left: 0, top: '8px', width: '3px', height: '24px', background: '#7f85f5', borderRadius: '0 4px 4px 0' }} />
-              )}
-            </div>
+            )}
 
             {/* 6. Teams / Workgroups icon */}
             <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
@@ -553,7 +555,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
             )}
 
             {/* Portfolio submenu */}
-            {subMenuTitle === 'APNILEAP PORTFOLIO' && (
+            {subMenuTitle === 'ENTERPRISE DASHBOARDS' && (
               <>
                 {isSuperAdmin && (
                   <button

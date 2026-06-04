@@ -174,6 +174,29 @@ function App() {
         console.log("📡 Real-time update received:", data);
         if (data.event === 'PROJECT_AWARDED') {
           handleRefresh();
+        } else if (data.event === 'CALL_INITIATED') {
+          const callData = data.data;
+          const myName = user?.name || user?.email || 'Anonymous';
+          if (callData.initiator !== myName) {
+            const isParticipant = callData.participants?.includes(myName) || callData.participants?.includes(user?.email);
+            // If teamId is present, we check if the user is in that team (handled in frontend CallsView, but we redirect first)
+            if (isParticipant || callData.teamId) {
+              setActiveView('calls');
+              setTimeout(() => {
+                const customEvt = new CustomEvent('incoming-call', { detail: callData });
+                window.dispatchEvent(customEvt);
+              }, 300);
+            }
+          }
+        } else if (data.event === 'CALL_CANCELLED') {
+          const customEvt = new CustomEvent('cancel-call', { detail: data.data });
+          window.dispatchEvent(customEvt);
+        } else if (data.event === 'CALL_DECLINED') {
+          const customEvt = new CustomEvent('decline-call', { detail: data.data });
+          window.dispatchEvent(customEvt);
+        } else if (data.event === 'CALLS_STORE_UPDATED') {
+          const customEvt = new CustomEvent('calls-store-updated', { detail: data.data });
+          window.dispatchEvent(customEvt);
         }
       } catch (err) {
         // Ping or malformed json, ignore
@@ -183,7 +206,7 @@ function App() {
     return () => {
       eventSource.close();
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user]);
 
   const handleLogin = (userData) => {
     saveSession(userData);          // persist to localStorage
@@ -276,7 +299,7 @@ function App() {
           {activeView === 'faculty-portal' && <FacultyPortalView user={user} />}
           {activeView === 'mentor-portal' && <MentorPortalView user={user} />}
           {activeView.startsWith('spoke-') && <SpokeBoardView user={user} spokeId={activeView.replace('spoke-', '') + '-spoke'} onRefresh={handleRefresh} />}
-          {activeView === 'simulator' && <CompanySimulatorView onRefresh={handleRefresh} />}
+          {activeView === 'simulator' && <CompanySimulatorView user={user} onRefresh={handleRefresh} />}
           {activeView === 'email-logs' && <AutomationLogsView user={user} />}
 
           {['dashboard', 'issues', 'analytics', 'teams', 'calls', 'meet', 'settings'].includes(activeView) && (

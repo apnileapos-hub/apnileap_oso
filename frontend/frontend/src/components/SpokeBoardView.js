@@ -223,22 +223,28 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                     <p style={{ fontSize: '12px', color: '#8b949e', margin: '0 0 16px 0' }}>
                       This B2B proposal is allocated to your Spoke. Faculty Handler review and acceptance are required before team delegation and Epic creation.
                     </p>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
-                      <button
-                        onClick={() => handleAcceptAllocation(proj.id)}
-                        disabled={submitting}
-                        style={{ background: '#3fb950', color: '#ffffff', border: 'none', padding: '8px 24px', fontSize: '13px', fontWeight: '600', borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        {submitting ? 'Accepting...' : 'Accept Project Assignment'}
-                      </button>
-                      <button
-                        onClick={() => handleDeclineAllocation(proj.id)}
-                        disabled={submitting}
-                        style={{ background: '#da3637', color: '#ffffff', border: 'none', padding: '8px 24px', fontSize: '13px', fontWeight: '600', borderRadius: '6px', cursor: 'pointer' }}
-                      >
-                        {submitting ? 'Declining...' : 'Decline Project Assignment'}
-                      </button>
-                    </div>
+                    {user?.role === 'College-SPOC' ? (
+                      <div style={{ fontSize: '13px', color: '#ff9800', fontWeight: '500', marginTop: '10px' }}>
+                        📢 Awaiting review and acceptance from Faculty Handler.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
+                        <button
+                          onClick={() => handleAcceptAllocation(proj.id)}
+                          disabled={submitting}
+                          style={{ background: '#3fb950', color: '#ffffff', border: 'none', padding: '8px 24px', fontSize: '13px', fontWeight: '600', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          {submitting ? 'Accepting...' : 'Accept Project Assignment'}
+                        </button>
+                        <button
+                          onClick={() => handleDeclineAllocation(proj.id)}
+                          disabled={submitting}
+                          style={{ background: '#da3637', color: '#ffffff', border: 'none', padding: '8px 24px', fontSize: '13px', fontWeight: '600', borderRadius: '6px', cursor: 'pointer' }}
+                        >
+                          {submitting ? 'Declining...' : 'Decline Project Assignment'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               );

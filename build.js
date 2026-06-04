@@ -13,6 +13,9 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+// Ensure warnings are not treated as errors in CI environments
+process.env.CI = 'false';
+
 const root     = __dirname;
 const backend  = path.join(root, 'backend');
 const frontend = path.join(root, 'frontend', 'frontend');

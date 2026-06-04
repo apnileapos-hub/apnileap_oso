@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: apnileap-dashboard
+    name: apnileapos
     env: node
     plan: free
     buildCommand: node build.js

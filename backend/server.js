@@ -584,21 +584,36 @@ app.get("/api/v1/users", verifyToken, async (req, res) => {
 
 // ── POST /api/v1/users ─────────────────────────────────────────────────────────
 app.post("/api/v1/users", verifyToken, async (req, res) => {
-  if (req.user.role !== 'Super-admin') {
-    return res.status(403).json({ error: "Forbidden. Super-admin access required." });
+  const { role: callerRole, collegeId: callerCollege } = req.user;
+  const isAdmin = callerRole === 'Super-admin' || callerRole === 'Admin';
+  const isFaculty = callerRole === 'Faculty' || callerRole === 'Principal-Investigator';
+  if (!isAdmin && !isFaculty) {
+    return res.status(403).json({ error: "Forbidden." });
   }
   const { email, name, role, password, collegeId } = req.body;
   if (!email || !name || !role) {
     return res.status(400).json({ error: "Missing required fields (email, name, role)" });
   }
+  // Faculty cannot assign Super-admin/Admin roles or create users outside their spoke
+  const RESTRICTED_ROLES = ['Super-admin', 'Admin'];
+  if (isFaculty) {
+    if (RESTRICTED_ROLES.includes(role)) {
+      return res.status(403).json({ error: "Faculty cannot assign Super-admin or Admin roles." });
+    }
+    const targetCollege = collegeId || null;
+    if (targetCollege && targetCollege !== callerCollege) {
+      return res.status(403).json({ error: "Faculty can only create users within their own spoke." });
+    }
+  }
   try {
     const db = require('./db');
     const pass = password || "Admin@123";
+    const finalCollege = isFaculty ? (callerCollege || collegeId || null) : (collegeId || null);
     const result = await db.query(
       `INSERT INTO users (email, name, role, password, college_id) 
        VALUES ($1, $2, $3, $4, $5) 
        RETURNING id, email, name, role, college_id`,
-      [email.toLowerCase().trim(), name, role, pass, collegeId || null]
+      [email.toLowerCase().trim(), name, role, pass, finalCollege]
     );
     res.json(result.rows[0]);
   } catch (error) {
@@ -609,8 +624,15 @@ app.post("/api/v1/users", verifyToken, async (req, res) => {
 
 // ── PUT /api/v1/users/:id ──────────────────────────────────────────────────────
 app.put("/api/v1/users/:id", verifyToken, async (req, res) => {
-  if (req.user.role !== 'Super-admin') {
-    return res.status(403).json({ error: "Forbidden. Super-admin access required." });
+  const { role: callerRole, collegeId: callerCollege } = req.user;
+  const isAdmin = callerRole === 'Super-admin' || callerRole === 'Admin';
+  const isFaculty = callerRole === 'Faculty' || callerRole === 'Principal-Investigator';
+  if (!isAdmin && !isFaculty) {
+    return res.status(403).json({ error: "Forbidden." });
+  }
+  const RESTRICTED_ROLES = ['Super-admin', 'Admin'];
+  if (isFaculty && req.body.role && RESTRICTED_ROLES.includes(req.body.role)) {
+    return res.status(403).json({ error: "Faculty cannot assign Super-admin or Admin roles." });
   }
   const { id } = req.params;
   const { email, name, role, password, collegeId } = req.body;
@@ -640,12 +662,27 @@ app.put("/api/v1/users/:id", verifyToken, async (req, res) => {
 
 // ── DELETE /api/v1/users/:id ───────────────────────────────────────────────────
 app.delete("/api/v1/users/:id", verifyToken, async (req, res) => {
-  if (req.user.role !== 'Super-admin') {
-    return res.status(403).json({ error: "Forbidden. Super-admin access required." });
+  const { role: callerRole, collegeId: callerCollege } = req.user;
+  const isAdmin = callerRole === 'Super-admin' || callerRole === 'Admin';
+  const isFaculty = callerRole === 'Faculty' || callerRole === 'Principal-Investigator';
+  if (!isAdmin && !isFaculty) {
+    return res.status(403).json({ error: "Forbidden." });
   }
   const { id } = req.params;
   try {
     const db = require('./db');
+    // Faculty can only delete users from their own spoke
+    if (isFaculty) {
+      const checkRes = await db.query('SELECT college_id, role FROM users WHERE id = $1', [id]);
+      if (checkRes.rows.length === 0) return res.status(404).json({ error: "User not found" });
+      const target = checkRes.rows[0];
+      if (target.college_id !== callerCollege) {
+        return res.status(403).json({ error: "You can only delete users from your own spoke." });
+      }
+      if (['Super-admin','Admin'].includes(target.role)) {
+        return res.status(403).json({ error: "Faculty cannot delete admin users." });
+      }
+    }
     const deleteResult = await db.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
     if (deleteResult.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });

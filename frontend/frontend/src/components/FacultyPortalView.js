@@ -35,6 +35,18 @@ export default function FacultyPortalView({ user }) {
   // Status change
   const [statusSaving, setStatusSaving] = useState({});
 
+  // ── User Management ─────────────────────────────────────────────────────────
+  const [pageTab, setPageTab]         = useState('projects');  // 'projects' | 'users'
+  const [usersList, setUsersList]     = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [showAddUser, setShowAddUser] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [userForm, setUserForm]       = useState({ email: '', name: '', role: 'Faculty', password: 'Admin@123', collegeId: '' });
+  const [userSubmitting, setUserSubmitting] = useState(false);
+  const [userError, setUserError]     = useState('');
+
+  const FACULTY_ROLES = ['Faculty', 'Principal-Investigator', 'College-SPOC', 'Corporate-Mentor', 'Sponsor', 'Student'];
+
   /* ── fetch ── */
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -60,7 +72,6 @@ export default function FacultyPortalView({ user }) {
       filtered.forEach(p => { if (p.teamId) map[p.id] = p.teamId; });
       setAssignMap(map);
 
-      // Seed coordination messages per team
       const msgs = {};
       teamRes.data.forEach(t => {
         msgs[t.id] = [{
@@ -80,7 +91,22 @@ export default function FacultyPortalView({ user }) {
     }
   }, [user]);
 
+  const fetchUsers = useCallback(async () => {
+    setUsersLoading(true);
+    setUserError('');
+    try {
+      const res = await axios.get(`${API}/users`, { headers: { Authorization: `Bearer ${user?.token}` } });
+      setUsersList(res.data || []);
+    } catch (e) {
+      setUserError('Failed to load users: ' + (e.response?.data?.error || e.message));
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { if (pageTab === 'users') fetchUsers(); }, [pageTab, fetchUsers]);
+
 
   /* ── helpers ── */
   const getTab       = (id)   => activeTab[id] || 'overview';
@@ -157,18 +183,83 @@ export default function FacultyPortalView({ user }) {
     setNewMsg(p => ({ ...p, [teamId]: '' }));
   };
 
-  /* ── render ── */
+  /* ── User Management Handlers ── */
+  const handleSaveUser = async (e) => {
+    e.preventDefault();
+    if (!userForm.email || !userForm.name || !userForm.role) return;
+    setUserSubmitting(true);
+    setUserError('');
+    try {
+      const token = user?.token;
+      const payload = { ...userForm, collegeId: user?.collegeId || userForm.collegeId || null };
+      if (editingUser) {
+        await axios.put(`${API}/api/v1/users/${editingUser.id}`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      } else {
+        await axios.post(`${API}/api/v1/users`, payload, { headers: { Authorization: `Bearer ${token}` } });
+      }
+      setShowAddUser(false);
+      setEditingUser(null);
+      setUserForm({ email: '', name: '', role: 'Faculty', password: 'Admin@123', collegeId: '' });
+      fetchUsers();
+    } catch (e) {
+      setUserError(e.response?.data?.error || e.message);
+    } finally {
+      setUserSubmitting(false);
+    }
+  };
+
+  const handleDeleteUser = async (uid) => {
+    if (!window.confirm('Delete this user permanently?')) return;
+    try {
+      await axios.delete(`${API}/api/v1/users/${uid}`, { headers: { Authorization: `Bearer ${user?.token}` } });
+      setUsersList(p => p.filter(u => u.accountId !== String(uid) && u.id !== uid));
+      fetchUsers();
+    } catch (e) {
+      alert('Delete failed: ' + (e.response?.data?.error || e.message));
+    }
+  };
+
+  const openEditUser = (u) => {
+    setEditingUser(u);
+    setUserForm({ email: u.email, name: u.displayName?.split(' (')[0] || u.name || '', role: u.role || 'Faculty', password: '', collegeId: u.collegeId || '' });
+    setShowAddUser(true);
+    setUserError('');
+  };
+
+
   return (
     <div style={{ color: 'var(--text-primary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
 
       {/* Header */}
-      <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
-          🎓 Faculty Coordinator Hub
-        </h1>
-        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
-          View project details, manage epics, update status, assign teams and coordinate with student teams.
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', marginBottom: '20px' }}>
+        <div>
+          <h1 style={{ fontSize: '22px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>
+            🎓 Faculty Coordinator Hub
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
+            Manage projects, epics, team assignments and users within your spoke.
+          </p>
+        </div>
+      </div>
+
+      {/* Page-level Tab Bar */}
+      <div style={{ display: 'flex', borderBottom: '2px solid var(--border)', marginBottom: '20px', gap: '4px' }}>
+        {[
+          { id: 'projects', label: '📋 Projects', count: projects.length },
+          { id: 'users',    label: '👥 Manage Users', count: usersList.length },
+        ].map(t => (
+          <button key={t.id} onClick={() => setPageTab(t.id)} style={{
+            padding: '9px 18px', fontSize: '13px', fontWeight: pageTab === t.id ? '700' : '400',
+            background: 'transparent', border: 'none',
+            borderBottom: pageTab === t.id ? '2px solid #58a6ff' : '2px solid transparent',
+            color: pageTab === t.id ? '#58a6ff' : 'var(--text-secondary)',
+            cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
+            marginBottom: '-2px', transition: 'color 0.15s'
+          }}>
+            {t.label}
+            {t.count > 0 && <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '10px', background: pageTab === t.id ? 'rgba(88,166,255,0.15)' : 'rgba(110,118,129,0.1)', color: pageTab === t.id ? '#58a6ff' : 'var(--text-secondary)', fontWeight: '700' }}>{t.count}</span>}
+          </button>
+        ))}
       </div>
 
       {error && (
@@ -177,7 +268,8 @@ export default function FacultyPortalView({ user }) {
         </div>
       )}
 
-      {loading ? (
+      {/* ══════════════ PROJECTS TAB ══════════════ */}
+      {pageTab === 'projects' && (loading ? (
         <div style={{ textAlign: 'center', padding: '80px' }}>
           <div style={{ width: '32px', height: '32px', border: '3px solid rgba(88,166,255,0.2)', borderTopColor: '#58a6ff', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 10px' }} />
           <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Loading...</div>
@@ -191,6 +283,7 @@ export default function FacultyPortalView({ user }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {projects.map(proj => {
+
             const tab           = getTab(proj.id);
             const assignedTeam  = getTeam(proj.teamId);
             const epics         = proj.epics || [];
@@ -527,7 +620,149 @@ export default function FacultyPortalView({ user }) {
             );
           })}
         </div>
+      ))}
+
+      {/* ══════════════ USERS TAB ══════════════ */}
+      {pageTab === 'users' && (
+        <div>
+          {/* Add/Edit User Modal */}
+          {showAddUser && (
+            <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '24px', width: '420px', maxWidth: '95vw' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                  <h3 style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+                    {editingUser ? '✏️ Edit User' : '➕ Add New User'}
+                  </h3>
+                  <button onClick={() => { setShowAddUser(false); setEditingUser(null); setUserError(''); }}
+                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '18px' }}>✕</button>
+                </div>
+                {userError && (
+                  <div style={{ background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.2)', color: '#ff7b72', padding: '8px 12px', borderRadius: '6px', fontSize: '12px', marginBottom: '14px' }}>
+                    {userError}
+                  </div>
+                )}
+                <form onSubmit={handleSaveUser} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Full Name *</label>
+                    <input type="text" required value={userForm.name}
+                      onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="e.g. Prof. Amit Kumar"
+                      style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Email *</label>
+                    <input type="email" required value={userForm.email}
+                      onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))}
+                      placeholder="e.g. amit@kle.edu"
+                      style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>Role *</label>
+                    <select required value={userForm.role}
+                      onChange={e => setUserForm(f => ({ ...f, role: e.target.value }))}
+                      style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', fontSize: '13px' }}>
+                      {FACULTY_ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                    <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginTop: '3px' }}>⚠️ Super-admin / Admin roles can only be assigned by the system administrator.</div>
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '11px', fontWeight: '600', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px', textTransform: 'uppercase' }}>
+                      Password {editingUser ? '(blank = keep current)' : '*'}
+                    </label>
+                    <input type="password" value={userForm.password} required={!editingUser}
+                      onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
+                      placeholder={editingUser ? 'Leave blank to keep current' : 'Default: Admin@123'}
+                      style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', fontSize: '13px', boxSizing: 'border-box' }} />
+                  </div>
+                  <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                    <button type="button" onClick={() => { setShowAddUser(false); setEditingUser(null); setUserError(''); }}
+                      style={{ padding: '8px 16px', background: 'none', border: '1px solid var(--border)', color: 'var(--text-secondary)', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                      Cancel
+                    </button>
+                    <button type="submit" disabled={userSubmitting}
+                      style={{ padding: '8px 20px', background: '#1f6feb', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>
+                      {userSubmitting ? 'Saving...' : editingUser ? 'Update User' : 'Create User'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Panel Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <div>
+              <h2 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>👥 User Management</h2>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>
+                Manage users in <strong style={{ color: 'var(--text-primary)' }}>{user?.collegeId || 'your spoke'}</strong>. Super-admin / Admin roles are protected.
+              </p>
+            </div>
+            <button
+              onClick={() => { setEditingUser(null); setUserForm({ email: '', name: '', role: 'Faculty', password: 'Admin@123', collegeId: '' }); setShowAddUser(true); setUserError(''); }}
+              style={{ padding: '8px 16px', background: '#1f6feb', border: 'none', color: '#fff', borderRadius: '6px', fontSize: '12px', fontWeight: '700', cursor: 'pointer' }}>
+              ➕ Add User
+            </button>
+          </div>
+
+          {userError && !showAddUser && (
+            <div style={{ color: '#ff7b72', padding: '10px 14px', background: 'rgba(248,81,73,0.1)', border: '1px solid rgba(248,81,73,0.2)', borderRadius: '6px', marginBottom: '16px', fontSize: '13px' }}>
+              {userError}
+            </div>
+          )}
+
+          {usersLoading ? (
+            <div style={{ textAlign: 'center', padding: '60px' }}>
+              <div style={{ width: '28px', height: '28px', border: '3px solid rgba(88,166,255,0.2)', borderTopColor: '#58a6ff', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 8px' }} />
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Loading users...</div>
+            </div>
+          ) : usersList.length === 0 ? (
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '40px', textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', marginBottom: '8px' }}>👤</div>
+              <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>No Users Found</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Click "Add User" to create the first user for your spoke.</div>
+            </div>
+          ) : (
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 160px 130px 90px', padding: '10px 16px', background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', fontSize: '10px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', gap: '8px' }}>
+                <span>Name</span><span>Email</span><span>Role</span><span>Spoke</span><span>Actions</span>
+              </div>
+              {usersList.map((u, i) => {
+                const name  = u.displayName?.split(' (')[0] || u.name || '—';
+                const role  = u.displayName?.match(/\(([^)]+)\)/)?.[1] || u.role || '—';
+                const ROLE_COLORS = { 'Faculty': '#58a6ff', 'Principal-Investigator': '#7f85f5', 'Student': '#3fb950', 'College-SPOC': '#d29922', 'Corporate-Mentor': '#ff9800', 'Sponsor': '#e3c55e' };
+                const roleColor = ROLE_COLORS[role] || 'var(--text-secondary)';
+                const isAdmin   = ['Super-admin', 'Admin'].includes(role);
+                return (
+                  <div key={u.accountId || u.id || i} style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.4fr 160px 130px 90px', padding: '12px 16px', borderBottom: '1px solid var(--bg-card)', alignItems: 'center', gap: '8px', background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.01)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
+                      <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: isAdmin ? '#7f85f5' : '#1f6feb', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', fontWeight: '700', flexShrink: 0 }}>
+                        {name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                    </div>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{u.email}</span>
+                    <span style={{ fontSize: '11px', fontWeight: '700', padding: '3px 8px', borderRadius: '10px', background: roleColor + '22', color: roleColor, border: `1px solid ${roleColor}44`, textAlign: 'center', display: 'inline-block' }}>{role}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{u.collegeId || '—'}</span>
+                    <div style={{ display: 'flex', gap: '6px' }}>
+                      {isAdmin ? (
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Protected</span>
+                      ) : (
+                        <>
+                          <button onClick={() => openEditUser({ ...u, role, id: u.accountId || u.id })}
+                            title="Edit" style={{ padding: '4px 8px', background: 'rgba(88,166,255,0.1)', border: '1px solid rgba(88,166,255,0.2)', color: '#58a6ff', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>✏️</button>
+                          <button onClick={() => handleDeleteUser(u.accountId || u.id)}
+                            title="Delete" style={{ padding: '4px 8px', background: 'rgba(248,81,73,0.08)', border: '1px solid rgba(248,81,73,0.2)', color: '#ff7b72', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}>🗑</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       )}
+
     </div>
   );
 }

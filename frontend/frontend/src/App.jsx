@@ -82,6 +82,11 @@ axios.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Rewrite hardcoded localhost API URLs in production (Render)
+    if (config.url && config.url.startsWith("http://localhost:5000")) {
+      const apiBase = window.location.port === "3000" ? "http://localhost:5000" : "";
+      config.url = config.url.replace("http://localhost:5000", apiBase);
+    }
     return config;
   },
   (error) => {
@@ -9729,7 +9734,8 @@ function App() {
                   <button
                     onClick={async () => {
                       try {
-                        const res = await fetch("http://localhost:5000/cache/clear", { method: "POST" });
+                        const apiBase = window.location.port === "3000" ? "http://localhost:5000" : "";
+                        const res = await fetch(`${apiBase}/cache/clear`, { method: "POST" });
                         const data = await res.json();
                         if (data.success) {
                           triggerToast("Server cache successfully purged!");

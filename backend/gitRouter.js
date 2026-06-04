@@ -64,27 +64,56 @@ router.post("/projects/:id/award", async (req, res) => {
       try {
         console.log(`Attempting to automate GitHub repository creation for: ${repoName}`);
         let createUrl = 'https://api.github.com/user/repos';
+        let isOrg = false;
+        
         if (githubOrg) {
           createUrl = `https://api.github.com/orgs/${githubOrg}/repos`;
+          isOrg = true;
         }
-        
-        const ghRes = await axios.post(
-          createUrl,
-          {
-            name: repoName,
-            description: `Automated repository for APNILEAP project: ${project.name}`,
-            private: true,
-            auto_init: true
-          },
-          {
-            headers: {
-              'Authorization': `token ${githubToken}`,
-              'Accept': 'application/vnd.github.v3+json',
-              'User-Agent': 'APNILEAP-App'
+
+        let ghRes;
+        try {
+          ghRes = await axios.post(
+            createUrl,
+            {
+              name: repoName,
+              description: `Automated repository for APNILEAP project: ${project.name}`,
+              private: true,
+              auto_init: true
+            },
+            {
+              headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'APNILEAP-App'
+              }
             }
+          );
+        } catch (orgErr) {
+          if (isOrg && (orgErr.response?.status === 404 || orgErr.response?.status === 403)) {
+            console.log(`[GitHub Fallback] Organization endpoint failed (${orgErr.response?.status}). Falling back to personal user repository creation...`);
+            ghRes = await axios.post(
+              'https://api.github.com/user/repos',
+              {
+                name: repoName,
+                description: `Automated repository for APNILEAP project: ${project.name}`,
+                private: true,
+                auto_init: true
+              },
+              {
+                headers: {
+                  'Authorization': `token ${githubToken}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'APNILEAP-App'
+                }
+              }
+            );
+          } else {
+            throw orgErr;
           }
-        );
-        if (ghRes.data && ghRes.data.html_url) {
+        }
+
+        if (ghRes && ghRes.data && ghRes.data.html_url) {
           finalRepoUrl = ghRes.data.html_url;
           console.log(`Successfully created GitHub repository: ${finalRepoUrl}`);
         }

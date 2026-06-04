@@ -127,27 +127,56 @@ Try asking me to:
         try {
           console.log(`[Rovo] Attempting to automate GitHub repository creation for: ${repoName}`);
           let createUrl = 'https://api.github.com/user/repos';
+          let isOrg = false;
+          
           if (githubOrg) {
             createUrl = `https://api.github.com/orgs/${githubOrg}/repos`;
+            isOrg = true;
           }
-          
-          const ghRes = await axios.post(
-            createUrl,
-            {
-              name: repoName,
-              description: `Automated repository for APNILEAP project: ${project.name}`,
-              private: true,
-              auto_init: true
-            },
-            {
-              headers: {
-                'Authorization': `token ${githubToken}`,
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'APNILEAP-App'
+
+          let ghRes;
+          try {
+            ghRes = await axios.post(
+              createUrl,
+              {
+                name: repoName,
+                description: `Automated repository for APNILEAP project: ${project.name}`,
+                private: true,
+                auto_init: true
+              },
+              {
+                headers: {
+                  'Authorization': `token ${githubToken}`,
+                  'Accept': 'application/vnd.github.v3+json',
+                  'User-Agent': 'APNILEAP-App'
+                }
               }
+            );
+          } catch (orgErr) {
+            if (isOrg && (orgErr.response?.status === 404 || orgErr.response?.status === 403)) {
+              console.log(`[Rovo Fallback] Organization endpoint failed (${orgErr.response?.status}). Falling back to personal user repository creation...`);
+              ghRes = await axios.post(
+                'https://api.github.com/user/repos',
+                {
+                  name: repoName,
+                  description: `Automated repository for APNILEAP project: ${project.name}`,
+                  private: true,
+                  auto_init: true
+                },
+                {
+                  headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'User-Agent': 'APNILEAP-App'
+                  }
+                }
+              );
+            } else {
+              throw orgErr;
             }
-          );
-          if (ghRes.data && ghRes.data.html_url) {
+          }
+
+          if (ghRes && ghRes.data && ghRes.data.html_url) {
             repoUrl = ghRes.data.html_url;
             console.log(`[Rovo] Successfully created GitHub repository: ${repoUrl}`);
           }

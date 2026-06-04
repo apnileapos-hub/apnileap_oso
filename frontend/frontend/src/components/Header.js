@@ -110,7 +110,7 @@ export default function Header({ user, activeView, onLogout, onRefresh, isRefres
       {/* Left: page title */}
       <div className="header-left">
         <div className="header-title">{title}</div>
-        <div className="header-subtitle">{subtitle}</div>
+        <div className="header-subtitle">{dynamicSubtitle}</div>
       </div>
 
       {/* Right: actions + user */}

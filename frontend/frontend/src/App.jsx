@@ -9681,11 +9681,11 @@ function App() {
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>JIRA Cloud Domain</label>
-                    <input type="text" className="form-input" value="https://manasa-kle-apnileap.atlassian.net" disabled style={{ padding: "8px 12px", fontSize: "12.5px", opacity: 0.7 }} />
+                    <input type="text" className="form-input" value="https://apnileapos.atlassian.net" disabled style={{ padding: "8px 12px", fontSize: "12.5px", opacity: 0.7 }} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Auth Email Address</label>
-                    <input type="text" className="form-input" value={currentUser?.email || "admin@apnileap.com"} disabled style={{ padding: "8px 12px", fontSize: "12.5px", opacity: 0.7 }} />
+                    <input type="text" className="form-input" value={currentUser?.email || "apnileapos@gmail.com"} disabled style={{ padding: "8px 12px", fontSize: "12.5px", opacity: 0.7 }} />
                   </div>
                 </div>
               </div>

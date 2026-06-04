@@ -1295,6 +1295,41 @@ app.post("/projects", verifyToken, async (req, res) => {
   }
 });
 
+async function getProjectById(id) {
+  const cleanId = parseInt(id.replace("proj-", ""));
+  if (isNaN(cleanId)) return null;
+  try {
+    const db = require('./db');
+    const res = await db.query(
+      `SELECT p.id as "id", p.name as "title", c.name as "company", 
+              p.description, p.budget as "funding", p.duration_weeks || ' Weeks' as "duration", 
+              p.status, p.confluence_space_url as "confluenceSpaceUrl", p.jira_board_url as "jiraBoardUrl",
+              p.created_by as "createdBy", p.accepted_by as "acceptedBy", 
+              p.work_progress_docs as "workProgressDocs", p.spoke_id as "spokeId", 
+              p.team_id as "teamId", p.epics, p.reminders, p.jira_project_key as "jiraProjectKey"
+       FROM projects p
+       LEFT JOIN companies c ON p.company_id = c.id
+       WHERE p.id = $1`,
+      [cleanId]
+    );
+    if (res.rows.length > 0) {
+      const row = res.rows[0];
+      return {
+        ...row,
+        id: `proj-${row.id}`,
+        funding: parseFloat(row.funding),
+        status: row.status.toLowerCase(),
+        epics: typeof row.epics === 'string' ? JSON.parse(row.epics) : (row.epics || []),
+        reminders: typeof row.reminders === 'string' ? JSON.parse(row.reminders) : (row.reminders || []),
+        workProgressDocs: typeof row.workProgressDocs === 'string' ? JSON.parse(row.workProgressDocs) : (row.workProgressDocs || [])
+      };
+    }
+  } catch (err) {
+    console.error("Error reading project from DB:", err);
+  }
+  return null;
+}
+
 // ── POST /projects/:id/assign-spoke ───────────────────────────────────────────
 app.post("/projects/:id/assign-spoke", verifyToken, async (req, res) => {
   try {
@@ -1305,10 +1340,14 @@ app.post("/projects/:id/assign-spoke", verifyToken, async (req, res) => {
       return res.status(403).json({ error: "Forbidden. Only moderators can allocate projects to Spokes." });
     }
 
-    const projects = readProjects();
-    const projIdx = projects.findIndex(p => p.id === id);
-    if (projIdx === -1) {
-      return res.status(404).json({ error: "Project not found." });
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      const localProj = projects.find(p => p.id === id);
+      if (!localProj) {
+        return res.status(404).json({ error: "Project not found." });
+      }
+      project = localProj;
     }
 
     const spokes = readSpokes();
@@ -1317,14 +1356,14 @@ app.post("/projects/:id/assign-spoke", verifyToken, async (req, res) => {
       return res.status(400).json({ error: "Invalid Spoke ID." });
     }
 
-    projects[projIdx].spokeId = spokeId;
-    projects[projIdx].status = "allocated"; // Match Pill "ALLOCATED" state in screenshot
+    project.spokeId = spokeId;
+    project.status = "allocated";
 
     // Trigger automated email reminder to Spoke SPOC
     const spocEmail = spoke.spocEmail || "spoc@college.edu";
-    const emailSubject = `New Project Assigned: ${projects[projIdx].title}`;
+    const emailSubject = `New Project Assigned: ${project.title}`;
     const emailBody = `Dear ${spoke.spocName || "Spoke SPOC"},\n\n` +
-      `The B2B project "${projects[projIdx].title}" from ${projects[projIdx].company} has been assigned to ${spoke.name}.\n` +
+      `The B2B project "${project.title}" from ${project.company} has been assigned to ${spoke.name}.\n` +
       `Please log into the portal to review the Epics, sync them to Jira, and assign a team.\n\n` +
       `Best regards,\nApni Leap Moderator Portal`;
 
@@ -1335,10 +1374,10 @@ app.post("/projects/:id/assign-spoke", verifyToken, async (req, res) => {
       type: "allocation"
     });
 
-    if (!Array.isArray(projects[projIdx].reminders)) {
-      projects[projIdx].reminders = [];
+    if (!Array.isArray(project.reminders)) {
+      project.reminders = [];
     }
-    projects[projIdx].reminders.push(emailLog);
+    project.reminders.push(emailLog);
 
     // Save to PostgreSQL Database
     const cleanId = parseInt(id.replace("proj-", ""));
@@ -1348,28 +1387,36 @@ app.post("/projects/:id/assign-spoke", verifyToken, async (req, res) => {
         `UPDATE projects 
          SET spoke_id = $1, status = $2, reminders = $3, updated_at = CURRENT_TIMESTAMP
          WHERE id = $4`,
-        [spokeId, 'ALLOCATED', JSON.stringify(projects[projIdx].reminders), cleanId]
+        [spokeId, 'ALLOCATED', JSON.stringify(project.reminders), cleanId]
       );
     }
 
-    writeProjects(projects);
-    res.json(projects[projIdx]);
+    // Sync back to local file if exists
+    const projects = readProjects();
+    const localIdx = projects.findIndex(p => p.id === id);
+    if (localIdx !== -1) {
+      projects[localIdx] = project;
+      writeProjects(projects);
+    }
+
+    res.json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// ── POST /projects/:id/accept ────────────────────────────────────────────────
 app.post("/projects/:id/accept", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const projects = readProjects();
-    const projIdx = projects.findIndex(p => p.id === id);
-    if (projIdx === -1) {
-      return res.status(404).json({ error: "Project not found." });
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      const localProj = projects.find(p => p.id === id);
+      if (!localProj) {
+        return res.status(404).json({ error: "Project not found." });
+      }
+      project = localProj;
     }
-
-    const project = projects[projIdx];
     
     // Check permission: Super-admin, Admin, College-SPOC, or Faculty for this specific Spoke
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
@@ -1461,7 +1508,13 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
       );
     }
 
-    writeProjects(projects);
+    // Sync back to local file if exists
+    const projects = readProjects();
+    const localIdx = projects.findIndex(p => p.id === id);
+    if (localIdx !== -1) {
+      projects[localIdx] = project;
+      writeProjects(projects);
+    }
     res.json(project);
   } catch (err) {
     console.error("Error accepting project:", err);
@@ -1473,13 +1526,15 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
 app.post("/projects/:id/decline", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
-    const projects = readProjects();
-    const projIdx = projects.findIndex(p => p.id === id);
-    if (projIdx === -1) {
-      return res.status(404).json({ error: "Project not found." });
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      const localProj = projects.find(p => p.id === id);
+      if (!localProj) {
+        return res.status(404).json({ error: "Project not found." });
+      }
+      project = localProj;
     }
-
-    const project = projects[projIdx];
     
     // Check permission: Super-admin, Admin, College-SPOC, or Faculty for this specific Spoke
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
@@ -1504,7 +1559,13 @@ app.post("/projects/:id/decline", verifyToken, async (req, res) => {
       );
     }
 
-    writeProjects(projects);
+    // Sync back to local file if exists
+    const projects = readProjects();
+    const localIdx = projects.findIndex(p => p.id === id);
+    if (localIdx !== -1) {
+      projects[localIdx] = project;
+      writeProjects(projects);
+    }
     res.json(project);
   } catch (err) {
     console.error("Error declining project:", err);
@@ -1521,13 +1582,15 @@ app.post("/projects/:id/epics", verifyToken, async (req, res) => {
       return res.status(400).json({ error: "Epic title is required." });
     }
 
-    const projects = readProjects();
-    const projIdx = projects.findIndex(p => p.id === id);
-    if (projIdx === -1) {
-      return res.status(404).json({ error: "Project not found." });
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      const localProj = projects.find(p => p.id === id);
+      if (!localProj) {
+        return res.status(404).json({ error: "Project not found." });
+      }
+      project = localProj;
     }
-
-    const project = projects[projIdx];
 
     // Check permission: Super-admin, Admin, or Faculty / Principal-Investigator for the spoke, or member of the assigned team
     let hasAccess = false;
@@ -1631,7 +1694,13 @@ app.post("/projects/:id/epics", verifyToken, async (req, res) => {
       );
     }
 
-    writeProjects(projects);
+    // Sync back to local file if exists
+    const projects = readProjects();
+    const localIdx = projects.findIndex(p => p.id === id);
+    if (localIdx !== -1) {
+      projects[localIdx] = project;
+      writeProjects(projects);
+    }
     res.json(newEpic);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -1644,13 +1713,15 @@ app.post("/projects/:id/assign-team", verifyToken, async (req, res) => {
     const { id } = req.params;
     const { teamId } = req.body;
 
-    const projects = readProjects();
-    const projIdx = projects.findIndex(p => p.id === id);
-    if (projIdx === -1) {
-      return res.status(404).json({ error: "Project not found." });
+    let project = await getProjectById(id);
+    if (!project) {
+      const projects = readProjects();
+      const localProj = projects.find(p => p.id === id);
+      if (!localProj) {
+        return res.status(404).json({ error: "Project not found." });
+      }
+      project = localProj;
     }
-
-    const project = projects[projIdx];
 
     // Check permission: only Faculty or Principal-Investigator can assign teams
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
@@ -1697,7 +1768,13 @@ app.post("/projects/:id/assign-team", verifyToken, async (req, res) => {
       );
     }
 
-    writeProjects(projects);
+    // Sync back to local file if exists
+    const projects = readProjects();
+    const localIdx = projects.findIndex(p => p.id === id);
+    if (localIdx !== -1) {
+      projects[localIdx] = project;
+      writeProjects(projects);
+    }
     res.json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });

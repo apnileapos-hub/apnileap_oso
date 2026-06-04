@@ -334,7 +334,7 @@ async function autoCreateJiraProject(projectTitle) {
 }
 
 // ── Helper: Automatically invite a user to Jira and add them to their spoke group ──────────────
-async function inviteAndSyncUserToJira(email, name, collegeId) {
+async function inviteAndSyncUserToJira(email, name, collegeId, products) {
   try {
     const jiraBase = getJiraBase();
     const jiraAuth = getJiraAuth();
@@ -344,7 +344,7 @@ async function inviteAndSyncUserToJira(email, name, collegeId) {
       return { success: false, reason: "Credentials not configured" };
     }
 
-    console.log(`[Jira Sync] Initiating synchronization for ${email} (${name}) with college group ${collegeId || 'None'}`);
+    console.log(`[Jira Sync] Initiating synchronization for ${email} (${name}) with college group ${collegeId || 'None'} and products: ${JSON.stringify(products || [])}`);
 
     let accountId = null;
 
@@ -355,7 +355,7 @@ async function inviteAndSyncUserToJira(email, name, collegeId) {
         {
           emailAddress: email,
           displayName: name,
-          products: ["jira-software"]
+          products: Array.isArray(products) && products.length > 0 ? products : ["jira-software"]
         },
         { auth: jiraAuth, headers: jiraHeaders }
       );
@@ -686,7 +686,7 @@ app.post("/api/v1/users", verifyToken, async (req, res) => {
   if (!isAdmin && !isFaculty) {
     return res.status(403).json({ error: "Forbidden." });
   }
-  const { email, name, role, password, collegeId } = req.body;
+  const { email, name, role, password, collegeId, products } = req.body;
   if (!email || !name || !role) {
     return res.status(400).json({ error: "Missing required fields (email, name, role)" });
   }
@@ -715,7 +715,7 @@ app.post("/api/v1/users", verifyToken, async (req, res) => {
     const newUser = result.rows[0];
     let syncResult = null;
     try {
-      syncResult = await inviteAndSyncUserToJira(newUser.email, newUser.name, newUser.college_id);
+      syncResult = await inviteAndSyncUserToJira(newUser.email, newUser.name, newUser.college_id, products);
     } catch (syncErr) {
       console.error(`[Jira Sync Error] Failed to invite user during registration:`, syncErr);
     }
@@ -743,7 +743,7 @@ app.put("/api/v1/users/:id", verifyToken, async (req, res) => {
     return res.status(403).json({ error: "Faculty cannot assign Super-admin or Admin roles." });
   }
   const { id } = req.params;
-  const { email, name, role, password, collegeId } = req.body;
+  const { email, name, role, password, collegeId, products } = req.body;
   try {
     const db = require('./db');
     const hasCollegeId = req.body.hasOwnProperty('collegeId');
@@ -765,7 +765,7 @@ app.put("/api/v1/users/:id", verifyToken, async (req, res) => {
     const updatedUser = updateResult.rows[0];
     let syncResult = null;
     try {
-      syncResult = await inviteAndSyncUserToJira(updatedUser.email, updatedUser.name, updatedUser.college_id);
+      syncResult = await inviteAndSyncUserToJira(updatedUser.email, updatedUser.name, updatedUser.college_id, products);
     } catch (syncErr) {
       console.error(`[Jira Sync Error] Failed to sync user during update:`, syncErr);
     }

@@ -24,6 +24,11 @@ export default function ModeratorPortalView({ user, initialTab }) {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
 
+  // Atlassian Product Invitation States
+  const [newUserProducts, setNewUserProducts] = useState({ jira: true, confluence: true, loom: true });
+  const [showProductDropdown, setShowProductDropdown] = useState(false);
+  const [hoveredProductItem, setHoveredProductItem] = useState(null);
+
   // Edit User State
   const [editingUser, setEditingUser] = useState(null);
   const [editUserName, setEditUserName] = useState('');
@@ -88,12 +93,18 @@ export default function ModeratorPortalView({ user, initialTab }) {
     if (!newUserEmail || !newUserName || !newUserRole) return;
     try {
       const token = user?.token;
+      const selectedProducts = [];
+      if (newUserProducts.jira) selectedProducts.push("jira-software");
+      if (newUserProducts.confluence) selectedProducts.push("confluence");
+      if (newUserProducts.loom) selectedProducts.push("loom");
+
       await axios.post(`${API}/api/v1/users`, {
         email: newUserEmail,
         name: newUserName,
         role: newUserRole,
         password: newUserPass,
-        collegeId: newUserCollege || null
+        collegeId: newUserCollege || null,
+        products: selectedProducts
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -102,6 +113,8 @@ export default function ModeratorPortalView({ user, initialTab }) {
       setNewUserRole('Super-admin');
       setNewUserPass('Admin@123');
       setNewUserCollege('');
+      setNewUserProducts({ jira: true, confluence: true, loom: true });
+      setShowProductDropdown(false);
       setShowAddUserModal(false);
       fetchUsers();
     } catch (err) {
@@ -607,6 +620,205 @@ export default function ModeratorPortalView({ user, initialTab }) {
                         <option value="mmcoep-spoke">MMCOEP Spoke</option>
                         <option value="rit-spoke">RIT Spoke</option>
                       </select>
+                    </div>
+                    {/* Atlassian Select Products Dropdown */}
+                    <div style={{ position: 'relative' }}>
+                      <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                        Select products / Add to other Atlassian products? <span style={{ color: '#ff7b72' }}>*</span>
+                      </label>
+                      
+                      {/* Styled Dropdown Trigger Box */}
+                      <div 
+                        onClick={() => setShowProductDropdown(!showProductDropdown)}
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          padding: '8px 12px',
+                          background: 'var(--bg-primary)',
+                          border: showProductDropdown ? '1px solid #58a6ff' : '1px solid var(--border)',
+                          borderRadius: '6px',
+                          color: '#58a6ff',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          userSelect: 'none',
+                          boxSizing: 'border-box',
+                          height: '38px',
+                          transition: 'border-color 0.2s'
+                        }}
+                      >
+                        <span style={{ fontWeight: '500' }}>
+                          {(() => {
+                            const selected = [];
+                            if (newUserProducts.jira) selected.push("Jira");
+                            if (newUserProducts.loom) selected.push("Loom");
+                            if (newUserProducts.confluence) selected.push("Confluence");
+                            if (selected.length === 0) return "Select products...";
+                            if (selected.length > 2) {
+                              return `${selected[0]}, ${selected[1]}, ... (+${selected.length - 2})`;
+                            }
+                            return selected.join(", ");
+                          })()}
+                        </span>
+                        <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>
+                          {showProductDropdown ? '▲' : '▼'}
+                        </span>
+                      </div>
+
+                      {/* Dropdown Options Overlay */}
+                      {showProductDropdown && (
+                        <>
+                          {/* Close overlay on click background */}
+                          <div 
+                            style={{ position: 'fixed', top: 0, bottom: 0, left: 0, right: 0, zIndex: 98 }} 
+                            onClick={() => setShowProductDropdown(false)} 
+                          />
+                          
+                          <div style={{
+                            position: 'absolute',
+                            zIndex: 99,
+                            left: 0,
+                            right: 0,
+                            top: 'calc(100% + 4px)',
+                            background: 'var(--bg-secondary)',
+                            border: '1px solid var(--border)',
+                            borderRadius: '6px',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                            padding: '6px 0',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            boxSizing: 'border-box'
+                          }}>
+                            {/* Choose all Link Option */}
+                            <div style={{
+                              padding: '6px 16px',
+                              display: 'flex',
+                              justifyContent: 'flex-start',
+                              borderBottom: '1px solid var(--border)',
+                              paddingBottom: '8px',
+                              marginBottom: '4px'
+                            }}>
+                              <button 
+                                type="button"
+                                onClick={() => {
+                                  const allSelected = newUserProducts.jira && newUserProducts.loom && newUserProducts.confluence;
+                                  setNewUserProducts({
+                                    jira: !allSelected,
+                                    loom: !allSelected,
+                                    confluence: !allSelected
+                                  });
+                                }}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: '#58a6ff',
+                                  fontSize: '12px',
+                                  cursor: 'pointer',
+                                  padding: 0,
+                                  fontWeight: '500',
+                                  fontFamily: 'inherit'
+                                }}
+                              >
+                                {newUserProducts.jira && newUserProducts.loom && newUserProducts.confluence ? "Deselect all" : "Choose all"}
+                              </button>
+                            </div>
+
+                            {/* Jira Row */}
+                            <div 
+                              onClick={() => setNewUserProducts({ ...newUserProducts, jira: !newUserProducts.jira })}
+                              onMouseEnter={() => setHoveredProductItem('jira')}
+                              onMouseLeave={() => setHoveredProductItem(null)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                padding: '8px 16px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                background: hoveredProductItem === 'jira' ? 'var(--bg-primary)' : 'transparent',
+                                transition: 'background 0.15s'
+                              }}
+                            >
+                              <input 
+                                type="checkbox" 
+                                checked={newUserProducts.jira}
+                                onChange={() => {}} // click handled on parent div
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(38,132,255,0.1)', padding: '5px', borderRadius: '4px' }}>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M1.3 11L5.5 6.8c.4-.4 1-.4 1.4 0l4.2 4.2c.4.4.4 1 0 1.4L6.9 16.6c-.4.4-1 .4-1.4 0L1.3 12.4c-.4-.4-.4-1 0-1.4z" fill="#2684FF" />
+                                  <path d="M6.3 5.4L10.5 1.2c.4-.4 1-.4 1.4 0l4.2 4.2c.4.4.4 1 0 1.4L11.9 11c-.4.4-1 .4-1.4 0L6.3 6.8c-.4-.4-.4-1 0-1.4z" fill="#0052CC" />
+                                </svg>
+                              </span>
+                              <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '500' }}>Jira</span>
+                            </div>
+
+                            {/* Loom Row */}
+                            <div 
+                              onClick={() => setNewUserProducts({ ...newUserProducts, loom: !newUserProducts.loom })}
+                              onMouseEnter={() => setHoveredProductItem('loom')}
+                              onMouseLeave={() => setHoveredProductItem(null)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                padding: '8px 16px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                background: hoveredProductItem === 'loom' ? 'var(--bg-primary)' : 'transparent',
+                                transition: 'background 0.15s'
+                              }}
+                            >
+                              <input 
+                                type="checkbox" 
+                                checked={newUserProducts.loom}
+                                onChange={() => {}} // click handled on parent div
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(98,93,245,0.1)', padding: '5px', borderRadius: '4px' }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <circle cx="12" cy="12" r="10" stroke="#625DF5" strokeWidth="3" fill="none"/>
+                                  <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07L19.07 4.93" stroke="#625DF5" strokeWidth="2.5" strokeLinecap="round"/>
+                                  <circle cx="12" cy="12" r="4.5" fill="#625DF5"/>
+                                </svg>
+                              </span>
+                              <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '500' }}>Loom</span>
+                            </div>
+
+                            {/* Confluence Row */}
+                            <div 
+                              onClick={() => setNewUserProducts({ ...newUserProducts, confluence: !newUserProducts.confluence })}
+                              onMouseEnter={() => setHoveredProductItem('confluence')}
+                              onMouseLeave={() => setHoveredProductItem(null)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                padding: '8px 16px',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                                background: hoveredProductItem === 'confluence' ? 'var(--bg-primary)' : 'transparent',
+                                transition: 'background 0.15s'
+                              }}
+                            >
+                              <input 
+                                type="checkbox" 
+                                checked={newUserProducts.confluence}
+                                onChange={() => {}} // click handled on parent div
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(38,132,255,0.1)', padding: '5px', borderRadius: '4px' }}>
+                                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                  <path d="M1.8 1.8c.8-.8 2.2-.8 3 0l8.4 8.4c.8.8.8 2.2 0 3s-2.2.8-3 0L1.8 4.8c-.8-.8-.8-2.2 0-3z" fill="#0052CC" />
+                                  <path d="M14.2 1.8c-.8-.8-2.2-.8-3 0L2.8 10.2c-.8.8-.8 2.2 0 3s2.2.8 3 0l8.4-8.4c.8-.8.8-2.2 0-3z" fill="#2684FF" />
+                                </svg>
+                              </span>
+                              <span style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '500' }}>Confluence</span>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '14px 20px', background: 'var(--bg-primary)', borderTop: '1px solid var(--border)', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>

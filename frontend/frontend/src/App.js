@@ -335,6 +335,7 @@ function App() {
       </div>
       <CreateIssueModal
         isOpen={isCreateModalOpen}
+        user={user}
         onClose={() => setIsCreateModalOpen(false)}
         onRefresh={handleRefresh}
       />

@@ -43,7 +43,9 @@ export default function IssueDetailsModal({ issue, user, onClose, onRefresh }) {
       const loadUsers = async () => {
         setLoadingUsers(true);
         try {
-          const res = await axios.get(`${API}/users`);
+          const res = await axios.get(`${API}/users`, {
+            headers: { Authorization: `Bearer ${user?.token}` }
+          });
           setUsers(Array.isArray(res.data) ? res.data : []);
         } catch (err) {
           console.error("Failed to load users:", err);

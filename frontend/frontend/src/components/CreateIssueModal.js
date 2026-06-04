@@ -4,7 +4,7 @@ import axios from 'axios';
 const API = process.env.REACT_APP_API_URL || 
   (window.location.port === '3000' ? 'http://localhost:5000' : '');
 
-export default function CreateIssueModal({ isOpen, onClose, onRefresh }) {
+export default function CreateIssueModal({ isOpen, onClose, onRefresh, user }) {
   const [summary, setSummary] = useState('');
   const [description, setDescription] = useState('');
   const [assigneeId, setAssigneeId] = useState('');
@@ -25,7 +25,9 @@ export default function CreateIssueModal({ isOpen, onClose, onRefresh }) {
         setLoadingUsers(true);
         setError('');
         try {
-          const res = await axios.get(`${API}/users`);
+          const res = await axios.get(`${API}/users`, {
+            headers: { Authorization: `Bearer ${user?.token}` }
+          });
           setUsers(Array.isArray(res.data) ? res.data : []);
           
           // Set default assignee and reporter if they exist
@@ -48,7 +50,7 @@ export default function CreateIssueModal({ isOpen, onClose, onRefresh }) {
       
       fetchUsers();
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   if (!isOpen) return null;
 
@@ -71,6 +73,8 @@ export default function CreateIssueModal({ isOpen, onClose, onRefresh }) {
         priority,
         status,
         dueDate: dueDate || undefined
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` }
       });
 
       // Clear form

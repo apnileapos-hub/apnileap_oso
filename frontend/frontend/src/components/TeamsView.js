@@ -42,7 +42,9 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
     try {
       const [teamsRes, usersRes, projectsRes, spokesRes] = await Promise.all([
         axios.get(`${API}/teams`),
-        axios.get(`${API}/users`),
+        axios.get(`${API}/users`, {
+          headers: { Authorization: `Bearer ${user?.token}` }
+        }),
         axios.get(`${API}/projects`, {
           headers: { Authorization: `Bearer ${user?.token}` }
         }),

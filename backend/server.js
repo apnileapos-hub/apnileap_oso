@@ -1551,7 +1551,7 @@ if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
 
   // Catch-all route — must come AFTER all API routes
-  app.get("/*", (req, res) => {
+  app.get("/*path", (req, res) => {
     res.sendFile(path.join(buildPath, "index.html"));
   });
 

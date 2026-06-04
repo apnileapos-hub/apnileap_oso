@@ -2786,10 +2786,11 @@ const SPOKES_MAP = {
 const getSpokeName = (id) => SPOKES_MAP[id] || id || "Campus Spoke";
 const getSpokeId = (name) => {
   if (!name) return null;
-  if (name.includes("KLE")) return "3";
-  if (name.includes("COEP") && !name.includes("MM")) return "101";
-  if (name.includes("MMCOEP")) return "102";
-  if (name.includes("RIT")) return "103";
+  const n = name.toLowerCase();
+  if (n.includes("mmcoep")) return "102";
+  if (n.includes("kle")) return "3";
+  if (n.includes("coep")) return "101";
+  if (n.includes("rit")) return "103";
   return name;
 };
 
@@ -3021,6 +3022,7 @@ app.post("/moderator/assign", verifyToken, async (req, res) => {
   const { projectId, targetBoardId, dueDate } = req.body;
   const cleanId = parseInt(projectId.replace("proj-", ""));
   const spokeKey = targetBoardId === "3" ? "kle-spoke" : (targetBoardId === "101" ? "coep-spoke" : (targetBoardId === "102" ? "mmcoep-spoke" : "rit-spoke"));
+  const spokeName = getSpokeName(spokeKey);
   try {
     const db = require('./db');
     await db.query(
@@ -3032,6 +3034,7 @@ app.post("/moderator/assign", verifyToken, async (req, res) => {
     res.json({
       success: true,
       message: "Successfully assigned project to Spoke.",
+      assignedTo: spokeName,
       status: "Proposed"
     });
   } catch (err) {
@@ -3372,10 +3375,11 @@ app.get("/hub/metrics", async (req, res) => {
     const getSpokeName = (id) => SPOKES_MAP[id] || id || "Campus Spoke";
     const getSpokeId = (name) => {
       if (!name) return null;
-      if (name.includes("KLE")) return "3";
-      if (name.includes("COEP") && !name.includes("MM")) return "101";
-      if (name.includes("MMCOEP")) return "102";
-      if (name.includes("RIT")) return "103";
+      const n = name.toLowerCase();
+      if (n.includes("mmcoep")) return "102";
+      if (n.includes("kle")) return "3";
+      if (n.includes("coep")) return "101";
+      if (n.includes("rit")) return "103";
       return name;
     };
 

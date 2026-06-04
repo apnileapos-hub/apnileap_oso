@@ -381,10 +381,12 @@ Try asking me to:
         console.error("[Rovo] Failed to automatically provision Confluence Space during proposal, falling back to stub:", confErr.message);
       }
 
+      const spokeKey = collegeId === 3 ? "kle-spoke" : (collegeId === 101 ? "coep-spoke" : (collegeId === 102 ? "mmcoep-spoke" : "rit-spoke"));
+
       const projectId = Date.now();
       const projRes = await db.query(
-        `INSERT INTO projects (id, name, description, budget, duration_weeks, status, created_by, confluence_space_url, jira_board_url) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+        `INSERT INTO projects (id, name, description, budget, duration_weeks, status, created_by, confluence_space_url, jira_board_url, jira_project_key, spoke_id) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
          RETURNING *`,
         [
           projectId,
@@ -395,7 +397,9 @@ Try asking me to:
           'OPEN_FOR_BIDDING', 
           'Rovo Copilot', 
           confluenceSpaceUrl, 
-          jiraBoardUrl || `${JIRA_BASE}/jira/boards/75`
+          jiraBoardUrl || `${JIRA_BASE}/jira/boards/75`,
+          jiraKey || null,
+          spokeKey
         ]
       );
 

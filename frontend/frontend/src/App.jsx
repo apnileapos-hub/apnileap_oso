@@ -309,6 +309,33 @@ const CAMPUS_LABELS = {
   "103": "rit-spoke"
 };
 
+const mapEmailToPersona = (email) => {
+  if (!email) return "moderator";
+  const cleanEmail = email.toLowerCase().trim();
+  if (cleanEmail === "admin@apnileap.com" || cleanEmail === "executive@apnileap.com" || cleanEmail === "executive") {
+    return "executive";
+  }
+  if (cleanEmail === "moderator@apnileap.com" || cleanEmail === "moderator" || cleanEmail.endsWith("@apnileap.com")) {
+    return "moderator";
+  }
+  if (cleanEmail.includes("sponsor") || cleanEmail.includes("nvidia")) {
+    return "sponsor-nvidia";
+  }
+  if (cleanEmail.includes("kle") || cleanEmail.endsWith("@kletech.ac.in")) {
+    return "spoke-kle";
+  }
+  if (cleanEmail.includes("mmcoep")) {
+    return "spoke-mmcoep";
+  }
+  if (cleanEmail.includes("coep")) {
+    return "spoke-coep";
+  }
+  if (cleanEmail.includes("rit")) {
+    return "spoke-rit";
+  }
+  return null;
+};
+
 function App() {
   // Authentication & Session States
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
@@ -384,7 +411,15 @@ function App() {
   const [activeWorkspace, setActiveWorkspace] = useState(() => {
     const auth = localStorage.getItem("apnileap-auth") === "true";
     if (auth) {
-      const persona = localStorage.getItem("apnileap-persona") || "moderator";
+      let persona = localStorage.getItem("apnileap-persona");
+      if (!persona || persona === "undefined" || persona === "null") {
+        try {
+          const user = JSON.parse(localStorage.getItem("apnileap-user"));
+          persona = mapEmailToPersona(user?.email) || "moderator";
+        } catch {
+          persona = "moderator";
+        }
+      }
       if (persona === "executive") return "hub";
       if (persona === "moderator") return "moderator";
       return persona;
@@ -393,7 +428,16 @@ function App() {
   });
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [currentPersona, setCurrentPersona] = useState(() => {
-    return localStorage.getItem("apnileap-persona") || "moderator";
+    let persona = localStorage.getItem("apnileap-persona");
+    if (!persona || persona === "undefined" || persona === "null") {
+      try {
+        const user = JSON.parse(localStorage.getItem("apnileap-user"));
+        persona = mapEmailToPersona(user?.email) || "moderator";
+      } catch {
+        persona = "moderator";
+      }
+    }
+    return persona;
   });
   const [currentUser, setCurrentUser] = useState(null);
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
@@ -584,31 +628,7 @@ function App() {
     }, 3000);
   };
 
-  const mapEmailToPersona = (email) => {
-    const cleanEmail = email.toLowerCase().trim();
-    if (cleanEmail === "admin@apnileap.com" || cleanEmail === "executive@apnileap.com" || cleanEmail === "executive") {
-      return "executive";
-    }
-    if (cleanEmail === "moderator@apnileap.com" || cleanEmail === "moderator" || cleanEmail.endsWith("@apnileap.com")) {
-      return "moderator";
-    }
-    if (cleanEmail.includes("sponsor") || cleanEmail.includes("nvidia")) {
-      return "sponsor-nvidia";
-    }
-    if (cleanEmail.includes("kle") || cleanEmail.endsWith("@kletech.ac.in")) {
-      return "spoke-kle";
-    }
-    if (cleanEmail.includes("mmcoep")) {
-      return "spoke-mmcoep";
-    }
-    if (cleanEmail.includes("coep")) {
-      return "spoke-coep";
-    }
-    if (cleanEmail.includes("rit")) {
-      return "spoke-rit";
-    }
-    return null;
-  };
+
 
   const handleLoginSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -631,15 +651,16 @@ function App() {
       });
 
       const { user, token } = response.data;
+      const persona = user.persona || mapEmailToPersona(user.email) || "moderator";
       setIsAuthenticated(true);
       setViewMode("dashboard");
       setSessionUser(user);
-      setCurrentPersona(user.persona);
-      setActiveWorkspace(user.persona === "executive" ? "hub" : user.persona === "moderator" ? "moderator" : user.persona);
+      setCurrentPersona(persona);
+      setActiveWorkspace(persona === "executive" ? "hub" : persona === "moderator" ? "moderator" : persona);
 
       localStorage.setItem("apnileap-auth", "true");
       localStorage.setItem("apnileap-user", JSON.stringify(user));
-      localStorage.setItem("apnileap-persona", user.persona);
+      localStorage.setItem("apnileap-persona", persona);
       if (token) {
         localStorage.setItem("apnileap-token", token);
       }
@@ -687,15 +708,16 @@ function App() {
       });
 
       const { user, token } = response.data;
+      const persona = user.persona || mapEmailToPersona(user.email) || "moderator";
       setIsAuthenticated(true);
       setViewMode("dashboard");
       setSessionUser(user);
-      setCurrentPersona(user.persona);
-      setActiveWorkspace(user.persona);
+      setCurrentPersona(persona);
+      setActiveWorkspace(persona);
 
       localStorage.setItem("apnileap-auth", "true");
       localStorage.setItem("apnileap-user", JSON.stringify(user));
-      localStorage.setItem("apnileap-persona", user.persona);
+      localStorage.setItem("apnileap-persona", persona);
       if (token) {
         localStorage.setItem("apnileap-token", token);
       }
@@ -739,15 +761,16 @@ function App() {
       });
 
       const { user, token } = response.data;
+      const persona = user.persona || mapEmailToPersona(user.email) || "moderator";
       setIsAuthenticated(true);
       setViewMode("dashboard");
       setSessionUser(user);
-      setCurrentPersona(user.persona);
-      setActiveWorkspace(user.persona === "executive" ? "hub" : user.persona === "moderator" ? "moderator" : user.persona);
+      setCurrentPersona(persona);
+      setActiveWorkspace(persona === "executive" ? "hub" : persona === "moderator" ? "moderator" : persona);
 
       localStorage.setItem("apnileap-auth", "true");
       localStorage.setItem("apnileap-user", JSON.stringify(user));
-      localStorage.setItem("apnileap-persona", user.persona);
+      localStorage.setItem("apnileap-persona", persona);
       if (token) {
         localStorage.setItem("apnileap-token", token);
       }
@@ -5130,7 +5153,7 @@ function App() {
           <nav style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1, overflowY: "auto", paddingRight: "4px" }}>
             
             {/* Multi-Tenant Persona Access Controller (Admin Only) */}
-            {sessionUser && sessionUser.role === "Central Moderator" && (
+            {sessionUser && (sessionUser.role === "Central Moderator" || sessionUser.role === "Super-admin" || sessionUser.role === "Admin") && (
               <div style={{
                 padding: "12px 14px",
                 marginBottom: "16px",

@@ -74,6 +74,14 @@ const jiraHeaders = {
 };
 
 const getAtlassianOrgHeaders = () => {
+  const orgToken = process.env.ATLASSIAN_ORG_TOKEN || process.env.ATLASSIAN_ORG_API_KEY;
+  if (orgToken) {
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${orgToken}`
+    };
+  }
   const currentAuth = getJiraAuth();
   const authBase64 = Buffer.from(`${currentAuth.username}:${currentAuth.password}`).toString('base64');
   return {
@@ -443,29 +451,6 @@ app.post("/issues", async (req, res) => {
   }
 });
 
-const TEAMS_FILE = path.join(__dirname, "teams.json");
-
-function readTeams() {
-  try {
-    if (fs.existsSync(TEAMS_FILE)) {
-      const data = fs.readFileSync(TEAMS_FILE, "utf8");
-      return JSON.parse(data);
-    }
-  } catch (err) {
-    console.error("Error reading teams file:", err);
-  }
-  return [];
-}
-
-function writeTeams(teams) {
-  try {
-    fs.writeFileSync(TEAMS_FILE, JSON.stringify(teams, null, 2), "utf8");
-    return true;
-  } catch (err) {
-    console.error("Error writing teams file:", err);
-    return false;
-  }
-}
 
 // ── Projects, Spokes & Email Helpers ──
 const PROJECTS_FILE = path.join(__dirname, "projects.json");
@@ -634,6 +619,7 @@ app.delete("/api/v1/users/:id", verifyToken, async (req, res) => {
 // ── GET /teams ────────────────────────────────────────────────────────────────
 app.get("/teams", async (req, res) => {
   try {
+    const db = require('./db');
     const orgId = process.env.ATLASSIAN_ORG_ID || "3e8909b9-234a-4def-aaf9-adc97997b269";
     const siteId = process.env.ATLASSIAN_SITE_ID || "";
     let atlassianTeams = [];
@@ -653,7 +639,29 @@ app.get("/teams", async (req, res) => {
       console.warn("Failed to fetch Atlassian teams, falling back to local teams only:", err.message);
     }
 
-    const localTeams = readTeams();
+    const localTeamsRes = await db.query('SELECT * FROM teams');
+    const localMessagesRes = await db.query('SELECT * FROM team_messages');
+
+    const messagesByTeam = {};
+    localMessagesRes.rows.forEach(msg => {
+      if (!messagesByTeam[msg.team_id]) {
+        messagesByTeam[msg.team_id] = [];
+      }
+      messagesByTeam[msg.team_id].push({
+        id: msg.id,
+        sender: msg.sender,
+        text: msg.text,
+        issueKey: msg.issue_key,
+        timestamp: msg.timestamp
+      });
+    });
+
+    const localTeams = localTeamsRes.rows.map(row => ({
+      id: row.id,
+      name: row.name,
+      members: row.members || [],
+      messages: messagesByTeam[row.id] || []
+    }));
     
     const mergedTeams = atlassianTeams.map(atTeam => {
       const matchingLocal = localTeams.find(lt => lt.id === atTeam.teamId) || { messages: [] };
@@ -682,6 +690,7 @@ app.get("/teams", async (req, res) => {
 // ── POST /teams ───────────────────────────────────────────────────────────────
 app.post("/teams", async (req, res) => {
   try {
+    const db = require('./db');
     const { name, members } = req.body;
     if (!name) {
       return res.status(400).json({ error: "Team name is required" });
@@ -718,38 +727,51 @@ app.post("/teams", async (req, res) => {
       console.warn("Failed to create team in Jira:", err.response?.data || err.message);
     }
 
-    const teams = readTeams();
-    const newTeam = {
-      id: jiraTeamId || "team-" + Date.now(),
-      name,
-      members: Array.isArray(members) ? members : []
-    };
+    const newTeamId = jiraTeamId || "team-" + Date.now();
+    const newTeamMembers = Array.isArray(members) ? members : [];
 
-    teams.push(newTeam);
-    writeTeams(teams);
-    res.json(newTeam);
+    await db.query(
+      'INSERT INTO teams (id, name, members) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET name = $2, members = $3',
+      [newTeamId, name, newTeamMembers]
+    );
+
+    res.json({
+      id: newTeamId,
+      name,
+      members: newTeamMembers,
+      messages: []
+    });
   } catch (error) {
     console.error("Error creating team:", error);
     res.status(500).json({ error: error.message });
   }
 });
+
 // ── PUT /teams/:id ────────────────────────────────────────────────────────────
-app.put("/teams/:id", (req, res) => {
+app.put("/teams/:id", async (req, res) => {
   try {
+    const db = require('./db');
     const { id } = req.params;
     const { name, members } = req.body;
-    const teams = readTeams();
-    const teamIndex = teams.findIndex(t => t.id === id);
     
-    if (teamIndex === -1) {
+    const checkTeam = await db.query('SELECT * FROM teams WHERE id = $1', [id]);
+    if (checkTeam.rows.length === 0) {
       return res.status(404).json({ error: "Team not found" });
     }
     
-    if (name) teams[teamIndex].name = name;
-    if (members) teams[teamIndex].members = members;
+    const updatedName = name || checkTeam.rows[0].name;
+    const updatedMembers = members !== undefined ? (Array.isArray(members) ? members : []) : checkTeam.rows[0].members;
     
-    writeTeams(teams);
-    res.json(teams[teamIndex]);
+    await db.query(
+      'UPDATE teams SET name = $1, members = $2 WHERE id = $3',
+      [updatedName, updatedMembers, id]
+    );
+    
+    res.json({
+      id,
+      name: updatedName,
+      members: updatedMembers
+    });
   } catch (error) {
     console.error("Error updating team:", error);
     res.status(500).json({ error: error.message });
@@ -757,16 +779,19 @@ app.put("/teams/:id", (req, res) => {
 });
 
 // ── GET /teams/:id/messages ───────────────────────────────────────────────────
-app.get("/teams/:id/messages", verifyToken, (req, res) => {
+app.get("/teams/:id/messages", verifyToken, async (req, res) => {
   try {
+    const db = require('./db');
     const { id } = req.params;
-    const teams = readTeams();
-    const team = teams.find(t => t.id === id);
     
-    // Decrypt messages before sending to client
-    const decryptedMessages = (team?.messages || []).map(msg => ({
-      ...msg,
-      text: decrypt(msg.text)
+    const messagesRes = await db.query('SELECT * FROM team_messages WHERE team_id = $1 ORDER BY timestamp ASC', [id]);
+    
+    const decryptedMessages = messagesRes.rows.map(msg => ({
+      id: msg.id,
+      sender: msg.sender,
+      text: decrypt(msg.text),
+      issueKey: msg.issue_key,
+      timestamp: msg.timestamp
     }));
     
     res.json(decryptedMessages);
@@ -777,8 +802,9 @@ app.get("/teams/:id/messages", verifyToken, (req, res) => {
 });
 
 // ── POST /teams/:id/messages ──────────────────────────────────────────────────
-app.post("/teams/:id/messages", verifyToken, (req, res) => {
+app.post("/teams/:id/messages", verifyToken, async (req, res) => {
   try {
+    const db = require('./db');
     const { id } = req.params;
     const { sender, text, issueKey, teamName } = req.body;
     
@@ -786,36 +812,31 @@ app.post("/teams/:id/messages", verifyToken, (req, res) => {
       return res.status(400).json({ error: "Message text is required" });
     }
     
-    const teams = readTeams();
-    let teamIndex = teams.findIndex(t => t.id === id);
-    
-    if (teamIndex === -1) {
-      teams.push({ id, name: teamName || "Atlassian Team", members: [], messages: [] });
-      teamIndex = teams.length - 1;
+    const checkTeam = await db.query('SELECT * FROM teams WHERE id = $1', [id]);
+    if (checkTeam.rows.length === 0) {
+      await db.query(
+        'INSERT INTO teams (id, name, members) VALUES ($1, $2, $3)',
+        [id, teamName || "Atlassian Team", []]
+      );
     }
     
-    // Encrypt the message text at rest
     const encryptedText = encrypt(text);
+    const newMessageId = "msg-" + Date.now() + Math.random().toString(36).substr(2, 5);
+    const senderName = sender || req.user?.name || "Unknown";
+    const iKey = issueKey || null;
+    const now = new Date();
+
+    await db.query(
+      'INSERT INTO team_messages (id, team_id, sender, text, issue_key, timestamp) VALUES ($1, $2, $3, $4, $5, $6)',
+      [newMessageId, id, senderName, encryptedText, iKey, now]
+    );
     
-    const newMessage = {
-      id: "msg-" + Date.now(),
-      sender: sender || req.user?.name || "Unknown",
-      text: encryptedText,
-      issueKey: issueKey || null,
-      timestamp: new Date().toISOString()
-    };
-    
-    if (!teams[teamIndex].messages) {
-      teams[teamIndex].messages = [];
-    }
-    
-    teams[teamIndex].messages.push(newMessage);
-    writeTeams(teams);
-    
-    // Return the decrypted version to the sender
     res.json({
-      ...newMessage,
-      text: text
+      id: newMessageId,
+      sender: senderName,
+      text: text,
+      issueKey: iKey,
+      timestamp: now.toISOString()
     });
   } catch (error) {
     console.error("Error posting team message:", error);
@@ -1049,9 +1070,9 @@ app.get("/projects", verifyToken, async (req, res) => {
       return res.json(filtered);
     }
 
-    // Team Member or other roles: read teams from teams.json and filter projects assigned to their teams
-    const teams = readTeams();
-    const userTeams = teams.filter(t => {
+    // Team Member or other roles: read teams from PostgreSQL and filter projects assigned to their teams
+    const teamsRes = await db.query('SELECT * FROM teams');
+    const userTeams = teamsRes.rows.filter(t => {
       return Array.isArray(t.members) && t.members.some(memberId => {
         return memberId === req.user.email || memberId.includes(name);
       });
@@ -1282,8 +1303,9 @@ app.post("/projects/:id/epics", verifyToken, async (req, res) => {
     } else if (req.user.role === "College-SPOC" && req.user.collegeId === project.spokeId) {
       hasAccess = true;
     } else {
-      const teams = readTeams();
-      const assignedTeam = teams.find(t => t.id === project.teamId);
+      const db = require('./db');
+      const teamRes = await db.query('SELECT * FROM teams WHERE id = $1', [project.teamId]);
+      const assignedTeam = teamRes.rows[0];
       if (assignedTeam && Array.isArray(assignedTeam.members) && assignedTeam.members.some(m => m === req.user.email || m.includes(req.user.name))) {
         hasAccess = true;
       }
@@ -1392,8 +1414,9 @@ app.post("/projects/:id/assign-team", verifyToken, async (req, res) => {
       }
     }
 
-    const teams = readTeams();
-    const team = teams.find(t => t.id === teamId);
+    const db = require('./db');
+    const teamRes = await db.query('SELECT * FROM teams WHERE id = $1', [teamId]);
+    const team = teamRes.rows[0];
     if (!team) {
       return res.status(400).json({ error: "Invalid Team ID." });
     }

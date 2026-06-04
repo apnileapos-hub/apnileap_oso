@@ -165,6 +165,21 @@ const initDb = async () => {
       issue_key VARCHAR(255),
       timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    CREATE TABLE IF NOT EXISTS teams (
+      id VARCHAR(255) PRIMARY KEY,
+      name VARCHAR(255) NOT NULL,
+      members TEXT[] DEFAULT '{}'
+    );
+
+    CREATE TABLE IF NOT EXISTS team_messages (
+      id VARCHAR(255) PRIMARY KEY,
+      team_id VARCHAR(255) REFERENCES teams(id) ON DELETE CASCADE,
+      sender VARCHAR(255) NOT NULL,
+      text TEXT NOT NULL,
+      issue_key VARCHAR(255),
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
   `;
 
   try {
@@ -234,6 +249,46 @@ const initDb = async () => {
           console.log('Seeded projects from projects.json into PostgreSQL!');
         } catch (seedErr) {
           console.error('Failed to seed projects:', seedErr.message);
+        }
+      }
+    }
+
+    // Seed teams from teams.json to PostgreSQL
+    const teamCount = await query('SELECT COUNT(*) FROM teams');
+    if (parseInt(teamCount.rows[0].count) === 0) {
+      const fs = require('fs');
+      const path = require('path');
+      const teamsFile = path.join(__dirname, 'teams.json');
+      if (fs.existsSync(teamsFile)) {
+        try {
+          const raw = fs.readFileSync(teamsFile, 'utf8');
+          const fileTeams = JSON.parse(raw);
+          for (const t of fileTeams) {
+            await query(
+              `INSERT INTO teams (id, name, members) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
+              [t.id, t.name, t.members || []]
+            );
+            if (t.messages && Array.isArray(t.messages)) {
+              for (const m of t.messages) {
+                const msgId = m.id || "msg-" + Date.now() + Math.random().toString(36).substr(2, 5);
+                await query(
+                  `INSERT INTO team_messages (id, team_id, sender, text, issue_key, timestamp) 
+                   VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING`,
+                  [
+                    msgId,
+                    t.id,
+                    m.sender || 'Unknown',
+                    m.text || '',
+                    m.issueKey || null,
+                    m.timestamp ? new Date(m.timestamp) : new Date()
+                  ]
+                );
+              }
+            }
+          }
+          console.log('Seeded teams from teams.json into PostgreSQL!');
+        } catch (seedErr) {
+          console.error('Failed to seed teams:', seedErr.message);
         }
       }
     }

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const db = require('./db');
 const axios = require('axios');
-const nodemailer = require('nodemailer');
+const { sendEmail } = require('./emailService');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
@@ -292,36 +292,6 @@ router.post("/meetings/:id/remind", verifyToken, async (req, res) => {
         }
       }
     });
-
-    const hasSmtpConfig = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
-    let transporter;
-    let info;
-    let isTestAccount = false;
-
-    if (hasSmtpConfig) {
-      transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "587"),
-        secure: process.env.SMTP_SECURE === "true",
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
-    } else {
-      isTestAccount = true;
-      const testAccount = await nodemailer.createTestAccount();
-      transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false,
-        auth: {
-          user: testAccount.user,
-          pass: testAccount.pass,
-        },
-      });
-    }
-
     const recipientList = Array.from(notifyCoordinators);
     const redirectEmail = process.env.SMTP_REDIRECT_TO || null;
     const finalTo = redirectEmail ? redirectEmail : recipientList.join(", ");
@@ -446,20 +416,15 @@ router.post("/meetings/:id/remind", verifyToken, async (req, res) => {
       </div>
     `;
 
-    info = await transporter.sendMail({
-      from: hasSmtpConfig
-        ? `"${process.env.SMTP_FROM_NAME || 'ApniLeap Hub'}" <${process.env.SMTP_USER}>`
-        : '"ApniLeap Hub Alert Gateway" <no-reply@apnileap.com>',
+    const textBody = `Meeting: ${meeting.title}\nCampus: ${spoke.name}\nTime: ${meeting.date} at ${meeting.time}\n\nOverdue Tasks: ${overdueTasks.length}\nBlocked Tasks: ${blockedTasks.length}`;
+
+    const info = await sendEmail({
       to: finalTo,
       subject: `🚨 [Warning Digest] Campus Sync Prep: ${meeting.title} (${spoke.name})`,
-      text: `Meeting: ${meeting.title}\nCampus: ${spoke.name}\nTime: ${meeting.date} at ${meeting.time}\n\nOverdue Tasks: ${overdueTasks.length}\nBlocked Tasks: ${blockedTasks.length}`,
-      html: htmlTemplate
+      body: textBody,
+      html: htmlTemplate,
+      type: 'warning'
     });
-
-    let previewUrl = "";
-    if (isTestAccount) {
-      previewUrl = nodemailer.getTestMessageUrl(info);
-    }
 
     res.json({
       success: true,
@@ -467,7 +432,7 @@ router.post("/meetings/:id/remind", verifyToken, async (req, res) => {
       notifiedEmails: recipientList,
       overdueCount: overdueTasks.length,
       blockerCount: blockedTasks.length,
-      previewUrl: isTestAccount ? previewUrl : undefined
+      emailId: info.id
     });
   } catch (error) {
     console.error("Prep Reminder Dispatch Error:", error.message);

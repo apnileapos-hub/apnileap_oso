@@ -334,28 +334,69 @@ async function autoCreateJiraProject(projectTitle) {
 }
 
 // ── GET /users ────────────────────────────────────────────────────────────────
-app.get("/users", async (req, res) => {
+app.get("/users", verifyToken, async (req, res) => {
   try {
-    const response = await axios.get(
-      `${getJiraBase()}/rest/api/3/user/assignable/search?project=${getJiraProject()}`,
-      { auth: getJiraAuth(), headers: jiraHeaders }
-    );
-    const users = response.data.map(u => ({
-      accountId: u.accountId,
-      displayName: u.displayName,
-      avatarUrl: u.avatarUrls?.["24x24"] || "",
-      active: u.active
+    const db = require('./db');
+    const { role, collegeId } = req.user;
+
+    // Get all registered users from database
+    let dbUsersQuery = 'SELECT id, email, name, role, college_id FROM users';
+    let dbParams = [];
+
+    // Filter by college_id if not Super-admin/Admin
+    if (role !== 'Super-admin' && role !== 'Admin' && collegeId) {
+      dbUsersQuery += ' WHERE college_id = $1';
+      dbParams.push(collegeId);
+    }
+    dbUsersQuery += ' ORDER BY id DESC';
+
+    const dbUsersRes = await db.query(dbUsersQuery, dbParams);
+    const dbUsers = dbUsersRes.rows.map(u => ({
+      accountId: u.id.toString(),
+      displayName: `${u.name} (${u.role})`,
+      email: u.email,
+      active: true,
+      collegeId: u.college_id
     }));
-    res.json(users);
+
+    // Mock/Simulated campus team members
+    const CAMPUS_TEAM_MEMBERS = {
+      "kle-spoke": [
+        { accountId: "mock-kle-1", displayName: "Rahul Sharma (Student)", email: "rahul@kle.edu", collegeId: "kle-spoke" },
+        { accountId: "mock-kle-2", displayName: "Priya Patel (Student)", email: "priya@kle.edu", collegeId: "kle-spoke" },
+        { accountId: "mock-kle-3", displayName: "Prof. Deshpande (Faculty)", email: "mentor@kle.edu", collegeId: "kle-spoke" }
+      ],
+      "coep-spoke": [
+        { accountId: "mock-coep-1", displayName: "Sneha Joshi (Student)", email: "sneha@coep.edu", collegeId: "coep-spoke" },
+        { accountId: "mock-coep-2", displayName: "Amit Waghmare (Student)", email: "amit@coep.edu", collegeId: "coep-spoke" }
+      ],
+      "mmcoep-spoke": [
+        { accountId: "mock-mmcoep-1", displayName: "Nikhil Rane (Student)", email: "nikhil@mmcoep.edu", collegeId: "mmcoep-spoke" },
+        { accountId: "mock-mmcoep-2", displayName: "Sayali Deshmukh (Student)", email: "sayali@mmcoep.edu", collegeId: "mmcoep-spoke" }
+      ],
+      "rit-spoke": [
+        { accountId: "mock-rit-1", displayName: "Tejas Shinde (Student)", email: "tejas@rit.edu", collegeId: "rit-spoke" },
+        { accountId: "mock-rit-2", displayName: "Priti Patil (Student)", email: "priti@rit.edu", collegeId: "rit-spoke" }
+      ]
+    };
+
+    let simulatedUsers = [];
+    if (role === 'Super-admin' || role === 'Admin' || !collegeId) {
+      // Return simulated users for all spokes
+      Object.keys(CAMPUS_TEAM_MEMBERS).forEach(key => {
+        simulatedUsers = [...simulatedUsers, ...CAMPUS_TEAM_MEMBERS[key]];
+      });
+    } else if (CAMPUS_TEAM_MEMBERS[collegeId]) {
+      // Return simulated users for this specific spoke
+      simulatedUsers = CAMPUS_TEAM_MEMBERS[collegeId];
+    }
+
+    // Merge both lists and exclude the logged-in user
+    const mergedUsers = [...dbUsers, ...simulatedUsers].filter(u => u.email !== req.user.email);
+    res.json(mergedUsers);
   } catch (error) {
-    console.warn("Failed to fetch live assignable users, falling back to mock team members:", error.message);
-    const mockUsers = [
-      { accountId: "mock-user-1", displayName: "Rahul Sharma (Student)", avatarUrl: "", active: true },
-      { accountId: "mock-user-2", displayName: "Priya Patel (Student)", avatarUrl: "", active: true },
-      { accountId: "mock-user-3", displayName: "Dr. Ramesh Patil (PI)", avatarUrl: "", active: true },
-      { accountId: "mock-user-4", displayName: "Sanjay Sen (Infosys Mentor)", avatarUrl: "", active: true }
-    ];
-    res.json(mockUsers);
+    console.error("GET /users error:", error);
+    res.status(500).json({ error: "Failed to fetch users" });
   }
 });
 
@@ -1188,6 +1229,7 @@ app.post("/projects", verifyToken, async (req, res) => {
 
     const numericId = Date.now();
     let dbSuccess = false;
+    let preparedEpics = [];
     
     try {
       let durationWeeks = 12;
@@ -1198,7 +1240,7 @@ app.post("/projects", verifyToken, async (req, res) => {
         }
       }
       
-      const preparedEpics = Array.isArray(epics) ? epics.map((e, idx) => ({
+      preparedEpics = Array.isArray(epics) ? epics.map((e, idx) => ({
         id: `epic-${Date.now()}-${idx}`,
         title: e.title || `Epic ${idx + 1}`,
         description: e.description || "",

@@ -1687,10 +1687,12 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
   useEffect(() => { saveStore(store); }, [store]);
   useEffect(() => {
     reqNotif();
-    axios.get(`${API}/users`).then(r => setUsers(r.data || [])).catch(() => {});
+    axios.get(`${API}/users`, {
+      headers: { Authorization: `Bearer ${user?.token}` }
+    }).then(r => setUsers(r.data || [])).catch(() => {});
     // Fetch teams for the unified Chat sidebar
     axios.get(`${API}/teams`).then(r => setTeams(r.data || [])).catch(() => {});
-  }, []);
+  }, [user]);
 
   const handleSelectTeamChannel = useCallback(async (team) => {
     setSelectedTeamChannel(team);

@@ -268,9 +268,11 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
 
   useEffect(() => {
     reqNotif();
-    axios.get(`${API}/users`).then(r => setUsers(r.data || [])).catch(() => {});
+    axios.get(`${API}/users`, {
+      headers: { Authorization: `Bearer ${user?.token}` }
+    }).then(r => setUsers(r.data || [])).catch(() => {});
     fetchMeetings();
-  }, [fetchMeetings]);
+  }, [fetchMeetings, user]);
 
   // Load chat messages when meeting is selected
   useEffect(() => {

@@ -11,16 +11,18 @@ if (!fs.existsSync(SENT_EMAILS_FILE)) {
 /**
  * Log email to file (simulator) and send real email if SMTP is configured in env.
  */
-async function sendEmail({ to, subject, body, type = 'notification' }) {
+async function sendEmail({ to, subject, body, html, type = 'notification' }) {
   console.log(`✉️ Sending email to: ${to}`);
   console.log(`Subject: ${subject}`);
-  console.log(`Body:\n${body}\n`);
+
+  const plainText = body || (html ? html.replace(/<[^>]*>/g, '') : '');
 
   const newEmail = {
     id: 'email-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
     to,
     subject,
-    body,
+    body: plainText,
+    html,
     type,
     timestamp: new Date().toISOString(),
     status: 'sent'
@@ -53,7 +55,8 @@ async function sendEmail({ to, subject, body, type = 'notification' }) {
         from: `"Apni Leap Ingest Portal" <${process.env.SMTP_USER}>`,
         to,
         subject,
-        text: body
+        text: plainText,
+        html: html
       });
       console.log(`✅ Real email sent successfully to ${to}`);
     } catch (smtpErr) {

@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: jira-analytics-dashboard
+    env: node
+    plan: free
+    buildCommand: node build.js
+    startCommand: node backend/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JIRA_EMAIL
+        sync: false          # Set this in Render dashboard
+      - key: JIRA_API_TOKEN
+        sync: false          # Set this in Render dashboard
+      - key: JIRA_BASE_URL
+        value: https://devcobraaa.atlassian.net
+      - key: JIRA_PROJECT_KEY
+        value: SCRUM

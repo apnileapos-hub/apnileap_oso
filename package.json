@@ -1,0 +1,17 @@
+{
+  "name": "jira-analytics-dashboard",
+  "version": "1.0.0",
+  "description": "Enterprise Jira Analytics Dashboard — React + Express",
+  "main": "backend/server.js",
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "start": "node backend/server.js",
+    "build": "node build.js",
+    "dev:api": "node backend/server.js",
+    "dev:ui": "npm start --prefix frontend/frontend",
+    "install:all": "node install.js"
+  }
+}

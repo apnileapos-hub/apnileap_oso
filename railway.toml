@@ -1,0 +1,9 @@
+[build]
+buildCommand = "node build.js"
+
+[deploy]
+startCommand = "node backend/server.js"
+healthcheckPath = "/health"
+healthcheckTimeout = 100
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

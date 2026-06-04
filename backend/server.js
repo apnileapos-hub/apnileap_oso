@@ -522,7 +522,7 @@ app.post("/login", async (req, res) => {
     res.json({ token, user: userPayload });
   } catch (error) {
     console.error("Login error:", error);
-    res.status(500).json({ error: "Internal server login error." });
+    res.status(500).json({ error: `Internal server login error: ${error.message}` });
   }
 });
 

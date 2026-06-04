@@ -102,7 +102,7 @@ async function fetchAllIssues() {
         maxResults: 100,
         fields: [
           "summary", "status", "assignee", "priority",
-          "issuetype", "created", "updated", "resolution",
+          "issuetype", "created", "updated", "resolution", "parent"
         ],
       },
       { auth: getJiraAuth(), headers: jiraHeaders, timeout: 4000 }
@@ -125,7 +125,8 @@ async function fetchAllIssues() {
             issuetype: { name: fields.issuetype?.name || "Task" },
             created: fields.created || row.created_at,
             updated: fields.updated || row.updated_at || row.created_at,
-            assignee: fields.assignee ? { displayName: fields.assignee.displayName } : null
+            assignee: fields.assignee ? { displayName: fields.assignee.displayName } : null,
+            parent: fields.parent || null
           }
         };
       });
@@ -625,7 +626,7 @@ app.get("/users", verifyToken, async (req, res) => {
 // ── POST /issues ──────────────────────────────────────────────────────────────
 app.post("/issues", async (req, res) => {
   try {
-    const { summary, description, assigneeId, reporterId, priority, status, dueDate } = req.body;
+    const { summary, description, assigneeId, reporterId, priority, status, dueDate, parentKey } = req.body;
 
     if (!summary) {
       return res.status(400).json({ error: "Summary is required" });
@@ -663,6 +664,10 @@ app.post("/issues", async (req, res) => {
         duedate: dueDate || undefined
       }
     };
+
+    if (parentKey) {
+      issueData.fields.parent = { key: parentKey };
+    }
 
     if (assigneeId) {
       issueData.fields.assignee = { accountId: assigneeId };
@@ -744,7 +749,8 @@ app.post("/issues", async (req, res) => {
         priority: { name: priority || "Medium" },
         issuetype: { name: "Task" },
         created: new Date().toISOString(),
-        assignee: assigneeName ? { displayName: assigneeName } : null
+        assignee: assigneeName ? { displayName: assigneeName } : null,
+        parent: parentKey ? { key: parentKey } : null
       };
 
       await db.query(
@@ -1284,7 +1290,7 @@ app.post("/teams/:id/messages", verifyToken, async (req, res) => {
 app.put("/issues/:key", async (req, res) => {
   try {
     const { key } = req.params;
-    const { assigneeId, reporterId, status } = req.body;
+    const { assigneeId, reporterId, status, priority } = req.body;
 
     const fieldsToUpdate = {};
 
@@ -1294,6 +1300,10 @@ app.put("/issues/:key", async (req, res) => {
 
     if (reporterId !== undefined) {
       fieldsToUpdate.reporter = reporterId ? { accountId: reporterId } : null;
+    }
+
+    if (priority !== undefined) {
+      fieldsToUpdate.priority = priority ? { name: priority } : null;
     }
 
     if (Object.keys(fieldsToUpdate).length > 0) {
@@ -1330,7 +1340,7 @@ app.put("/issues/:key", async (req, res) => {
     try {
       const db = require('./db');
       const { key } = req.params;
-      const { assigneeId, status } = req.body;
+      const { assigneeId, reporterId, status, priority } = req.body;
 
       const tRes = await db.query('SELECT * FROM mock_tasks WHERE key = $1', [key]);
       if (tRes.rows.length > 0) {
@@ -1362,8 +1372,37 @@ app.put("/issues/:key", async (req, res) => {
           }
         }
 
+        if (reporterId !== undefined) {
+          if (reporterId === null) {
+            fields.reporter = null;
+          } else {
+            // Find displayName
+            let reporterName = reporterId;
+            const uRes = await db.query('SELECT name FROM users WHERE id::text = $1 OR email = $1 LIMIT 1', [reporterId]);
+            if (uRes.rows.length > 0) {
+              reporterName = uRes.rows[0].name;
+            } else {
+              const simulatedUser = [
+                { accountId: "557058:apnileapos", displayName: "apnileapos" },
+                { accountId: "557058:renuka", displayName: "Renuka Kagadal" },
+                { accountId: "557058:ananya", displayName: "Ananya Bhat" },
+                { accountId: "557058:divya", displayName: "Divya Kumari" },
+                { accountId: "557058:manasa", displayName: "Manasa B Vasare" }
+              ].find(u => u.accountId === reporterId);
+              if (simulatedUser) {
+                reporterName = simulatedUser.displayName;
+              }
+            }
+            fields.reporter = { displayName: reporterName };
+          }
+        }
+
         if (status) {
           fields.status = { name: status };
+        }
+
+        if (priority) {
+          fields.priority = { name: priority };
         }
 
         await db.query(
@@ -1853,9 +1892,9 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
 
     // 3. Automate GitHub Private Repository Creation
     const repoName = `apnileap-${cleanName}`;
-    let repoUrl = `https://github.com/apnileapos-hub/${repoName}`;
-    const githubToken = process.env.GITHUB_TOKEN;
     const githubOrg = process.env.GITHUB_ORG || 'apnileapos-hub';
+    let repoUrl = `https://github.com/${githubOrg}/${repoName}`;
+    const githubToken = process.env.GITHUB_TOKEN;
 
     if (githubToken) {
       try {

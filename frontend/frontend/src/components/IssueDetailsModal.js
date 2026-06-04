@@ -14,7 +14,11 @@ export default function IssueDetailsModal({ issue, user, onClose, onRefresh }) {
   const [postingComment, setPostingComment] = useState(false);
   const [error, setError] = useState('');
 
-  const hasEditAccess = user?.role === 'Super-admin' || user?.role === 'Admin';
+  const hasEditAccess = user?.role === 'Super-admin' || 
+                        user?.role === 'Admin' || 
+                        user?.role === 'Faculty' || 
+                        user?.role === 'Principal-Investigator' || 
+                        user?.role === 'College-SPOC';
 
   // Get current issue fields
   const key = issue?.key;
@@ -86,6 +90,7 @@ export default function IssueDetailsModal({ issue, user, onClose, onRefresh }) {
     if (fieldName === 'assignee') payload.assigneeId = val || null;
     if (fieldName === 'reporter') payload.reporterId = val || null;
     if (fieldName === 'status') payload.status = val;
+    if (fieldName === 'priority') payload.priority = val;
 
     try {
       await axios.put(`${API}/issues/${key}`, payload);
@@ -173,7 +178,7 @@ export default function IssueDetailsModal({ issue, user, onClose, onRefresh }) {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--warning)', marginRight: 6 }}>
               <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span>Read-only Mode. Admin or Super-admin privileges required to make changes or comment.</span>
+            <span>Read-only Mode. Faculty, Admin, or Super-admin privileges required to make changes or comment.</span>
           </div>
         )}
 
@@ -258,7 +263,7 @@ export default function IssueDetailsModal({ issue, user, onClose, onRefresh }) {
                   </form>
                 ) : (
                   <div className="comment-textarea disabled">
-                    Sign in as Admin or Super-admin to write a comment.
+                    Sign in as Faculty, Admin, or Super-admin to write a comment.
                   </div>
                 )}
               </div>
@@ -347,9 +352,24 @@ export default function IssueDetailsModal({ issue, user, onClose, onRefresh }) {
               <div className="details-field-row">
                 <span className="field-lbl">Priority</span>
                 <div className="field-val">
-                  <span className="static-field-val">
-                    {currentPriority}
-                  </span>
+                  {hasEditAccess ? (
+                    <select
+                      className="modal-select details-field-select"
+                      value={currentPriority}
+                      onChange={(e) => handleFieldChange('priority', e.target.value)}
+                      disabled={updatingField}
+                    >
+                      <option value="Highest">Highest</option>
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                      <option value="Lowest">Lowest</option>
+                    </select>
+                  ) : (
+                    <span className="static-field-val">
+                      {currentPriority}
+                    </span>
+                  )}
                 </div>
               </div>
 

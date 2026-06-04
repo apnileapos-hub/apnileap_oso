@@ -16,6 +16,7 @@ const STATUS_OPTIONS = [
 export default function FacultyPortalView({ user }) {
   const [projects, setProjects]     = useState([]);
   const [teams, setTeams]           = useState([]);
+  const [issues, setIssues]         = useState([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -29,6 +30,14 @@ export default function FacultyPortalView({ user }) {
   const [showEpicForm, setShowEpicForm]   = useState({});
   const [epicTitle, setEpicTitle]         = useState({});
   const [epicDesc, setEpicDesc]           = useState({});
+  // Task/Subtask creation form under Epic
+  const [showTaskForm, setShowTaskForm]   = useState({});
+  const [taskTitle, setTaskTitle]         = useState({});
+  const [taskDesc, setTaskDesc]           = useState({});
+  const [taskAssignee, setTaskAssignee]   = useState({});
+  const [taskPriority, setTaskPriority]   = useState({});
+  const [taskStatus, setTaskStatus]       = useState({});
+  const [addingTask, setAddingTask]       = useState({});
   // Team coordination
   const [messages, setMessages]   = useState({});
   const [newMsg, setNewMsg]       = useState({});
@@ -53,9 +62,10 @@ export default function FacultyPortalView({ user }) {
     setError('');
     try {
       const token = user?.token;
-      const [projRes, teamRes] = await Promise.all([
+      const [projRes, teamRes, issuesRes] = await Promise.all([
         axios.get(`${API}/projects`, { headers: { Authorization: `Bearer ${token}` } }),
         axios.get(`${API}/teams`,    { headers: { Authorization: `Bearer ${token}` } }),
+        axios.get(`${API}/issues`,   { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       const collegeFilter = user?.collegeId;
@@ -67,6 +77,7 @@ export default function FacultyPortalView({ user }) {
 
       setProjects(filtered);
       setTeams(teamRes.data || []);
+      setIssues(issuesRes.data || []);
 
       const map = {};
       filtered.forEach(p => { if (p.teamId) map[p.id] = p.teamId; });
@@ -104,8 +115,10 @@ export default function FacultyPortalView({ user }) {
     }
   }, [user]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-  useEffect(() => { if (pageTab === 'users') fetchUsers(); }, [pageTab, fetchUsers]);
+  useEffect(() => { 
+    fetchData(); 
+    fetchUsers();
+  }, [fetchData, fetchUsers]);
 
 
   /* ── helpers ── */
@@ -159,6 +172,57 @@ export default function FacultyPortalView({ user }) {
       setProjects(p => p.map(pr => pr.id === projId ? { ...pr, epics: res.data.epics } : pr));
     } catch (e) {
       alert('Delete epic failed: ' + (e.response?.data?.error || e.message));
+    }
+  };
+
+  const handleCreateTask = async (projId, epic) => {
+    const epicKey = epic.jiraKey || epic.id;
+    const title = taskTitle[epicKey]?.trim();
+    if (!title) return;
+    setAddingTask(p => ({ ...p, [epicKey]: true }));
+    try {
+      const assigneeId = taskAssignee[epicKey] || null;
+      const priority = taskPriority[epicKey] || 'Medium';
+      const status = taskStatus[epicKey] || 'To Do';
+      const description = taskDesc[epicKey] || '';
+
+      await axios.post(`${API}/issues`, {
+        summary: title,
+        description,
+        assigneeId,
+        priority,
+        status,
+        parentKey: epic.jiraKey || null
+      }, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+
+      // Clear form state
+      setTaskTitle(p => ({ ...p, [epicKey]: '' }));
+      setTaskDesc(p => ({ ...p, [epicKey]: '' }));
+      setTaskAssignee(p => ({ ...p, [epicKey]: '' }));
+      setTaskPriority(p => ({ ...p, [epicKey]: 'Medium' }));
+      setTaskStatus(p => ({ ...p, [epicKey]: 'To Do' }));
+      setShowTaskForm(p => ({ ...p, [epicKey]: false }));
+
+      // Refresh data
+      fetchData();
+    } catch (e) {
+      alert('Create task failed: ' + (e.response?.data?.error || e.message));
+    } finally {
+      setAddingTask(p => ({ ...p, [epicKey]: false }));
+    }
+  };
+
+  const handleDeleteTask = async (taskKey) => {
+    if (!window.confirm(`Delete task ${taskKey}?`)) return;
+    try {
+      await axios.delete(`${API}/tasks/${taskKey}`, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      fetchData();
+    } catch (e) {
+      alert('Delete task failed: ' + (e.response?.data?.error || e.message));
     }
   };
 
@@ -480,38 +544,187 @@ export default function FacultyPortalView({ user }) {
                           No epics defined yet. Click "Add Epic" above.
                         </div>
                       ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {epics.map(epic => (
-                            <div key={epic.id} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                              <div style={{ flex: 1 }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                                  {epic.jiraKey && !epic.jiraKey.startsWith('MOCK') ? (
-                                    <a href={`https://apnileapos.atlassian.net/browse/${epic.jiraKey}`} target="_blank" rel="noreferrer"
-                                      style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: '700', color: '#58a6ff', textDecoration: 'none', background: 'rgba(88,166,255,0.1)', padding: '1px 6px', borderRadius: '4px' }}>
-                                      {epic.jiraKey} ↗
-                                    </a>
-                                  ) : epic.jiraKey ? (
-                                    <span style={{ fontSize: '10px', fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '4px' }}>{epic.jiraKey}</span>
-                                  ) : (
-                                    <span style={{ fontSize: '10px', color: '#ff9800' }}>⏳ Awaiting sync</span>
-                                  )}
-                                  <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '10px',
-                                    background: epic.status === 'Done' ? 'rgba(63,185,80,0.15)' : epic.status === 'In Progress' ? 'rgba(88,166,255,0.15)' : 'rgba(110,118,129,0.15)',
-                                    color:      epic.status === 'Done' ? '#3fb950'             : epic.status === 'In Progress' ? '#58a6ff'             : 'var(--text-secondary)',
-                                    fontWeight: '600' }}>{epic.status}</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                          {epics.map(epic => {
+                            const epicKey = epic.jiraKey || epic.id;
+                            const epicTasks = issues.filter(issue => {
+                              const parentKey = issue.fields?.parent?.key;
+                              return parentKey === epicKey || parentKey === epic.jiraKey || parentKey === epic.id;
+                            });
+
+                            const isTaskFormOpen = showTaskForm[epicKey] || false;
+                            
+                            // Resolve assignable students
+                            const teamMembers = assignedTeam?.members || [];
+                            const assignedStudents = usersList.filter(u => 
+                              teamMembers.includes(u.email) || teamMembers.some(tm => tm.toLowerCase() === u.email?.toLowerCase())
+                            );
+                            const displayStudents = assignedStudents.length > 0 ? assignedStudents : usersList.filter(u => u.role === 'Student' || u.displayName?.includes('Student') || u.email?.includes('student'));
+
+                            return (
+                              <div key={epic.id} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                {/* Epic Header */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                                  <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                      {epic.jiraKey && !epic.jiraKey.startsWith('MOCK') ? (
+                                        <a href={`https://apnileapos.atlassian.net/browse/${epic.jiraKey}`} target="_blank" rel="noreferrer"
+                                          style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: '700', color: '#58a6ff', textDecoration: 'none', background: 'rgba(88,166,255,0.1)', padding: '2px 8px', borderRadius: '10px' }}>
+                                          {epic.jiraKey} ↗
+                                        </a>
+                                      ) : epic.jiraKey ? (
+                                        <span style={{ fontSize: '10px', fontFamily: 'monospace', color: 'var(--text-secondary)', background: 'var(--bg-card)', padding: '2px 8px', borderRadius: '10px', border: '1px solid var(--border)' }}>{epic.jiraKey}</span>
+                                      ) : (
+                                        <span style={{ fontSize: '10px', color: '#ff9800', background: 'rgba(255,152,0,0.1)', padding: '2px 8px', borderRadius: '10px' }}>⏳ Awaiting sync</span>
+                                      )}
+                                      <span style={{ fontSize: '9px', padding: '2px 8px', borderRadius: '10px',
+                                        background: epic.status === 'Done' || epic.status === 'Complete' ? 'rgba(63,185,80,0.15)' : epic.status === 'In Progress' ? 'rgba(88,166,255,0.15)' : 'rgba(110,118,129,0.15)',
+                                        color:      epic.status === 'Done' || epic.status === 'Complete' ? '#3fb950'             : epic.status === 'In Progress' ? '#58a6ff'             : 'var(--text-secondary)',
+                                        fontWeight: '700' }}>{epic.status}</span>
+                                    </div>
+                                    <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>{epic.title}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{epic.description}</div>
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '6px' }}>
+                                    <button
+                                      onClick={() => setShowTaskForm(p => ({ ...p, [epicKey]: !isTaskFormOpen }))}
+                                      style={{ padding: '4px 10px', background: 'none', border: '1px solid var(--border)', color: 'var(--text-primary)', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: 'pointer' }}
+                                    >
+                                      {isTaskFormOpen ? '✕ Cancel' : '➕ Add Task'}
+                                    </button>
+                                    <button
+                                      onClick={() => handleDeleteEpic(proj.id, epic.id)}
+                                      title="Delete epic"
+                                      style={{ padding: '4px 8px', background: 'none', border: '1px solid rgba(248,81,73,0.3)', color: '#ff7b72', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}
+                                    >
+                                      🗑
+                                    </button>
+                                  </div>
                                 </div>
-                                <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '2px' }}>{epic.title}</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{epic.description}</div>
+
+                                {/* Task Creation Form */}
+                                {isTaskFormOpen && (
+                                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '14px', marginTop: '4px' }}>
+                                    <div style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '10px' }}>➕ Create Subtask Division for Students</div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                      <input
+                                        type="text"
+                                        placeholder="Task Summary/Title * (e.g. Design Landing Page)"
+                                        value={taskTitle[epicKey] || ''}
+                                        onChange={e => setTaskTitle(p => ({ ...p, [epicKey]: e.target.value }))}
+                                        style={{ padding: '8px 10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '12px' }}
+                                      />
+                                      <textarea
+                                        placeholder="Task description / requirements..."
+                                        value={taskDesc[epicKey] || ''}
+                                        onChange={e => setTaskDesc(p => ({ ...p, [epicKey]: e.target.value }))}
+                                        rows={2}
+                                        style={{ padding: '8px 10px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px', resize: 'vertical' }}
+                                      />
+                                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
+                                        <div>
+                                          <label style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: '600' }}>Assignee (Student)</label>
+                                          <select
+                                            value={taskAssignee[epicKey] || ''}
+                                            onChange={e => setTaskAssignee(p => ({ ...p, [epicKey]: e.target.value }))}
+                                            style={{ width: '100%', padding: '6px 8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px' }}
+                                          >
+                                            <option value="">Unassigned</option>
+                                            {displayStudents.map(u => (
+                                              <option key={u.accountId || u.id} value={u.accountId || u.id}>{u.displayName || u.name}</option>
+                                            ))}
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: '600' }}>Priority</label>
+                                          <select
+                                            value={taskPriority[epicKey] || 'Medium'}
+                                            onChange={e => setTaskPriority(p => ({ ...p, [epicKey]: e.target.value }))}
+                                            style={{ width: '100%', padding: '6px 8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px' }}
+                                          >
+                                            <option value="Highest">Highest</option>
+                                            <option value="High">High</option>
+                                            <option value="Medium">Medium</option>
+                                            <option value="Low">Low</option>
+                                            <option value="Lowest">Lowest</option>
+                                          </select>
+                                        </div>
+                                        <div>
+                                          <label style={{ fontSize: '10px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px', fontWeight: '600' }}>Column Status</label>
+                                          <select
+                                            value={taskStatus[epicKey] || 'To Do'}
+                                            onChange={e => setTaskStatus(p => ({ ...p, [epicKey]: e.target.value }))}
+                                            style={{ width: '100%', padding: '6px 8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px' }}
+                                          >
+                                            <option value="To Do">To Do</option>
+                                            <option value="In Progress">In Progress</option>
+                                            <option value="In Review">In Review</option>
+                                            <option value="Testing">Testing</option>
+                                            <option value="Done">Done</option>
+                                          </select>
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => handleCreateTask(proj.id, epic)}
+                                        disabled={!taskTitle[epicKey]?.trim() || addingTask[epicKey]}
+                                        style={{ alignSelf: 'flex-end', marginTop: '4px', padding: '6px 14px', background: taskTitle[epicKey]?.trim() ? '#3fb950' : 'var(--bg-card)', border: 'none', color: taskTitle[epicKey]?.trim() ? '#fff' : 'var(--text-secondary)', borderRadius: '4px', fontSize: '11px', fontWeight: '600', cursor: taskTitle[epicKey]?.trim() ? 'pointer' : 'not-allowed' }}
+                                      >
+                                        {addingTask[epicKey] ? 'Creating...' : 'Create Task under Epic'}
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Epic Tasks List */}
+                                <div style={{ borderTop: epicTasks.length > 0 ? '1px solid var(--border)' : 'none', paddingTop: epicTasks.length > 0 ? '8px' : 0 }}>
+                                  {epicTasks.length === 0 ? (
+                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontStyle: 'italic', padding: '4px 0' }}>
+                                      No subtasks created under this Epic yet.
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                      <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', textTransform: 'uppercase', marginBottom: '2px', display: 'flex', justifyItems: 'center', gap: '4px' }}>
+                                        📋 Tasks Assigned to Students ({epicTasks.length})
+                                      </div>
+                                      {epicTasks.map(task => {
+                                        const pColors = { Highest: '#ff7b72', High: '#d29922', Medium: '#58a6ff', Low: '#3fb950', Lowest: 'var(--text-secondary)' };
+                                        const sColors = { 'To Do': 'rgba(110,118,129,0.15)', 'In Progress': 'rgba(88,166,255,0.15)', 'In Review': 'rgba(210,153,34,0.15)', 'Testing': 'rgba(127,133,245,0.15)', 'Done': 'rgba(63,185,80,0.15)' };
+                                        const sTextColors = { 'To Do': 'var(--text-secondary)', 'In Progress': '#58a6ff', 'In Review': '#d29922', 'Testing': '#7f85f5', 'Done': '#3fb950' };
+
+                                        const taskStatusName = task.fields?.status?.name || 'To Do';
+                                        const taskPriorityName = task.fields?.priority?.name || 'Medium';
+                                        
+                                        return (
+                                          <div key={task.id || task.key} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '6px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden' }}>
+                                              <span style={{ fontSize: '10px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--text-secondary)', minWidth: '70px' }}>{task.key}</span>
+                                              <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '600', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task.fields?.summary}</span>
+                                              {task.fields?.assignee?.displayName && (
+                                                <span style={{ fontSize: '10px', background: 'rgba(88,166,255,0.1)', color: '#58a6ff', padding: '1px 6px', borderRadius: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                                  👤 {task.fields.assignee.displayName}
+                                                </span>
+                                              )}
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                                              <span style={{ fontSize: '9px', fontWeight: '700', padding: '1px 6px', borderRadius: '4px', border: `1px solid ${pColors[taskPriorityName]}44`, color: pColors[taskPriorityName] }}>{taskPriorityName}</span>
+                                              <span style={{ fontSize: '9px', fontWeight: '700', padding: '1px 6px', borderRadius: '4px', background: sColors[taskStatusName] || 'rgba(110,118,129,0.15)', color: sTextColors[taskStatusName] || 'var(--text-secondary)' }}>{taskStatusName}</span>
+                                              <button
+                                                onClick={() => handleDeleteTask(task.key)}
+                                                title="Delete task"
+                                                style={{ border: 'none', background: 'none', color: '#ff7b72', cursor: 'pointer', padding: '2px 4px', fontSize: '12px' }}
+                                              >
+                                                ✕
+                                              </button>
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                              <button
-                                onClick={() => handleDeleteEpic(proj.id, epic.id)}
-                                title="Delete epic"
-                                style={{ padding: '3px 8px', background: 'none', border: '1px solid rgba(248,81,73,0.3)', color: '#ff7b72', borderRadius: '4px', fontSize: '11px', cursor: 'pointer', flexShrink: 0 }}
-                              >
-                                🗑
-                              </button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       )}
                     </div>

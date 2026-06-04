@@ -118,9 +118,9 @@ Try asking me to:
       // Automate GitHub Private Repository Creation
       const cleanName = project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
       const repoName = `apnileap-${cleanName}`;
-      let repoUrl = `https://github.com/apnileapos-hub/${repoName}`;
-      const githubToken = process.env.GITHUB_TOKEN;
       const githubOrg = process.env.GITHUB_ORG || 'apnileapos-hub';
+      let repoUrl = `https://github.com/${githubOrg}/${repoName}`;
+      const githubToken = process.env.GITHUB_TOKEN;
 
       if (githubToken) {
         try {

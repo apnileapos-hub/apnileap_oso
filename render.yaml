@@ -24,4 +24,4 @@ services:
       - key: GITHUB_TOKEN
         sync: false          # Optional: GitHub PAT for automated repository creation
       - key: GITHUB_ORG
-        value: apnileapos-hub
+        value: apnileapos

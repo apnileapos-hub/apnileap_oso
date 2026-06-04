@@ -41,9 +41,10 @@ router.post("/projects/:id/award", async (req, res) => {
       project = projCheck.rows[0];
     }
 
+    const githubOrg = process.env.GITHUB_ORG || 'apnileapos-hub';
     const cleanProjectName = project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
     const repoName = `apnileap-${cleanProjectName}`;
-    const repoUrl = `https://github.com/apnileapos-hub/${repoName}`;
+    const repoUrl = `https://github.com/${githubOrg}/${repoName}`;
     const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${cleanProjectName.toUpperCase()}`;
 
     // 2. Update status and provision URLs
@@ -58,7 +59,6 @@ router.post("/projects/:id/award", async (req, res) => {
     // 3. Create Git Repository on GitHub (if token is available) and in Database
     let finalRepoUrl = repoUrl;
     const githubToken = process.env.GITHUB_TOKEN;
-    const githubOrg = process.env.GITHUB_ORG;
 
     if (githubToken) {
       try {

@@ -8,7 +8,7 @@ const connectionString = process.env.DATABASE_URL;
 
 const pool = new Pool({
   connectionString: connectionString,
-  ssl: isProduction ? { rejectUnauthorized: false } : false
+  ssl: (isProduction || (connectionString && connectionString.includes('render.com'))) ? { rejectUnauthorized: false } : false
 });
 
 // Helper for querying

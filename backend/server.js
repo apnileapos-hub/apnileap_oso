@@ -1696,6 +1696,15 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
       );
     }
 
+    // 5. Automatically generate Epics and Tasks in Jira and local Database
+    try {
+      const { autoGenerateIssuesForProject } = require('./rovoIssueService');
+      const updatedEpics = await autoGenerateIssuesForProject(project, autoKey);
+      project.epics = updatedEpics;
+    } catch (rovoErr) {
+      console.error("Failed to automatically generate issues via Rovo Service:", rovoErr.message);
+    }
+
     // Sync back to local file if exists
     const projects = readProjects();
     const localIdx = projects.findIndex(p => p.id === id);
@@ -2422,33 +2431,33 @@ const server = app.listen(PORT, () => {
 
 // ── GET /api/v1/download-report ───────────────────────────────────────────────
 app.get("/api/v1/download-report", (req, res) => {
-  const { file } = req.query;
-  if (!file) {
-    return res.status(400).json({ error: "File name is required" });
-  }
-
-  // Resolve file path to the parent directory or root workspace
+  const { title, file } = req.query;
+  
+  // Enforce docx file type by using ApniCart_Design_Document.docx as the standard document
+  const reportFile = "ApniCart_Design_Document.docx";
   const parentDir = path.join(__dirname, "..");
-  const allowedFiles = [
-    "ApniCart_Design_Document.docx", 
-    "APNILEAP_PROJECT (1).pdf",
-    "docx_content.txt",
-    "pdf_content.txt",
-    "pdf_extracted_details.txt"
-  ];
+  const filePath = path.join(parentDir, reportFile);
 
-  const matchedFile = allowedFiles.find(f => f.toLowerCase() === file.toLowerCase() || f.replace(/\s+/g, '_').toLowerCase() === file.replace(/\s+/g, '_').toLowerCase());
-
-  if (!matchedFile) {
-    return res.status(400).json({ error: "Invalid or unauthorized file download." });
-  }
-
-  const filePath = path.join(parentDir, matchedFile);
   if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: `File not found on server: ${matchedFile}` });
+    return res.status(404).json({ error: "Standard design report template (.docx) not found on server." });
   }
 
-  res.download(filePath, matchedFile);
+  // Generate a customized download filename based on the project title or file parameter
+  let cleanTitle = "";
+  if (title) {
+    cleanTitle = title;
+  } else if (file) {
+    // Extract base name without extension: e.g. "APNILEAP_PROJECT (1).pdf" -> "APNILEAP_PROJECT_1"
+    cleanTitle = file.replace(/\.[^/.]+$/, "").replace(/\s*\(\d+\)\s*/g, " ");
+  }
+
+  let downloadName = "Project_Design_Document.docx";
+  if (cleanTitle) {
+    const sanitizedTitle = cleanTitle.trim().replace(/[^a-zA-Z0-9\s-_]/g, "").replace(/[\s-]+/g, "_");
+    downloadName = `${sanitizedTitle}_Design_Document.docx`;
+  }
+
+  res.download(filePath, downloadName);
 });
 
 // ── Error handler — catches port-in-use and other listen errors ───────────────

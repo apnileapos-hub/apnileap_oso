@@ -102,15 +102,37 @@ Try asking me to:
 
       const project = result.rows[0];
 
+      const { autoCreateJiraProject, autoGenerateIssuesForProject } = require('./rovoIssueService');
+      let autoKey = project.jira_project_key || project.jiraProjectKey;
+      let jiraBoardUrl = project.jira_board_url || project.jiraBoardUrl;
+
+      if (!autoKey) {
+        autoKey = await autoCreateJiraProject(project.name);
+        jiraBoardUrl = `${process.env.JIRA_BASE_URL || "https://devcobraaa.atlassian.net"}/browse/${autoKey}`;
+        project.jira_project_key = autoKey;
+        project.jira_board_url = jiraBoardUrl;
+      }
+
+      const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.name.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+      project.confluence_space_url = confluenceSpaceUrl;
+
       await db.query(
         `UPDATE projects 
-         SET status = 'ACCEPTED', accepted_by = $1, updated_at = CURRENT_TIMESTAMP
-         WHERE id = $2`,
-         [acceptedBy, project.id]
+         SET status = 'ACCEPTED', accepted_by = $1, confluence_space_url = $2, jira_board_url = $3, jira_project_key = $4, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $5`,
+         [acceptedBy, confluenceSpaceUrl, jiraBoardUrl, autoKey, project.id]
       );
 
+      // Trigger automatic issue and epic auto-generation via Rovo Agent
+      try {
+        project.epics = project.epics || [];
+        await autoGenerateIssuesForProject(project, autoKey);
+      } catch (rovoErr) {
+        console.error("Failed to automatically generate issues via Rovo Service in Chat:", rovoErr.message);
+      }
+
       return res.json({
-        reply: `✅ **Project Accepted Successfully!**\n\n• **Project:** ${project.name}\n• **Accepted By:** ${acceptedBy}\n• **New Status:** ACCEPTED\n• **Timestamp:** ${new Date().toLocaleString()}`
+        reply: `✅ **Project Accepted Successfully!**\n\n• **Project:** ${project.name}\n• **Accepted By:** ${acceptedBy}\n• **New Status:** ACCEPTED\n• **Jira Project Key:** ${autoKey}\n• **Jira Link:** [Jira Board](${jiraBoardUrl})\n• **Confluence Link:** [Space Link](${confluenceSpaceUrl})\n• **Rovo Auto-Tasks:** Automated task lists have been generated and synced under each epic!\n• **Timestamp:** ${new Date().toLocaleString()}`
       });
     }
 

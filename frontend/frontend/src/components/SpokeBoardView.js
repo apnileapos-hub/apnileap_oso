@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_API_URL || 
-  (window.location.port === '3000' ? 'http://localhost:5000' : '');
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : '');
 
 export default function SpokeBoardView({ user, spokeId, onRefresh }) {
   const [projects, setProjects] = useState([]);
@@ -472,7 +472,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                             <a href={proj.confluenceSpaceUrl} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', background: '#0052cc', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none', marginRight: '8px' }}>
                               Open in Confluence ↗
                             </a>
-                            <a href={`${API}/api/v1/download-report?file=${proj.title?.toLowerCase().includes('apnicart') ? 'ApniCart_Design_Document.docx' : 'APNILEAP_PROJECT (1).pdf'}`} download style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', background: '#238636', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none' }}>
+                            <a href={`${API}/api/v1/download-report?title=${encodeURIComponent(proj.title || '')}&file=${proj.title?.toLowerCase().includes('apnicart') ? 'ApniCart_Design_Document.docx' : 'APNILEAP_PROJECT (1).pdf'}`} download style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '5px 12px', background: '#238636', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none' }}>
                               📥 Download Report Directly
                             </a>
                           </div>

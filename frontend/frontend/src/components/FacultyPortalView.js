@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 const API = process.env.REACT_APP_API_URL ||
-  (window.location.port === '3000' ? 'http://localhost:5000' : '');
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000' : '');
 
 const STATUS_OPTIONS = [
   { value: 'pending_review', label: 'Pending Review',  color: '#ff9800' },
@@ -423,7 +423,7 @@ export default function FacultyPortalView({ user }) {
                               style={{ fontSize: '12px', color: '#0052cc', textDecoration: 'none', fontWeight: '600', padding: '6px 14px', background: 'rgba(0,82,204,0.08)', border: '1px solid rgba(0,82,204,0.2)', borderRadius: '6px', marginRight: '8px' }}>
                               📄 Open Confluence ↗
                             </a>
-                            <a href={`${API}/api/v1/download-report?file=${proj.title?.toLowerCase().includes('apnicart') ? 'ApniCart_Design_Document.docx' : 'APNILEAP_PROJECT (1).pdf'}`} download
+                            <a href={`${API}/api/v1/download-report?title=${encodeURIComponent(proj.title || '')}&file=${proj.title?.toLowerCase().includes('apnicart') ? 'ApniCart_Design_Document.docx' : 'APNILEAP_PROJECT (1).pdf'}`} download
                               style={{ fontSize: '12px', color: '#fff', textDecoration: 'none', fontWeight: '600', padding: '6px 14px', background: '#238636', borderRadius: '6px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                               📥 Download Report Directly
                             </a>

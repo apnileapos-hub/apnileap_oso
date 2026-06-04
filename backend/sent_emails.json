@@ -1,5 +1,14 @@
 [
   {
+    "id": "email-1780309670481-78",
+    "to": "spoc-kle@college.edu",
+    "subject": "Reminder: Project Apnicart Awaiting Team Assignment",
+    "body": "Dear Dr. Ramesh Patil,\n\nThe project \"Apnicart\" is allocated to KLE Spoke (Live) but has no team assigned. Please allocate a development team.\n\nBest regards,\nApni Leap Moderator",
+    "type": "reminder",
+    "timestamp": "2026-06-01T10:27:50.481Z",
+    "status": "sent"
+  },
+  {
     "id": "email-1780309211096-950",
     "to": "spoc-kle@college.edu",
     "subject": "Reminder: Project Apnicart Awaiting Team Assignment",

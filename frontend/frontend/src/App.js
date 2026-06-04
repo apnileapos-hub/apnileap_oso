@@ -18,6 +18,10 @@ import MentorPortalView from './components/MentorPortalView';
 
 import './App.css';
 
+const API = process.env.REACT_APP_API_URL || 
+  (window.location.port === '3000' ? 'http://localhost:5000' : '');
+
+
 // ── localStorage helpers ──────────────────────────────────────────────────────
 const STORAGE_KEY_AUTH = 'dc_auth';
 const STORAGE_KEY_USER = 'dc_user';
@@ -166,7 +170,7 @@ function App() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    const eventSource = new EventSource('/api/realtime');
+    const eventSource = new EventSource(`${API}/api/realtime`);
     
     eventSource.onmessage = (event) => {
       try {

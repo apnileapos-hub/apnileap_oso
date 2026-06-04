@@ -239,6 +239,24 @@ const initDb = async () => {
     `);
     console.log('Ensured 5 real Atlassian users exist in PostgreSQL.');
 
+    // Seed the 10 demo Quick Connect accounts in the users table
+    await query(`
+      INSERT INTO users (email, name, role, password, college_id) VALUES
+      ('admin@apnileap.com', 'Executive Admin', 'Admin', 'moderator123', NULL),
+      ('moderator@apnileap.com', 'Central Moderator', 'Super-admin', 'moderator123', NULL),
+      ('coordinator@kle.edu', 'KLE Mentor', 'College-SPOC', 'kle123', 'kle-spoke'),
+      ('coordinator@coep.edu', 'COEP Mentor', 'College-SPOC', 'coep123', 'coep-spoke'),
+      ('coordinator@mmcoep.edu', 'MMCOEP Mentor', 'College-SPOC', 'mmcoep123', 'mmcoep-spoke'),
+      ('coordinator@rit.edu', 'RIT Mentor', 'College-SPOC', 'rit123', 'rit-spoke'),
+      ('sponsor@nvidia.com', 'NVIDIA Sponsor', 'Sponsor', 'nvidia123', NULL),
+      ('student@kle.edu', 'KLE Student', 'Student', 'student123', 'kle-spoke'),
+      ('student@coep.edu', 'COEP Student', 'Student', 'student123', 'coep-spoke'),
+      ('student@rit.edu', 'RIT Student', 'Student', 'student123', 'rit-spoke')
+      ON CONFLICT (email) DO UPDATE 
+      SET password = EXCLUDED.password, role = EXCLUDED.role, college_id = EXCLUDED.college_id
+    `);
+    console.log('PostgreSQL users table updated with Quick Connect demo accounts.');
+
 
     // Seed projects from projects.json to PostgreSQL
     const projCount = await query('SELECT COUNT(*) FROM projects');

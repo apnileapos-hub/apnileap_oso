@@ -1,8 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LoginPage from './components/LoginPage';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import Dashboard from './components/Dashboard';
+import CreateIssueModal from './components/CreateIssueModal';
+import IssueDetailsModal from './components/IssueDetailsModal';
+import RovoChatbot from './components/RovoChatbot';
+
+// Apni Leap B2B views
+import ModeratorPortalView from './components/ModeratorPortalView';
+import ExecutiveHubView from './components/ExecutiveHubView';
+import SpokeBoardView from './components/SpokeBoardView';
+import CompanySimulatorView from './components/CompanySimulatorView';
+import AutomationLogsView from './components/AutomationLogsView';
+import FacultyPortalView from './components/FacultyPortalView';
+import MentorPortalView from './components/MentorPortalView';
+
 import './App.css';
 
 // ── localStorage helpers ──────────────────────────────────────────────────────
@@ -145,13 +158,58 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState(null);
   
-  // ✅ State for connected notifications
   const [notifications, setNotifications] = useState([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedIssue, setSelectedIssue] = useState(null);
+
+  // Subscribe to real-time Server-Sent Events (SSE) updates
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const eventSource = new EventSource('/api/realtime');
+    
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log("📡 Real-time update received:", data);
+        if (data.event === 'PROJECT_AWARDED') {
+          handleRefresh();
+        }
+      } catch (err) {
+        // Ping or malformed json, ignore
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, [isAuthenticated]);
 
   const handleLogin = (userData) => {
     saveSession(userData);          // persist to localStorage
     setUser(userData);
     setIsAuthenticated(true);
+
+    // Dynamic redirection based on user role
+    if (userData?.role === 'Super-admin') {
+      setActiveView('moderator-portal');
+    } else if (userData?.role === 'College-SPOC') {
+      if (userData?.collegeId === 'coep-spoke' || userData?.collegeId === '101') {
+        setActiveView('spoke-coep');
+      } else if (userData?.collegeId === 'mmcoep-spoke' || userData?.collegeId === '102') {
+        setActiveView('spoke-mmcoep');
+      } else if (userData?.collegeId === 'rit-spoke' || userData?.collegeId === '103') {
+        setActiveView('spoke-rit');
+      } else {
+        setActiveView('spoke-kle');
+      }
+    } else if (userData?.role === 'Faculty' || userData?.role === 'Principal-Investigator') {
+      setActiveView('faculty-portal');
+    } else if (userData?.role === 'Corporate-Mentor' || userData?.role === 'Sponsor') {
+      setActiveView('mentor-portal');
+    } else {
+      setActiveView('dashboard');
+    }
   };
 
   const handleLogout = () => {
@@ -169,7 +227,6 @@ function App() {
   const handleIssuesLoaded = (issuesList) => {
     const freshNotifs = generateNotifications(issuesList);
     setNotifications((prevNotifs) => {
-      // Merge: if a notification ID matches an existing one, keep its 'read' status
       return freshNotifs.map((newN) => {
         const existing = prevNotifs.find((p) => p.id === newN.id);
         if (existing) {
@@ -178,6 +235,13 @@ function App() {
         return newN;
       });
     });
+
+    if (selectedIssue) {
+      const freshIssue = issuesList.find(i => i.key === selectedIssue.key);
+      if (freshIssue) {
+        setSelectedIssue(freshIssue);
+      }
+    }
   };
 
   // ── Unauthenticated — show login ───────────────────────────────────────────
@@ -192,6 +256,7 @@ function App() {
         activeView={activeView}
         onNavigate={setActiveView}
         onLogout={handleLogout}
+        user={user}
       />
       <div className="main-area">
         <Header
@@ -203,20 +268,47 @@ function App() {
           lastUpdated={lastUpdated}
           notifications={notifications}
           setNotifications={setNotifications}
+          onCreateIssueClick={() => setIsCreateModalOpen(true)}
         />
         <div className="dashboard-content">
-          <Dashboard
-            activeView={activeView}
-            refreshKey={refreshKey}
-            onFetchStart={() => setIsRefreshing(true)}
-            onFetchEnd={(ts) => {
-              setIsRefreshing(false);
-              setLastUpdated(ts);
-            }}
-            onIssuesLoaded={handleIssuesLoaded}
-          />
+          {activeView === 'moderator-portal' && <ModeratorPortalView user={user} onRefresh={handleRefresh} />}
+          {activeView === 'executive-hub' && <ExecutiveHubView user={user} />}
+          {activeView === 'faculty-portal' && <FacultyPortalView user={user} />}
+          {activeView === 'mentor-portal' && <MentorPortalView user={user} />}
+          {activeView.startsWith('spoke-') && <SpokeBoardView user={user} spokeId={activeView.replace('spoke-', '') + '-spoke'} onRefresh={handleRefresh} />}
+          {activeView === 'simulator' && <CompanySimulatorView onRefresh={handleRefresh} />}
+          {activeView === 'email-logs' && <AutomationLogsView user={user} />}
+
+          {['dashboard', 'issues', 'analytics', 'teams', 'calls', 'meet', 'settings'].includes(activeView) && (
+            <Dashboard
+              activeView={activeView}
+              refreshKey={refreshKey}
+              onFetchStart={() => setIsRefreshing(true)}
+              onFetchEnd={(ts) => {
+                setIsRefreshing(false);
+                setLastUpdated(ts);
+              }}
+              onIssuesLoaded={handleIssuesLoaded}
+              user={user}
+              onIssueClick={setSelectedIssue}
+            />
+          )}
         </div>
       </div>
+      <CreateIssueModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onRefresh={handleRefresh}
+      />
+      {selectedIssue && (
+        <IssueDetailsModal
+          issue={selectedIssue}
+          user={user}
+          onClose={() => setSelectedIssue(null)}
+          onRefresh={handleRefresh}
+        />
+      )}
+      <RovoChatbot />
     </div>
   );
 }

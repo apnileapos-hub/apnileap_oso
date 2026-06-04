@@ -1,0 +1,561 @@
+=== PAGE 61 ===
+Chapter 9
+GitHub Architecture & Developer
+Workows
+9.1 Overview
+In the context of the APNILEAP Industry-Academia Governance & Collaboration OS,
+GitHub serves not only as the primary version control system but as the central nervous
+system for continuous integration, continuous delivery (CI/CD), security scanning, and
+developer collaboration. Given the multi-tenant SaaS nature of APNILEAP, combining
+academic research with enterprise-grade governance, the source code management strat-
+egy must enforce strict compliance, auditability, and automated workows. This chapter
+details the architectural decisions governing GitHub organizations, repository topologies,
+branching strategies, and automated CI/CD pipelines.
+9.2 Repository Governance & Organization Model
+APNILEAP utilizes a structured GitHub Enterprise Organization model to enforce Role-
+Based Access Control (RBAC), repository standardizations, and compliance require-
+ments.
+9.2.1 Organization Structure
+The APNILEAP GitHub footprint is consolidated under a single GitHub Enterprise Or-
+ganization (apnileap-os). Access is governed by Single Sign-On (SSO) integrated with
+the corporate Identity Provider (IdP) (e.g., Azure AD or Okta).
+Team Hierarchy & RBAC
+Access to repositories is strictly managed via GitHub Teams, mapped to IdP groups:
+Global Admins:Organization owners with unrestricted access, primarily utilized
+by the Platform Engineering and Security teams.
+Core Maintainers:Read/Write/Admin access to specic domain repositories
+(e.g.,backend-core,frontend-workspace).
+Contributors (Internal):Read/Write access for active development.
+46
+
+=== PAGE 62 ===
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+External Collaborators (Academia/Partners):Granular, repository-level Read/Write
+access granted on a time-bound basis via automated provisioning workows.
+Security & Auditors:Read-only access across all repositories, specically for
+automated scanning, compliance audits, and incident response.
+9.2.2 Repository Topology: Domain-Driven Polyrepo
+APNILEAP adopts a Domain-Driven Polyrepo strategy over a monolithic repository to
+enable independent scaling, decoupled deployments, and strict boundary enforcement
+between system components.
+Key repositories include:
+apnileap-core-api: The primary backend services (Node.js/Go/Python depend-
+ing on stack).
+apnileap-web-app: The frontend Next.js/React application.
+apnileap-infra: Infrastructure as Code (IaC) utilizing Terraform/Pulumi.
+apnileap-contracts: Shared OpenAPI specications, gRPC protobufs, and database
+schemas.
+apnileap-docs: Developer portals, architecture decision records (ADRs), and user
+documentation.
+9.3 Automated Repository Provisioning
+To maintain consistency and enforce security baselines across the APNILEAP ecosys-
+tem, manual repository creation is disabled. Repositories are provisioned exclusively via
+Infrastructure as Code (IaC) utilizing the GitHub Terraform Provider.
+9.3.1 Standardized Baselines
+Every provisioned repository automatically inherits:
+Branch Protection Rules:Enforced onmain(require signed commits, linear
+history, status checks, minimum 2 approvals).
+CODEOWNERS le:Automatically generated based on the service domain to
+route review requests.
+Vulnerability Management:Dependabot, Secret Scanning, and CodeQL auto-
+matically enabled.
+Standardized Templates:Issue templates, PR templates, andCONTRIBUTING.md
+boilerplate.
+9.4 Branching Strategy
+APNILEAP employs a tailored Trunk-Based Development (TBD) model to ensure rapid
+iteration while maintaining stability for the multi-tenant SaaS environment.
+Page 47
+
+=== PAGE 63 ===
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+9.4.1 Trunk-Based Flow
+Main Branch (main):The single source of truth. It is heavily protected and must
+always be in a deployable state. Direct commits tomainare prohibited.
+Feature Branches (feature/<jira-id>-<short-desc>):Short-lived branches
+created frommainfor developing new capabilities.
+Fix Branches (fix/<jira-id>-<short-desc>):Branches for bug xes.
+Release Branches (release/vX.Y.Z):Cut frommainfor production deploy-
+ments, serving as immutable snapshots. Hotxes are applied here and cherry-picked
+back tomain.
+M1 M2 M3 M4 M5
+F1 F2 PR Merge
+R1 R2
+Cut Release
+main
+feature/
+release/
+Figure 9.1: APNILEAP Trunk-Based Branching Strategy
+9.5 Pull Request Workow & Code Review Automa-
+tion
+The Pull Request (PR) is the fundamental gatekeeper for code quality and security in
+APNILEAP.
+9.5.1 Pre-requisites for PR Merge
+Before a PR can be merged intomain, the following automated checks and human ap-
+provals must pass:
+1.Linting & Formatting:Automated enforcement using Prettier, ESLint, or equiv-
+alent, executed via GitHub Actions.
+2.Unit & Integration Tests:Minimum 80% code coverage enforced via SonarQube
+or Codecov.
+3.Security Scans:SAST (Static Application Security Testing) via CodeQL and de-
+pendency scanning via Dependabot must report zero critical or high vulnerabilities.
+4.Peer Review:Minimum of two approving reviews from CODEOWNERS.
+Page 48
+
+=== PAGE 64 ===
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+5.Ephemeral Environments:For frontend/API changes, a preview deployment
+(e.g., via Vercel or A WS Amplify) is automatically generated and linked in the PR
+for functional testing.
+6.Conventional Commits:PR titles must adhere to Conventional Commits (e.g.,
+feat(auth): implement SSO) to drive automated semantic versioning.
+9.6 CI/CD Strategy
+APNILEAP leverages GitHub Actions as the primary orchestrator for Continuous In-
+tegration and Continuous Deployment, deeply integrated with the cloud infrastructure
+(A WS/Azure/GCP).
+9.6.1 Continuous Integration (CI) Pipeline
+Triggered on every push to a feature branch or PR update.
+Build Stage:Compiles code, builds Docker images, and caches dependencies to
+optimize pipeline duration.
+Test Stage:Executes parallelized unit and integration tests.
+Security Stage:Runs Secret Scanning, Trivy for container image scanning, and
+CodeQL.
+Artifact Publishing:Pushes veried Docker images to the internal Container
+Registry with a temporary tag (e.g.,pr-<number>).
+9.6.2 Continuous Deployment (CD) Pipeline
+Triggered on merges tomainand release tags. APNILEAP follows a progressive delivery
+model.
+Environment Progression
+1.Development (Dev):Automatically deployed on merge tomain. Used for inter-
+nal QA and integration testing.
+2.Staging (UAT):Triggered via GitHub Release creation. Mirrors production in-
+frastructure for User Acceptance Testing by academia/industry stakeholders.
+3.Production (Prod):Requires manual gating (Environment Approvals in GitHub
+Actions) and deploys using Blue/Green or Canary deployment strategies via Ar-
+goCD or A WS CodeDeploy.
+Page 49
+
+=== PAGE 65 ===
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+Developer
+Push
+CI Pipeline
+(Test,
+Build, Scan)
+PR Approved
+& Merged
+Deploy
+to Dev
+(Auto)
+Deploy to
+Staging
+(Tag Trigger)
+Deploy
+to Prod
+(Manual
+Gate)
+Figure 9.2: APNILEAP GitHub Actions CI/CD Pipeline Flow
+9.6.3 Secrets Management & OIDC
+Hardcoded secrets and long-lived credentials are fundamentally banned in APNILEAP
+CI/CD.
+OpenID Connect (OIDC):GitHub Actions authenticate directly with the Cloud
+Provider (A WS IAM / Azure Workload Identity) using ephemeral OIDC tokens.
+GitHub Environments:Deployment targets (Dev, Staging, Prod) are congured
+as GitHub Environments, enforcing protection rules, specic environment secrets,
+and restricted deployment branches.
+9.7 Summary of Governance Policies
+To ensure APNILEAP's GitHub ecosystem remains secure and scalable:
+All infrastructure and repository congurations must be represented as code.
+Security scanning is shifted left into the PR phase.
+Principle of Least Privilege applies to all human and machine identities accessing
+repositories.
+Page 50
+
+=== PAGE 66 ===
+Chapter 10
+Rovo Architecture and Agentic AI
+Integration
+10.1 Introduction
+The APNILEAP (Industry-Academia Governance & Collaboration Operating System)
+platform leverages Atlassian's Rovo architecture to embed intelligent, autonomous, and
+semi-autonomous AI agents across the entire collaboration lifecycle. Rovo acts as the
+cognitive layer of the OS, bridging enterprise knowledge, academic research repositories,
+and operational governance tools. This chapter details the architectural patterns, agent
+taxonomies, and advanced prompt engineering methodologies used to integrate Rovo
+deeply into the APNILEAP ecosystem.
+By utilizing Rovo, APNILEAP transitions from a passive management system into
+an active participant in project governance, capable of synthesizing cross-domain knowl-
+edge, automating compliance checks, and facilitating complex multi-stakeholder work-
+ows. This integration allows for a suite of specialized operational agents to drive e-
+ciency, compliance, and strategic alignment.
+10.2 Rovo Core Architecture within APNILEAP
+The integration of Rovo into APNILEAP is built upon a multi-layered, microservices-
+driven architecture. This ensures that the agents have secure, context-aware access to
+all necessary internal and external data sources while maintaining strict data governance
+and role-based access control (RBAC).
+10.2.1 System Topology Diagram
+The following TikZ diagram illustrates the high-level architecture of the Rovo integration
+within the APNILEAP operating system, highlighting the ve core operational agents.
+10.3 Risk Agent
+The Risk Agent operates continuously to assess, quantify, and mitigate potential opera-
+tional, nancial, and intellectual property (IP) risks across all active industry-academia
+collaborations.
+51
+
+=== PAGE 67 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+Rovo Agent
+Orchestration
+Engine
+Enterprise
+Knowledge
+Graph
+RBAC &
+Security
+Gateway
+Risk Agent Governance
+Agent
+Reporting
+Agent
+Faculty
+Agent
+Analytics
+Agent
+Figure 10.1: APNILEAP Rovo Architecture Topology with Operational Agents
+10.3.1 Role and AI Summaries
+Role:To provide proactive identication of project anomalies, budget overruns, and IP
+leakage vectors.
+AI Summary Generation:Synthesizes weekly risk proles for each project by
+aggregating data from Jira issues, nancial ERPs, and document repositories. The agent
+generates a comprehensiveRisk Posture Summarythat highlights deviations from the
+baseline project charter.
+10.3.2 Specic Prompts
+The Risk Agent relies on highly constrained prompt structures to ensure objective eval-
+uation.
+1< system_prompt >
+2You are the APNILEAP Risk Agent .
+3Your objective is to evaluate project telemetry for financial
+and IP risks .
+4
+5CRITICAL I N S T R U C T I O N S :
+61 . Analyze the provided < project_telemetry > and <
+financial_ledger >.
+72 . Compare the current burn rate and milestone completion
+against the
+8< baseline_charter >.
+93 . Identify any IP exposure based on the < git_commit_logs >
+and
+10< nda_boundaries >.
+114 . Output a strict JSON response containing a risk score ( 0 -1
+0 0 ) and an
+12array of identified vectors .
+Page 52
+
+=== PAGE 68 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+13
+14JSON Schema :
+15{
+16" project_id " : " UUID " ,
+17" c o m p o s i t e _ r i s k _ s c o r e " : 8 5 ,
+18" r i s k _ v e c t o r s " : [
+19{ " type " : " FINANCIAL " , " severity " : " HIGH " , " de scr ipt ion " :
+"..." }
+20]
+21}
+22</ system_prompt >
+Listing 10.1: System Prompt for the Risk Agent
+10.3.3 Risk Detection Algorithms
+The agent employs a multi-factor risk detection algorithm, represented below. The al-
+gorithm normalizes inputs from nancial variance, schedule delays, and IP overlap to
+compute a Composite Risk Score (CRS).
+1def c a l c u l a t e _ c o m p o s i t e _ r i s k ( financial_data , schedule_data , ip_data ) :
+2# No rm al iz e fi na n ci al variance (0 to 1)
+3fv_score = max (0 , min (1 , ( f i n a n c i a l _ d a t a . b u rn _r at e - 1.0) / 0.5) )
+4
+5# No rm al iz e schedule delay (0 to 1)
+6sd_score = max (0 , min (1 , s c h e d u l e _ d a t a . d a y s _ d e l a y e d / 30.0) )
+7
+8# NLP - based IP risk a s s e s s m e n t (0 to 1)
+9ip_score = nl p_ m od el . p r e d i c t _ i p _ l e a k a g e ( ip_data . commits , ip_data .
+nda )
+10
+11# Weighted co mp o si te score
+12weights = { ' fi n an ci al ': 0.4 , ' schedule ': 0.3 , ' ip ': 0.3}
+13crs = ( fv_score * weights [ ' f in an ci al '] +
+14sd_score * weights [ ' schedule '] +
+15ip_score * weights [ ' ip ' ]) * 100
+16
+17return crs
+Listing 10.2: Risk Agent Algorithm Pseudo-code
+10.3.4 Executive Reporting and Recommendations
+The Risk Agent generates an automatedExecutive Risk Dashboardaccessible to steering
+committees. Recommendations are prescribed based on the CRS threshold:
+CRS > 75 (Critical):Recommend immediate project freeze; trigger automated
+escalation to legal and nance leads.
+CRS 50-74 (Warning):Recommend milestone audit and budget reallocation.
+CRS < 50 (Nominal):Standard ongoing monitoring.
+Page 53
+
+=== PAGE 69 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+10.4 Governance Agent
+The Governance Agent enforces institutional compliance, ethical research standards, and
+regulatory adherence throughout the project lifecycle.
+10.4.1 Role and AI Summaries
+Role:Automates the auditing of deliverables against regulatory frameworks (e.g., GDPR,
+HIPAA, University IP Policies).
+AI Summary Generation:Creates anAudit Trail Summarythat translates com-
+plex regulatory mapping into human-readable compliance statuses for project managers
+and institutional review boards (IRBs).
+10.4.2 Specic Prompts
+1< system_prompt >
+2You are the APNILEAP Governance Agent .
+3Your duty is to ensure all project outputs comply with
+i n s t i t u t i o n a l policies
+4and data privacy laws .
+5
+6CRITICAL I N S T R U C T I O N S :
+71 . Review the < research_dataset > and < publication_draft >.
+82 . Cross - reference against < compliance_frameworks > ( e . g . ,
+GDPR , IRB rules ) .
+93 . If PII ( Personally I d e n t i f i a b l e In form ati on ) or unapproved
+IP is found ,
+10flag the document imm edi ate ly .
+114 . Output your compliance matrix in JSON format .
+12
+13JSON Schema :
+14{
+15" doc umen t_i d " : " UUID " ,
+16" c o m p l i a n c e _ s t a t u s " : " PASS " | " FAIL " | "
+R E Q U I R E S _ H U M A N _ R E V I E W " ,
+17" violations " : [ " Clause 4 . 2 GDPR " , " Section 3 University IP
+Policy " ] ,
+18" m i t i g a t i o n _ s t e p s " : "..."
+19}
+20</ system_prompt >
+Listing 10.3: System Prompt for the Governance Agent
+10.4.3 Risk Detection Algorithms
+The Governance Agent utilizes Named Entity Recognition (NER) combined with rule-
+based heuristics to detect non-compliant entities within unstructured text.
+Page 54
+
+=== PAGE 70 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+Ingest Project
+Document
+Execute NER
+for PII/IP
+Entities
+Entities
+Found?
+Issue Compli-
+ance Certicate
+Map to Policy
+Violation
+Trigger Gov-
+ernance Alert
+No
+Yes
+Figure 10.2: Governance Compliance Verication Flow
+Page 55
+
+=== PAGE 71 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+10.4.4 Executive Reporting and Recommendations
+The Governance Agent produces aMonthly Compliance Ledger.Recommendations:
+Data Anonymization:Automatically recommend and optionally trigger data
+masking pipelines if PII is detected.
+Policy Updates:Suggest amendments to project charters if external regulatory
+environments shift.
+10.5 Reporting Agent
+The Reporting Agent serves as the intelligent aggregation layer, abstracting granular
+technical data into strategic insights for C-level executives and Deans.
+10.5.1 Role and AI Summaries
+Role:To eliminate manual report generation by continuously synthesizing cross-project
+data into customized stakeholder briengs.
+AI Summary Generation:ProducesBoard-Level Briengsthat abstract engineer-
+ing velocity, nancial health, and research milestones into a cohesive narrative, complete
+with sentiment analysis of the project's health.
+10.5.2 Specic Prompts
+1< system_prompt >
+2You are the APNILEAP Reporting Agent .
+3Your goal is to synthesize complex , multi - agent telemetry
+into an
+4executive summary .
+5
+6CRITICAL I N S T R U C T I O N S :
+71 . Ingest < risk_agent_report > , < gov_agent_report > , and <
+project_milestones >.
+82 . Draft a 3 - paragraph executive summary focusing on
+strategic alignment ,
+9ROI , and critical roadblocks .
+103 . Use a p r o f e s s i o n a l , objective tone suitable for a Board of
+Directors .
+114 . Output the report structure in JSON to be rendered by the
+frontend .
+12
+13JSON Schema :
+14{
+15" e x e c u t i v e _ s u m m a r y " : "..." ,
+16" k e y _ a c h i e v e m e n t s " : [ "..." ] ,
+17" s t r a t e g i c _ b l o c k e r s " : [ "..." ] ,
+18" o v e r a l l _ s e n t i m e n t " : " POSITIVE " | " NEUTRAL " | " NEGATIVE "
+Page 56
+
+=== PAGE 72 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+19}
+20</ system_prompt >
+Listing 10.4: System Prompt for the Reporting Agent
+10.5.3 Risk Detection Algorithms
+The Reporting Agent uses an anomaly detection algorithm on reporting frequency and
+sentiment. If project updates consistently show declining sentiment or increased variance
+in milestone delivery, it ags a "Strategic Drift Risk".
+10.5.4 Executive Reporting and Recommendations
+Outputs include theQuarterly Strategic Review (QSR).Recommendations:
+Suggests realignment of resources based on cross-portfolio performance.
+Recommends killing or pivoting projects that exhibit consecutive negative sentiment
+trends across three reporting cycles.
+10.6 Faculty Agent
+The Faculty Agent is a personalized assistant designed specically for academic re-
+searchers interacting with the APNILEAP platform.
+10.6.1 Role and AI Summaries
+Role:To reduce administrative burden on principal investigators (PIs) by automat-
+ing literature reviews, identifying industry grants, and aligning academic outputs with
+industry needs.
+AI Summary Generation:CreatesResearch Alignment Summariesthat translate
+an industry sponsor's problem statement into academic research hypotheses and potential
+publication avenues.
+10.6.2 Specic Prompts
+1< system_prompt >
+2You are the APNILEAP Faculty Agent .
+3Your objective is to bridge academic research with industry
+r e q u i r e m e n t s .
+4
+5CRITICAL I N S T R U C T I O N S :
+61 . Read the < i n d u s t r y _ p r o b l e m _ s t a t e m e n t > and the PI ' s <
+publication_history >.
+72 . Propose 3 potential research vectors that address the
+industry problem
+8while advancing the PI ' s academic portfolio .
+Page 57
+
+=== PAGE 73 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+93 . Suggest potential target journals for the resulting
+i n t e l l e c t u a l property .
+104 . Format output strictly as JSON .
+11
+12JSON Schema :
+13{
+14" r e s e a r c h _ v e c t o r s " : [
+15{ " hypothesis " : "..." , " me tho dol ogy " : "..." , "
+i n d u s t r y _ v a l u e " : "..." }
+16] ,
+17" t a r g e t _ j o u r n a l s " : [ " IEEE Access " , " Nature C o m m u n i c a t i o n s " ]
+18}
+19</ system_prompt >
+Listing 10.5: System Prompt for the Faculty Agent
+10.6.3 Risk Detection Algorithms
+The Faculty Agent assesses "Alignment Risk"the probability that the academic re-
+search will diverge from the industry sponsor's commercial goals. It calculates a cosine
+similarity score between the generated research hypotheses and the sponsor's initial Re-
+quest for Proposal (RFP) embeddings.
+10.6.4 Executive Reporting and Recommendations
+Produces theFaculty Engagement Index.Recommendations:
+Recommends co-authorship opportunities by identifying complementary researchers
+within the university network.
+Suggests pivot strategies if the Alignment Risk score falls below a critical threshold
+(e.g., cosine similarity < 0.6).
+10.7 Analytics Agent
+The Analytics Agent provides meta-analysis on the APNILEAP platform itself, optimiz-
+ing the operating system's performance and user engagement.
+10.7.1 Role and AI Summaries
+Role:To monitor platform telemetry, predict workow bottlenecks, and optimize the
+overarching collaboration network.
+AI Summary Generation:GeneratesNetwork Eciency Summariesthat detail
+how quickly information moves between industry and academia within the platform,
+highlighting communication silos.
+Page 58
+
+=== PAGE 74 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+10.7.2 Specic Prompts
+1< system_prompt >
+2You are the APNILEAP Analytics Agent .
+3Your role is to optimize platform usage and c o l l a b o r a t i o n
+efficiency .
+4
+5CRITICAL I N S T R U C T I O N S :
+61 . Analyze < platform_telemetry > including login frequency ,
+message latency ,
+7and document approval times .
+82 . Identify the top 3 workflow bot tle nec ks in the current
+c o l l a b o r a t i o n graph .
+93 . Propose actionable workflow o p t i m i z a t i o n s .
+10
+11JSON Schema :
+12{
+13" bot tlen eck s " : [
+14{ " node " : " Legal Approval " , " a v e r a g e _ d e l a y _ d a y s " : 1 2 , "
+impact " : " HIGH " }
+15] ,
+16" o p t i m i z a t i o n s " : [ " Automate low - risk NDA approvals via Gov -
+Agent ." ]
+17}
+18</ system_prompt >
+Listing 10.6: System Prompt for the Analytics Agent
+10.7.3 Risk Detection Algorithms
+Utilizes Graph Neural Networks (GNNs) on the collaboration interaction graph to identify
+"Centrality Risks"situations where a single individual (e.g., a specic legal counsel or
+PI) becomes a single point of failure for multiple projects.
+10.7.4 Executive Reporting and Recommendations
+Generates theOperational Eciency Report.Recommendations:
+Recommends delegation of approval authority when a user's queue exceeds a pre-
+dicted processing time of 72 hours.
+Suggests UI/UX improvements based on features with high drop-o rates during
+complex workows.
+10.8 Agent Communication and Orchestration Proto-
+col
+To ensure cohesive operation, the ve core agents communicate asynchronously via a
+secure pub/sub event bus within the APNILEAP orchestration layer.
+Page 59
+
+=== PAGE 75 ===
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+Kafka Event Bus (APNILEAP Core)
+Faculty
+Agent
+Gov
+Agent Risk
+Agent
+Reporting
+Agent
+Analytics
+Agent
+PROPOSAL_CREATED Sub:PROPOSAL_CREATED COMPLIANCE_PASSED Sub:COMPLIANCE_PASSED
+Figure 10.3: Operational Agent Asynchronous Communication Protocol
+For example, when the Faculty Agent nalizes a research proposal, it emits aPROPOSAL_CREATED
+event. The Governance Agent intercepts this to perform an automated compliance check.
+If passed, the Risk Agent subsequently evaluates it for IP and nancial risk before the
+Reporting Agent summarizes the outcome for the executive dashboard.
+10.9 Implementation and Deployment Strategies
+Deploying these ve operational agents within APNILEAP requires careful consideration
+of latency, cost, and data residency.
+10.9.1 Model Routing and Cost Optimization
+APNILEAP implements a semantic router to assign tasks based on complexity:
+Tier 1 (Fast/Cheap Models):Used by the Analytics and Reporting agents for
+data aggregation, sentiment analysis, and basic summarization.
+Tier 2 (Complex/Expensive Models):Reserved for the Governance, Risk, and
+Faculty agents when performing deep reasoning, CoT (Chain of Thought) logic, and
+legal interpretation.
+10.9.2 Security and Sandboxing
+When agents utilize tools that mutate system statesuch as the Risk Agent freezing a
+project budget or the Governance Agent agging a documentthe actions are executed
+within a sandboxed WebAssembly (Wasm) environment. The orchestration layer enforces
+a strict "Human-in-the-Loop" (HITL) approval step for all high-impact actions, ensuring
+that AI agents empower rather than override human authority.
+10.10 Summary
+The integration of specialized Rovo agentsspanning Risk, Governance, Reporting, Fac-
+ulty, and Analyticstransforms APNILEAP into an autonomous operating system capa-
+Page 60

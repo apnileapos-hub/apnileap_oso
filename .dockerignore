@@ -1,0 +1,11 @@
+node_modules
+frontend/frontend/node_modules
+frontend/frontend/build
+.git
+.env
+.env.local
+.env.development
+.env.production
+*.zip
+*.pdf
+*.docx

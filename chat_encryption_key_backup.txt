@@ -1,0 +1,9 @@
+=========================================================
+JIRA DASHBOARD - CHAT ENCRYPTION KEY BACKUP
+=========================================================
+
+Please store this key in a secure location (e.g. Password Manager).
+If you lose your .env file, you will need this key to decrypt your 
+teams.json chat history.
+
+CHAT_ENCRYPTION_SECRET=b9d0834a2fa539c3a6463ea421a4ff82562c209aeba11b80f8e8c8c0028937d4

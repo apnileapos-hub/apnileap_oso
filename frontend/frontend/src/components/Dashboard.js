@@ -4,6 +4,9 @@ import KPICards from './KPICards';
 import StatusPieChart from './StatusPieChart';
 import AssigneeBarChart from './AssigneeBarChart';
 import IssueTable from './IssueTable';
+import TeamsView from './TeamsView';
+import CallsView from './CallsView';
+import MeetView from './MeetView';
 
 // Empty string = relative URL (same origin).
 // In dev the CRA proxy forwards /api calls to localhost:5000.
@@ -29,13 +32,59 @@ function ErrorBanner({ message, onRetry }) {
   );
 }
 
-export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetchEnd, onIssuesLoaded }) {
+export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetchEnd, onIssuesLoaded, user, onIssueClick }) {
   const [metrics, setMetrics]       = useState(null);
   const [statusData, setStatusData] = useState([]);
   const [assigneeData, setAssigneeData] = useState([]);
   const [issues, setIssues]         = useState([]);
+  const [settings, setSettings]     = useState(null);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState(null);
+
+  // ── Atlassian connection form state ─────────────────────────────────────────
+  const [siteUrl, setSiteUrl]       = useState('');
+  const [projectKey, setProjectKey] = useState('');
+  const [email, setEmail]           = useState('');
+  const [apiToken, setApiToken]     = useState('');
+  const [orgId, setOrgId]           = useState('');
+  const [saving, setSaving]         = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+  const [showToken, setShowToken]   = useState(false);
+
+  useEffect(() => {
+    if (settings) {
+      setSiteUrl(settings.jiraBaseUrl || '');
+      setProjectKey(settings.jiraProjectKey || '');
+      setEmail(settings.jiraEmail || '');
+      setOrgId(settings.atlassianOrgId || '');
+      setApiToken(settings.jiraApiToken || '');
+    }
+  }, [settings]);
+
+  const handleSaveConnection = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setSaveStatus(null);
+    try {
+      const res = await axios.post(`${API}/settings`, {
+        jiraBaseUrl: siteUrl,
+        jiraProjectKey: projectKey,
+        jiraEmail: email,
+        atlassianOrgId: orgId,
+        jiraApiToken: apiToken
+      });
+      setSaveStatus({ type: 'success', message: res.data.message || 'Connection configured successfully!' });
+      setTimeout(() => {
+        setSaveStatus(null);
+        window.location.reload();
+      }, 2000);
+    } catch (err) {
+      const errMsg = err.response?.data?.error || err.message;
+      setSaveStatus({ type: 'error', message: errMsg });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
@@ -43,16 +92,18 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
     onFetchStart?.();
 
     try {
-      const [metricsRes, statusRes, assigneeRes, issuesRes] = await Promise.all([
+      const [metricsRes, statusRes, assigneeRes, issuesRes, settingsRes] = await Promise.all([
         axios.get(`${API}/dashboard-metrics`),
         axios.get(`${API}/status-summary`),
         axios.get(`${API}/assignee-summary`),
         axios.get(`${API}/issues`),
+        axios.get(`${API}/settings`),
       ]);
 
       setMetrics(metricsRes.data);
       setStatusData(statusRes.data);
       setAssigneeData(assigneeRes.data);
+      setSettings(settingsRes.data);
       const fetchedIssues = Array.isArray(issuesRes.data) ? issuesRes.data : [];
       setIssues(fetchedIssues);
       onIssuesLoaded?.(fetchedIssues);
@@ -104,7 +155,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
         </div>
 
         <div className="section-title">Recent Issues</div>
-        <IssueTable issues={issues} loading={loading} limit={8} />
+        <IssueTable issues={issues} loading={loading} limit={8} onIssueClick={onIssueClick} />
       </>
     );
   }
@@ -114,7 +165,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
     return (
       <>
         <div className="section-title">All Jira Issues</div>
-        <IssueTable issues={issues} loading={loading} />
+        <IssueTable issues={issues} loading={loading} onIssueClick={onIssueClick} />
       </>
     );
   }
@@ -183,45 +234,318 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
     );
   }
 
-  // ── Settings view (placeholder) ───────────────────────────────────────────
+  // ── Teams view ────────────────────────────────────────────────────────────
+  if (activeView === 'teams') {
+    return <TeamsView 
+      user={user} 
+      issues={issues} 
+      onOpenIssueDetails={(key) => {
+        const issue = issues.find(i => i.key === key);
+        onIssueClick(issue || { key });
+      }} 
+    />;
+  }
+
+  // ── Meet view ─────────────────────────────────────────────────────
+  if (activeView === 'meet') {
+    return <MeetView
+      user={user}
+      issues={issues}
+      onOpenIssueDetails={(key) => {
+        const issue = issues.find(i => i.key === key);
+        onIssueClick(issue || { key });
+      }}
+    />;
+  }
+
+  // ── Calls & Meetings view ─────────────────────────────────────────────────
+  if (activeView === 'calls') {
+    return <CallsView 
+      user={user} 
+      issues={issues}
+      onOpenIssueDetails={(key) => {
+        const issue = issues.find(i => i.key === key);
+        onIssueClick(issue || { key });
+      }}
+    />;
+  }
+
+  // ── Settings view ───────────────────────────────────────────────────────────
   if (activeView === 'settings') {
     return (
-      <div className="settings-panel">
-        <div className="settings-section">
-          <div className="settings-section-title">Jira Connection</div>
-          <div className="settings-row">
-            <div className="settings-label">Site URL</div>
-            <div className="settings-value">https://devcobraaa.atlassian.net</div>
+      <div className="settings-panel" style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px' }}>
+        <div className="section-title">Atlassian Integration Settings</div>
+        
+        <form onSubmit={handleSaveConnection} className="settings-section" style={{ padding: '24px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
+          <div className="settings-section-title" style={{ fontSize: '16px', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px', color: '#c9d1d9' }}>
+            Jira Cloud Connection Control Panel
           </div>
-          <div className="settings-row">
-            <div className="settings-label">Project Key</div>
-            <div className="settings-value settings-badge">SCRUM</div>
-          </div>
-          <div className="settings-row">
-            <div className="settings-label">Status</div>
-            <div className="settings-value">
-              <span className="badge badge-done"><span className="badge-dot" />Connected</span>
+
+          {saveStatus && (
+            <div 
+              style={{
+                padding: '12px 16px',
+                borderRadius: '6px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '14px',
+                background: saveStatus.type === 'success' ? 'rgba(56, 139, 253, 0.15)' : 'rgba(248, 81, 73, 0.15)',
+                border: saveStatus.type === 'success' ? '1px solid rgba(56, 139, 253, 0.4)' : '1px solid rgba(248, 81, 73, 0.4)',
+                color: saveStatus.type === 'success' ? '#58a6ff' : '#ff7b72'
+              }}
+            >
+              {saveStatus.type === 'success' ? (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16zm3.78-9.72a.75.75 0 0 0-1.06-1.06L7 9.44 5.28 7.72a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.06 0l4.5-4.5z"/>
+                </svg>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 16A8 8 0 1 1 8 0a8 8 0 0 1 0 16zM7 4v5h2V4H7zm0 6v2h2v-2H7z"/>
+                </svg>
+              )}
+              <span>{saveStatus.message}</span>
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {/* Site URL */}
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Atlassian Site URL</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <input
+                  type="url"
+                  value={siteUrl}
+                  onChange={(e) => setSiteUrl(e.target.value)}
+                  placeholder="https://your-company.atlassian.net"
+                  required
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #30363d',
+                    background: '#0d1117',
+                    color: '#c9d1d9',
+                    fontSize: '14px',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: '#484f58' }}>Standard Jira Cloud URL, e.g. https://devcobraaa.atlassian.net</span>
+              </div>
+            </div>
+
+            {/* Project Key */}
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Jira Project Key</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <input
+                  type="text"
+                  value={projectKey}
+                  onChange={(e) => setProjectKey(e.target.value.toUpperCase())}
+                  placeholder="e.g. AUTO"
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #30363d',
+                    background: '#0d1117',
+                    color: '#c9d1d9',
+                    fontSize: '14px',
+                    width: '150px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: '#58a6ff' }}>
+                  💡 <strong>Optional:</strong> Leave blank to automatically create and provision a brand new Software Kanban project on your Atlassian site!
+                </span>
+              </div>
+            </div>
+
+            {/* Organization ID */}
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Atlassian Org ID</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <input
+                  type="text"
+                  value={orgId}
+                  onChange={(e) => setOrgId(e.target.value)}
+                  placeholder="3e8909b9-234a-4def-aaf9-adc97997b269"
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #30363d',
+                    background: '#0d1117',
+                    color: '#c9d1d9',
+                    fontSize: '14px',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: '#484f58' }}>Required for Atlassian teams syncing. Retained from system organization.</span>
+              </div>
+            </div>
+
+            {/* Email */}
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Atlassian Registered Email</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@company.com"
+                  required
+                  style={{
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1px solid #30363d',
+                    background: '#0d1117',
+                    color: '#c9d1d9',
+                    fontSize: '14px',
+                    width: '100%',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <span style={{ fontSize: '11px', color: '#484f58' }}>Email address of the administrator account on the specified Jira instance</span>
+              </div>
+            </div>
+
+            {/* API Token */}
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Jira API Token</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                <div style={{ position: 'relative', display: 'flex', width: '100%' }}>
+                  <input
+                    type={showToken ? "text" : "password"}
+                    value={apiToken}
+                    onChange={(e) => setApiToken(e.target.value)}
+                    placeholder="••••••••••••••••"
+                    required
+                    style={{
+                      padding: '8px 45px 8px 12px',
+                      borderRadius: '6px',
+                      border: '1px solid #30363d',
+                      background: '#0d1117',
+                      color: '#c9d1d9',
+                      fontSize: '14px',
+                      width: '100%',
+                      boxSizing: 'border-box'
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowToken(!showToken)}
+                    style={{
+                      position: 'absolute',
+                      right: '8px',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      color: '#8b949e',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '4px'
+                    }}
+                  >
+                    {showToken ? (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 9.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+                        <path d="M1.5 8c1.333-3.11 4.242-5 6.5-5 2.259 0 5.167 1.89 6.5 5-1.333 3.11-4.242 5-6.5 5-2.259 0-5.167-1.89-6.5-5zM8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                        <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+                        <path d="M11.354 4.646a.5.5 0 1 0-.708-.708L8 6.586 5.354 3.938a.5.5 0 1 0-.708.708L7.293 7.3 4.646 9.946a.5.5 0 1 0 .708.708L8 8.014l2.646 2.646a.5.5 0 0 0 .708-.708L8.707 7.3l2.647-2.654z"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+                <span style={{ fontSize: '11px', color: '#484f58' }}>Generate an API Token from your Atlassian Account Security settings page</span>
+              </div>
+            </div>
+
+            {/* Save Button */}
+            <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
+              <div />
+              <button
+                type="submit"
+                disabled={saving}
+                style={{
+                  padding: '10px 16px',
+                  borderRadius: '6px',
+                  border: '1px solid rgba(56, 139, 253, 0.4)',
+                  background: 'linear-gradient(180deg, #2188ff 0%, #1f6feb 100%)',
+                  color: '#ffffff',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  justifyContent: 'center',
+                  alignSelf: 'flex-start',
+                  width: 'fit-content',
+                  boxShadow: '0 1px 0 rgba(27, 31, 35, 0.1)'
+                }}
+              >
+                {saving ? (
+                  <>
+                    <span className="login-spinner" style={{ width: '14px', height: '14px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: '#ffffff', borderRadius: '50%', display: 'inline-block', animation: 'spin 1s linear infinite' }} />
+                    Verifying & Saving Connection…
+                  </>
+                ) : (
+                  <>
+                    Test & Save Connection
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M12.78 6.22a.75.75 0 0 1 0 1.06L8.06 12a.75.75 0 0 1-1.06 0L4.22 9.28a.75.75 0 0 1 1.06-1.06L8 10.94l4.22-4.22a.75.75 0 0 1 1.06 0z"/>
+                    </svg>
+                  </>
+                )}
+              </button>
             </div>
           </div>
-          <div className="settings-row">
-            <div className="settings-label">API Version</div>
-            <div className="settings-value">Jira Cloud REST v3</div>
-          </div>
-        </div>
+        </form>
 
-        <div className="settings-section">
-          <div className="settings-section-title">Dashboard Preferences</div>
-          <div className="settings-row">
-            <div className="settings-label">Theme</div>
-            <div className="settings-value">Dark (Enterprise)</div>
+        <div className="settings-section" style={{ padding: '24px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
+          <div className="settings-section-title" style={{ fontSize: '16px', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px', color: '#c9d1d9' }}>
+            System Information
           </div>
-          <div className="settings-row">
-            <div className="settings-label">Refresh Rate</div>
-            <div className="settings-value">Manual</div>
+          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #21262d' }}>
+            <div className="settings-label" style={{ color: '#8b949e' }}>Connection Status</div>
+            <div className="settings-value">
+              {settings ? (
+                <span className={`badge ${settings.status === 'Connected' ? 'badge-done' : 'badge-failed'}`} style={{
+                  padding: '4px 8px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: '600',
+                  background: settings.status === 'Connected' ? 'rgba(63, 185, 80, 0.15)' : 'rgba(248, 81, 73, 0.15)',
+                  color: settings.status === 'Connected' ? '#58a6ff' : '#ff7b72',
+                  border: settings.status === 'Connected' ? '1px solid rgba(63,185,80,0.3)' : '1px solid rgba(248,81,73,0.3)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <span style={{
+                    width: '6px',
+                    height: '6px',
+                    borderRadius: '50%',
+                    background: settings.status === 'Connected' ? '#3fb950' : '#f85149'
+                  }} />
+                  {settings.status}
+                </span>
+              ) : "Loading..."}
+            </div>
           </div>
-          <div className="settings-row">
-            <div className="settings-label">Max Issues</div>
-            <div className="settings-value">100 per request</div>
+          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #21262d' }}>
+            <div className="settings-label" style={{ color: '#8b949e' }}>Integration Standard</div>
+            <div className="settings-value" style={{ color: '#c9d1d9' }}>{settings?.apiVersion || "Jira Cloud REST v3"}</div>
+          </div>
+          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #21262d' }}>
+            <div className="settings-label" style={{ color: '#8b949e' }}>Theme Setting</div>
+            <div className="settings-value" style={{ color: '#c9d1d9' }}>Dark (Enterprise Governance OS)</div>
           </div>
         </div>
       </div>

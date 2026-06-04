@@ -1,0 +1,132 @@
+=== PAGE 78 ===
+Chapter 11
+Communication Platform
+The communication platform forms the real-time interaction backbone of the APNILEAP
+OS, facilitating seamless collaboration between academia and industry stakeholders. This
+chapter provides a rigorous architectural and implementation-level detailing of the chat,
+meeting, and media processing services. We explore the utilization of WebRTC, LiveKit
+for Selective Forwarding Unit (SFU) capabilities, persistent messaging infrastructure,
+media recording pipelines, and the integration of the AI Meeting Assistant.
+11.1 Real-Time Communication Architecture
+The foundation of the APNILEAP communication platform relies on modern real-time
+protocols, predominantly WebRTC (Web Real-Time Communication), to enable peer-
+to-peer and server-mediated video, audio, and data transfer. However, a pure peer-to-
+peer mesh topology does not scale beyond a small number of participants. Therefore,
+APNILEAP employs an SFU architecture mediated by LiveKit.
+11.1.1 Selective Forwarding Unit (SFU) with LiveKit
+LiveKit serves as the core SFU infrastructure. Unlike Multipoint Control Units (MCUs)
+that decode, mix, and re-encode media streams, an SFU forwards incoming media streams
+to all other participants without transcoding, signicantly reducing server-side CPU uti-
+lization and latency while allowing clients to choose which streams to render.
+The LiveKit server is deployed within the Kubernetes cluster, utilizing host networking
+or optimized UDP routing to minimize packet loss and latency.
+11.2 Meeting Lifecycle and Authentication
+The lifecycle of a meeting in APNILEAP involves robust room management and secure
+token-based authentication.
+11.2.1 Room Provisioning and Token Generation
+When a user initiates or joins a meeting, the APNILEAP backend acts as the authoritative
+entity. It communicates with the LiveKit server via Server APIs to create a room if it
+does not exist, and generates a JWT (JSON Web Token) for the user.
+63
+
+=== PAGE 79 ===
+CHAPTER 11. COMMUNICATION PLATFORM APNILEAP Enterprise Architecture Book
+Client A
+(Publisher)
+Client B
+(Subscriber)
+Client C
+(Subscriber)
+LiveKit SFU
+1x Video/Audio Stream
+StreamStream
+Control/SignalingControl/Signaling Control
+Figure 11.1: SFU Architecture over LiveKit
+The token payload includes specic grants that dictate the user's permissions within
+the room (e.g., ability to publish video, publish audio, or record the session).
+Web Client Backend API LiveKit Server
+1. POST /api/meetings/join
+2. CreateRoom (if needed)
+3. Room details
+4. Generate JWT with Grants
+5. Return RoomName & JWT
+6. Connect via WebSocket + JWT
+7. WebRTC PeerConnection established
+Figure 11.2: Meeting Connection and Authentication Sequence
+11.2.2 WebRTC Signaling and ICE Negotiation
+Once the WebSocket connection is established with LiveKit, signaling commences. The
+client and server exchange Session Description Protocol (SDP) oers and answers. Si-
+multaneously, Interactive Connectivity Establishment (ICE) candidate gathering occurs
+to determine the optimal network path (UDP, TCP, or TURN). For strict corporate re-
+walls, a dedicated TURN server deployment guarantees fallback connectivity over port
+443.
+11.3 Chat and Messaging System
+While LiveKit provides an ephemeral data channel suitable for in-meeting chat, AP-
+NILEAP requires a persistent, universally accessible messaging system independent of
+Page 64
+
+=== PAGE 80 ===
+CHAPTER 11. COMMUNICATION PLATFORM APNILEAP Enterprise Architecture Book
+active video sessions.
+11.3.1 WebSocket Infrastructure
+The persistent chat system is built upon scalable WebSocket servers, heavily utilizing
+Redis Pub/Sub for message broadcasting across multiple backend instances. When a
+user sends a message, it is validated, persisted to the PostgreSQL database, and then
+published to the relevant Redis channel (e.g.,channel:{workspace_id}).
+11.3.2 Implementation of Message Persistence
+The database schema is optimized for rapid retrieval of conversational history.
+CREATE TABLE messages (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+channel_id UUID REFERENCES channels(id),
+sender_id UUID REFERENCES users(id),
+content TEXT NOT NULL,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+updated_at TIMESTAMP WITH TIME ZONE,
+is_deleted BOOLEAN DEFAULT FALSE,
+attachments JSONB
+);
+CREATE INDEX idx_messages_channel_created ON messages(channel_id, created_at DESC);
+11.4 Recording and Media Processing Pipeline
+APNILEAP provides enterprise-grade recording capabilities through LiveKit Egress.
+11.4.1 LiveKit Egress Integration
+When a recording is triggered via the API, the backend invokes the LiveKit Egress service.
+Egress launches a headless Chrome instance or utilizes a direct track composite to render
+the meeting layout. It then encodes this layout into an MP4 le in real-time.
+11.4.2 Storage and Archiving
+Upon completion of the meeting, the Egress service uploads the encoded media le di-
+rectly to a cloud storage bucket (e.g., A WS S3). A webhook is then dispatched to the
+APNILEAP backend, containing the storage object key and metadata. The backend
+updates the meeting record, making the recording instantly available for playback via
+pre-signed URLs.
+11.5 AI Meeting Assistant
+The AI Meeting Assistant acts as an invisible, highly capable participant in every gover-
+nance and collaboration session, providing real-time transcription, translation, and post-
+meeting intelligence.
+Page 65
+
+=== PAGE 81 ===
+CHAPTER 11. COMMUNICATION PLATFORM APNILEAP Enterprise Architecture Book
+11.5.1 Real-Time Audio Extraction and Transcription
+During a meeting, the LiveKit server is congured to utilize SIP or SIP-like audio stream-
+ing to forward mixed audio tracks to the AI processing service. The audio service utilizes
+streaming Automatic Speech Recognition (ASR) models (such as Whisper or a propri-
+etary low-latency equivalent) to generate real-time transcripts.
+AI Meeting Assistant Data Flow
+11.5.2 Large Language Model (LLM) Integration
+Post-meeting, the complete transcript is fed into a ne-tuned Large Language Model.
+The system employs specic prompt engineering techniques to instruct the LLM to:
+1.Summarize:Generate concise executive summaries of the discussion.
+2.Action Item Extraction:Identify explicit and implicit tasks, assigning them to
+mentioned stakeholders.
+3.Sentiment and Governance Analysis:Ensure the discussion aligned with the
+predetermined agenda and standard industry-academia collaboration frameworks.
+The output is structured into JSON, validated against expected schemas, and stored
+in the PostgreSQL database, linked relationally to the meeting object. The embeddings
+of the transcripts are also stored in a Vector Database to enable semantic search across
+all historical APNILEAP meetings.
+Page 66
+
+=== PAGE 82 ===
+Part V
+UI and Dashboard Architecture
+67

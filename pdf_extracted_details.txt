@@ -1,0 +1,764 @@
+=== PAGE 27 ===
+CHAPTER 3. MULTI-TENANT SAAS ARCHITECTURE APNILEAP Enterprise Architecture Book
+CREATE TABLE tenants (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+name VARCHAR(255) NOT NULL,
+domain VARCHAR(255) UNIQUE NOT NULL,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+-- Example Tenant-Bound Table: Users
+CREATE TABLE users (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+email VARCHAR(255) NOT NULL,
+password_hash VARCHAR(255) NOT NULL,
+role VARCHAR(50) NOT NULL,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+UNIQUE (tenant_id, email)
+);
+-- Enable RLS
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+RLS Policy Denition
+We dene RLS policies that restrictSELECT,INSERT,UPDATE, andDELETEoperations
+based on a custom PostgreSQL conguration setting, specicallyapp.current_tenant_id.
+-- Create a policy for tenant isolation
+CREATE POLICY tenant_isolation_policy ON users
+AS RESTRICTIVE
+FOR ALL
+USING (tenant_id = current_setting('app.current_tenant_id', TRUE)::UUID);
+-- Ensure the policy applies to table owners/superusers in standard operations
+-- (Optional but recommended for strictness, forced by FORCE ROW LEVEL SECURITY)
+ALTER TABLE users FORCE ROW LEVEL SECURITY;
+Tenant A
+Client
+Tenant B
+Client
+Next.js API
+(Prisma Client)
+Connection
+Pooler
+PostgreSQL
+(Shared DB)
+RLS Boundary
+Req + JWT (Tenant A)
+Req + JWT (Tenant B)
+SET app.tenant_id
+Figure 3.1: RLS-based Data Isolation Flow
+Page 12
+
+=== PAGE 28 ===
+CHAPTER 3. MULTI-TENANT SAAS ARCHITECTURE APNILEAP Enterprise Architecture Book
+3.3 Prisma ORM Integration for Multi-Tenancy
+APNILEAP utilizes Prisma as the primary ORM. Since Prisma does not natively sup-
+port session-variable-based RLS out of the box in a fully transparent way for connection
+pools, we implement aPrisma Client Extensioncoupled with Prisma's interactive
+transactions or query raw methods to inject the tenant ID into the database session
+before executing queries.
+3.3.1 Prisma Schema Conguration
+The Prisma schema must reect thetenant_idon all relevant models.
+generator client {
+provider = "prisma-client-js"
+previewFeatures = ["clientExtensions"]
+}
+datasource db {
+provider = "postgresql"
+url = env("DATABASE_URL")
+}
+model Tenant {
+id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+name String
+domain String @unique
+users User[]
+@@map("tenants")
+}
+model User {
+id String @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+tenantId String @map("tenant_id") @db.Uuid
+email String
+passwordHash String @map("password_hash")
+role String
+tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+@@unique([tenantId, email])
+@@map("users")
+}
+3.3.2 The Prisma Extension Implementation
+To ensure that every query executed on behalf of a tenant automatically sets the Post-
+greSQL conguration variable, we utilize Prisma Client Extensions. The extension wraps
+queries within a transaction where theSET LOCALcommand establishes the context.
+import { PrismaClient } from '@prisma/client'
+Page 13
+
+=== PAGE 29 ===
+CHAPTER 3. MULTI-TENANT SAAS ARCHITECTURE APNILEAP Enterprise Architecture Book
+export const createTenantClient = (tenantId: string) => {
+const prisma = new PrismaClient()
+return prisma.$extends({
+query: {
+$allModels: {
+async $allOperations({ model, operation, args, query }) {
+// Bypass RLS for models that are not tenant-bound (e.g., Tenant model itself)
+if (model === 'Tenant') {
+return query(args)
+}
+// Execute within an interactive transaction to guarantee connection scope
+return prisma.$transaction(async (tx) => {
+// Set the tenant ID for the current transaction scope
+await tx.$executeRaw`
+SELECT set_config('app.current_tenant_id', ${tenantId}, true)
+`;
+// Execute the actual Prisma query
+// The RLS policy will now automatically filter based on app.current_tenant_id
+return query(args)
+})
+},
+},
+},
+})
+}
+Usage in API Routes
+Within Next.js API routes or Server Actions, the tenant context is extracted from the
+authentication token (e.g., JWT payload) and used to instantiate the extended client.
+// lib/auth.ts
+export async function getTenantPrismaClient(req: Request) {
+const session = await getSession(req);
+if (!session || !session.tenantId) {
+throw new Error('Unauthorized or Missing Tenant Context');
+}
+return createTenantClient(session.tenantId);
+}
+// app/api/users/route.ts
+export async function GET(req: Request) {
+const db = await getTenantPrismaClient(req);
+// This will ONLY return users for the current tenant due to RLS
+Page 14
+
+=== PAGE 30 ===
+CHAPTER 3. MULTI-TENANT SAAS ARCHITECTURE APNILEAP Enterprise Architecture Book
+// No need to explicitly write `where: { tenantId: session.tenantId }`
+const users = await db.user.findMany();
+return NextResponse.json(users);
+}
+3.4 Connection Pooling and pgBouncer
+A critical challenge with RLS and Serverless environments (like Next.js on Vercel) is
+connection exhaustion. APNILEAP usesPgBouncerinTransaction Pooling Mode
+to multiplex thousands of client connections onto a small number of actual PostgreSQL
+connections.
+Because PgBouncer in transaction mode assigns a new server connection for each
+transaction, session variables set viaSETwould normally leak across dierent clients.
+This is explicitly mitigated by our Prisma Extension, which usesSET LOCAL ... true.
+Thetrueag signies that the setting is local to the current transaction. Once the
+transaction commits or rolls back, PostgreSQL discards the setting, ensuring subsequent
+transactions on the same connection pool are not polluted.
+Next.js Serverless Functions
+(Prisma Client instances)
+PgBouncer
+(Transaction Pooling Mode)
+PostgreSQL
+(Max Connections: 100)
+1000s of ephemeral
+TCP connections
+Persistent, multiplexed
+connection pool
+Figure 3.2: Connection Pooling Architecture
+3.5 Security Considerations
+3.5.1 Preventing Tenant Bleed
+By enforcing RLS at the database kernel level, APNILEAP ensures defense-in-depth.
+Even if a developer writesprisma.user.findMany()without awhereclause in a context
+where they shouldn't, the database itself will silently lter the result set.
+Page 15
+
+=== PAGE 34 ===
+CHAPTER 4. USER AND ORGANIZATION MANAGEMENT ARCHITECTURE APNILEAP Enterprise Architecture Book
+4.2.3 Companies (Industry Partners)
+Companies participate in the ecosystem to source talent, collaborate on research, and
+oer training. They are autonomous tenants with cross-tenant interaction capabilities.
+Core Capabilities:
+Job and Internship Postings:Publishing opportunities visible to mapped Col-
+leges.
+Skill Requirements Denition:Providing feedback on curriculum based on
+industry trends.
+Candidate Assessment:Managing interview pipelines and oers.
+Corporate Social Responsibility (CSR):Tracking educational initiatives.
+Data Model (Entity:CompanyProfile):
+1CREATE TABLE c o m p a n y _ p r o f i l e s (
+2id UUID PRIMARY KEY DEFAULT u u i d _ g e n e r a t e _ v 4 () ,
+3te na n t_ id UUID R E F E R E N C E S tenants ( id ) UNIQUE ,
+4name VARCHAR (255) NOT NULL ,
+5i n d u s t r y _ s e c t o r VARCHAR (100) ,
+6c o m p a n y _ s i z e VARCHAR (50) ,
+7r e g i s t r a t i o n _ n u m b e r VARCHAR (100) ,
+8address JSONB ,
+9status VARCHAR (50) DEFAULT ' VERIFIED ' ,
+10c r e a t e d _ a t T IM ES TA MP WITH TIME ZONE DEFAULT NOW ()
+11) ;
+Listing 4.3: Company Prole Schema
+4.3 User Architecture and Identity Management
+The user architecture dictates how individuals interact within and across tenants. It
+leverages a robust Role-Based Access Control (RBAC) augmented with Attribute-Based
+Access Control (ABAC) for ne-grained permissions.
+4.3.1 Identity Schema
+All users authenticate against a central identity store. The core user record is tenant-
+agnostic, enabling a single user to potentially hold roles in multiple tenants (e.g., a guest
+lecturer at two dierent colleges).
+1-- Central Identity
+2CREATE TABLE users (
+3id UUID PRIMARY KEY DEFAULT u u i d _ g e n e r a t e _ v 4 () ,
+4sso_id VARCHAR (255) UNIQUE , -- Link to Keycloak / Auth0
+5email VARCHAR (255) UNIQUE NOT NULL ,
+6p h o n e _ n u m b e r VARCHAR (20) ,
+7p a s s w o r d _ h a s h VARCHAR (255) , -- If local auth is s up po rt ed
+8is _a c ti ve BOOLEAN DEFAULT TRUE ,
+9l a s t _ l o g i n T IM ES TA MP WITH TIME ZONE ,
+10c r e a t e d _ a t T IM ES TA MP WITH TIME ZONE DEFAULT NOW ()
+11) ;
+Page 19
+
+=== PAGE 35 ===
+CHAPTER 4. USER AND ORGANIZATION MANAGEMENT ARCHITECTURE APNILEAP Enterprise Architecture Book
+12
+13-- Tenant Mapping & Role A s s i g n m e n t
+14CREATE TABLE u s e r _ t e n a n t _ r o l e s (
+15id UUID PRIMARY KEY DEFAULT u u i d _ g e n e r a t e _ v 4 () ,
+16user_id UUID R E F E R E N C E S users ( id ) ON DELETE CASCADE ,
+17te na n t_ id UUID R E F E R E N C E S tenants ( id ) ON DELETE CASCADE ,
+18role_id UUID R E F E R E N C E S roles ( id ) ,
+19d e p a r t m e n t _ i d UUID , -- Optional context ( e . g . , specific CS Dept )
+20status VARCHAR (50) DEFAULT ' ACTIVE ' ,
+21UNIQUE ( user_id , tenant_id , role_id )
+22) ;
+Listing 4.4: Core User and Identity Schema
+4.3.2 Role Hierarchy and RBAC Implementation
+The system denes base roles globally, which can be instantiated with specic permissions
+per tenant.
+Key Role Denitions
+College Specic Roles:
+College Admin:Full access to tenant settings, user provisioning, and organiza-
+tional structure denition.
+HOD (Head of Department):Scoped access. Can manage faculty, view student
+analytics, and approve course structures only within their assigneddepartment_id.
+Placement Ocer (TPO):Can view all student proles, manage company MoUs,
+and coordinate placement drives.
+Faculty:Can manage assigned courses, input grades, and track attendance.
+Student:Can view their own academic record, apply for jobs, and submit assign-
+ments.
+Company Specic Roles:
+Company Admin:Manages company prole, billing, and user access.
+HR/Recruiter:Can post jobs, view applicant pools, and initiate assessment work-
+ows.
+Interviewer:Highly scoped. Can only view proles of candidates assigned to them
+for interviews and submit feedback forms.
+4.3.3 Authentication Flow
+The authentication process utilizes OAuth 2.0 with OpenID Connect (OIDC). Upon
+successful login, a JWT (JSON Web Token) is generated containing the user's identity
+and a list of their roles across various tenants.
+Page 20
+
+=== PAGE 36 ===
+CHAPTER 4. USER AND ORGANIZATION MANAGEMENT ARCHITECTURE APNILEAP Enterprise Architecture Book
+Hub (Apex Body)
+Tenant ID: 0
+College A
+Tenant ID: 101
+College B
+Tenant ID: 102
+Company X
+Tenant ID: 201
+Company Y
+Tenant ID: 202
+Hub Admin
+HOD Student HR Manager
+Collaboration
+Figure 4.1: APNILEAP Multi-Tenant Hierarchical Architecture
+Super Admin
+Hub Admin
+Hub Auditor
+College Admin
+HOD Placement Ocer
+Faculty
+Student
+Company Admin
+HR/Recruiter
+Interviewer
+Figure 4.2: APNILEAP Role Hierarchy
+Web Client
+(SPA) API Gateway Auth Service
+(Keycloak)
+Identity DBResource
+Service
+1. Login Request
+2. Validate
+3. Return JWT
+4. API Call + Bearer JWT 5. Validate Token
+6. Route to Service
+Figure 4.3: Authentication and Authorization Flow
+Page 21
+
+=== PAGE 78 ===
+Chapter 11
+Communication Platform
+The communication platform forms the real-time interaction backbone of the APNILEAP
+OS, facilitating seamless collaboration between academia and industry stakeholders. This
+chapter provides a rigorous architectural and implementation-level detailing of the chat,
+meeting, and media processing services. We explore the utilization of WebRTC, LiveKit
+for Selective Forwarding Unit (SFU) capabilities, persistent messaging infrastructure,
+media recording pipelines, and the integration of the AI Meeting Assistant.
+11.1 Real-Time Communication Architecture
+The foundation of the APNILEAP communication platform relies on modern real-time
+protocols, predominantly WebRTC (Web Real-Time Communication), to enable peer-
+to-peer and server-mediated video, audio, and data transfer. However, a pure peer-to-
+peer mesh topology does not scale beyond a small number of participants. Therefore,
+APNILEAP employs an SFU architecture mediated by LiveKit.
+11.1.1 Selective Forwarding Unit (SFU) with LiveKit
+LiveKit serves as the core SFU infrastructure. Unlike Multipoint Control Units (MCUs)
+that decode, mix, and re-encode media streams, an SFU forwards incoming media streams
+to all other participants without transcoding, signicantly reducing server-side CPU uti-
+lization and latency while allowing clients to choose which streams to render.
+The LiveKit server is deployed within the Kubernetes cluster, utilizing host networking
+or optimized UDP routing to minimize packet loss and latency.
+11.2 Meeting Lifecycle and Authentication
+The lifecycle of a meeting in APNILEAP involves robust room management and secure
+token-based authentication.
+11.2.1 Room Provisioning and Token Generation
+When a user initiates or joins a meeting, the APNILEAP backend acts as the authoritative
+entity. It communicates with the LiveKit server via Server APIs to create a room if it
+does not exist, and generates a JWT (JSON Web Token) for the user.
+63
+
+=== PAGE 79 ===
+CHAPTER 11. COMMUNICATION PLATFORM APNILEAP Enterprise Architecture Book
+Client A
+(Publisher)
+Client B
+(Subscriber)
+Client C
+(Subscriber)
+LiveKit SFU
+1x Video/Audio Stream
+StreamStream
+Control/SignalingControl/Signaling Control
+Figure 11.1: SFU Architecture over LiveKit
+The token payload includes specic grants that dictate the user's permissions within
+the room (e.g., ability to publish video, publish audio, or record the session).
+Web Client Backend API LiveKit Server
+1. POST /api/meetings/join
+2. CreateRoom (if needed)
+3. Room details
+4. Generate JWT with Grants
+5. Return RoomName & JWT
+6. Connect via WebSocket + JWT
+7. WebRTC PeerConnection established
+Figure 11.2: Meeting Connection and Authentication Sequence
+11.2.2 WebRTC Signaling and ICE Negotiation
+Once the WebSocket connection is established with LiveKit, signaling commences. The
+client and server exchange Session Description Protocol (SDP) oers and answers. Si-
+multaneously, Interactive Connectivity Establishment (ICE) candidate gathering occurs
+to determine the optimal network path (UDP, TCP, or TURN). For strict corporate re-
+walls, a dedicated TURN server deployment guarantees fallback connectivity over port
+443.
+11.3 Chat and Messaging System
+While LiveKit provides an ephemeral data channel suitable for in-meeting chat, AP-
+NILEAP requires a persistent, universally accessible messaging system independent of
+Page 64
+
+=== PAGE 80 ===
+CHAPTER 11. COMMUNICATION PLATFORM APNILEAP Enterprise Architecture Book
+active video sessions.
+11.3.1 WebSocket Infrastructure
+The persistent chat system is built upon scalable WebSocket servers, heavily utilizing
+Redis Pub/Sub for message broadcasting across multiple backend instances. When a
+user sends a message, it is validated, persisted to the PostgreSQL database, and then
+published to the relevant Redis channel (e.g.,channel:{workspace_id}).
+11.3.2 Implementation of Message Persistence
+The database schema is optimized for rapid retrieval of conversational history.
+CREATE TABLE messages (
+id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+channel_id UUID REFERENCES channels(id),
+sender_id UUID REFERENCES users(id),
+content TEXT NOT NULL,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+updated_at TIMESTAMP WITH TIME ZONE,
+is_deleted BOOLEAN DEFAULT FALSE,
+attachments JSONB
+);
+CREATE INDEX idx_messages_channel_created ON messages(channel_id, created_at DESC);
+11.4 Recording and Media Processing Pipeline
+APNILEAP provides enterprise-grade recording capabilities through LiveKit Egress.
+11.4.1 LiveKit Egress Integration
+When a recording is triggered via the API, the backend invokes the LiveKit Egress service.
+Egress launches a headless Chrome instance or utilizes a direct track composite to render
+the meeting layout. It then encodes this layout into an MP4 le in real-time.
+11.4.2 Storage and Archiving
+Upon completion of the meeting, the Egress service uploads the encoded media le di-
+rectly to a cloud storage bucket (e.g., A WS S3). A webhook is then dispatched to the
+APNILEAP backend, containing the storage object key and metadata. The backend
+updates the meeting record, making the recording instantly available for playback via
+pre-signed URLs.
+11.5 AI Meeting Assistant
+The AI Meeting Assistant acts as an invisible, highly capable participant in every gover-
+nance and collaboration session, providing real-time transcription, translation, and post-
+meeting intelligence.
+Page 65
+
+=== PAGE 81 ===
+CHAPTER 11. COMMUNICATION PLATFORM APNILEAP Enterprise Architecture Book
+11.5.1 Real-Time Audio Extraction and Transcription
+During a meeting, the LiveKit server is congured to utilize SIP or SIP-like audio stream-
+ing to forward mixed audio tracks to the AI processing service. The audio service utilizes
+streaming Automatic Speech Recognition (ASR) models (such as Whisper or a propri-
+etary low-latency equivalent) to generate real-time transcripts.
+AI Meeting Assistant Data Flow
+11.5.2 Large Language Model (LLM) Integration
+Post-meeting, the complete transcript is fed into a ne-tuned Large Language Model.
+The system employs specic prompt engineering techniques to instruct the LLM to:
+1.Summarize:Generate concise executive summaries of the discussion.
+2.Action Item Extraction:Identify explicit and implicit tasks, assigning them to
+mentioned stakeholders.
+3.Sentiment and Governance Analysis:Ensure the discussion aligned with the
+predetermined agenda and standard industry-academia collaboration frameworks.
+The output is structured into JSON, validated against expected schemas, and stored
+in the PostgreSQL database, linked relationally to the meeting object. The embeddings
+of the transcripts are also stored in a Vector Database to enable semantic search across
+all historical APNILEAP meetings.
+Page 66
+
+=== PAGE 85 ===
+CHAPTER 12. UI WIREFRAMES AND FRONTEND PORTAL CATALOG APNILEAP Enterprise Architecture Book
+| | South: [|||||||||||||||| ] 50% Coverage (25 Univs) |
+| | East: [|||||||||| ] 35% Coverage (12 Univs) |
+| | West: [|||||||||||||||||||||||||| ] 82% Coverage (40 Univs) |
++---------------------------------------------------------------------------------------------------------------+
+12.2.2 Project Management Oce (PMO) Portal
+The PMO Portal is the operational command center for APNILEAP administrators and
+regional program managers. It focuses on bottleneck resolution, risk mitigation, and fund
+disbursement workows.
++---------------------------------------------------------------------------------------------------------------+
+| [APNILEAP LOGO] Search Projects/Tasks: [___________] (/) [Alerts (12)] [Messages] [PMO Director] |
++---------------------------------------------------------------------------------------------------------------+
+| | |
+| [ ] Dashboard | PROJECT MANAGEMENT OFFICE (PMO) PORTAL - COMMAND CENTER |
+| [x] Program Tracks | ----------------------------------------------------------------------------------- |
+| - Active (452) | Filter by: [Status v] [Domain v] [University v] [Corporate v] [+ New Track] |
+| - At Risk (23) | |
+| - Completed (89) | Critical Project Alerts (Attention Required) |
+| | [!] Proj #4092 (Quantum ML) - Milestone 3 Overdue by 14 Days. [Escalate] [Message] |
+| [ ] Resource Alloc. | [!] Proj #4110 (CyberSec) - Budget variance > 15% detected. [Audit] [Message] |
+| | |
+| [ ] Milestones | Gantt View: Q3 - Q4 Active High-Value Initiatives |
+| - Approvals | +---------------------------------------------------------------------------------+ |
+| - Disbursements | | Project Name | Aug | Sep | Oct | Nov | Dec | |
+| | |--------------------|-----------|-----------|-----------|-----------|----------| |
+| [ ] Risk Register | | AI/ML Cohort 1 | [====> | | | | | |
+| | | IoT Smart City | | [=======>| | | | |
+| [ ] Reports | | FinTech Blockchain | [====|=======> | | | | |
+| | | MedTech Devices | | | [====>| | | |
+| | +---------------------------------------------------------------------------------+ |
+| | |
+| | Recent Disbursement Requests (Pending PMO Approval) |
+| | 1. $10,000 to Tech Institute A (Milestone 2 - IoT) [Approve] [Reject] [Details] |
+| | 2. $4,500 to State University (Milestone 1 - ML) [Approve] [Reject] [Details] |
++---------------------------------------------------------------------------------------------------------------+
+12.2.3 Faculty Portal
+The Faculty Portal allows academic sta to monitor student progress on industry projects,
+perform evaluations against standardized rubrics, and approve submissions.
++---------------------------------------------------------------------------------------------------------------+
+| [APNILEAP LOGO] Search Students/Courses: [_________] (/) [Notifications] [Chat] [Prof. Smith] |
++---------------------------------------------------------------------------------------------------------------+
+| | |
+| [ ] My Dashboard | FACULTY ADVISOR PORTAL - PROJECT SUPERVISION |
+| [x] My Students | ----------------------------------------------------------------------------------- |
+Page 70
+
+=== PAGE 86 ===
+CHAPTER 12. UI WIREFRAMES AND FRONTEND PORTAL CATALOG APNILEAP Enterprise Architecture Book
+| - Enrolled (120) | Current Advising Load: 15 Active Students across 4 Corporate Projects |
+| - Mentored (15) | |
+| | Active Project Supervision |
+| [ ] Project Rubrics | +---------------------------------------------------------------------------------+ |
+| - Grading | | Project Title | Corp Partner | Students | Next Milestone | Status | |
+| - Evaluations | |-------------------------|--------------|----------|----------------|------------| |
+| | | NLP for Healthcare | BioHealth Inc| 4 | 2026-10-15 | On Track | |
+| [ ] Approvals | | Autonomous Drones | AeroTech Sys | 3 | 2026-11-01 | Needs Rev | |
+| - Proposals | | Smart Grid Analytics | EnergyCorp | 5 | 2026-09-30 | Overdue! | |
+| - Final Reports | | Supply Chain Blockchain | LogistiX | 3 | 2026-12-10 | On Track | |
+| | +---------------------------------------------------------------------------------+ |
+| [ ] IP & Patents | |
+| | Student Evaluation Queue (Requires Grading Action) |
+| [ ] Settings | [ ] John Doe (NLP Healthcare) - Milestone 2 Code Submission [Review Submission] |
+| | [ ] Jane Roe (Auto Drones) - Hardware Design Doc v2 [Review Submission] |
+| | |
+| | Quick Communication & Scheduling |
+| | [Broadcast Message to All Mentees] [Schedule Virtual Office Hours] |
++---------------------------------------------------------------------------------------------------------------+
+12.2.4 Mentor Portal
+Corporate and alumni mentors utilize this interface to manage their availability, conduct
+1:1 sessions, track mentee progress, and endorse specic skills.
++---------------------------------------------------------------------------------------------------------------+
+| [APNILEAP LOGO] Search Mentees: [__________________] (/) [Alerts] [Messages (5)] [Mentor: J. Doe] |
++---------------------------------------------------------------------------------------------------------------+
+| | |
+| [x] Mentorship Hub | INDUSTRY MENTOR PORTAL |
+| - Upcoming (2) | ----------------------------------------------------------------------------------- |
+| - Past Sessions | Availability: [x] Accepting New Mentees | Current Mentee Load: 3/5 |
+| | |
+| [ ] My Mentees | Upcoming 1:1 Sessions (This Week) |
+| - Alice Chen | +---------------------------------------------------------------------------------+ |
+| - Bob Smith | | Date/Time | Mentee | Topic | Action | |
+| - Charlie Davis | |-------------------|----------------|-----------------------------|--------------| |
+| | | Oct 12, 10:00 AM | Alice Chen | Code Review: React Hooks | [Join Video] | |
+| [ ] Skill Endorse | | Oct 14, 02:00 PM | Bob Smith | Career Path: Cloud Arch. | [Join Video] | |
+| | +---------------------------------------------------------------------------------+ |
+| [ ] Q&A Forums | |
+| | Mentee Progress Tracker |
+| [ ] Feedback | Alice Chen : [||||||||||||||||||| ] 90% (Final Project Phase) [Endorse Skills] |
+| | Bob Smith : [|||||||| ] 40% (Mid-Term Evaluation) [Submit Feedback] |
+| [ ] My Profile | Charlie Davis: [|||| ] 20% (Onboarding Phase) [Send Message] |
+| | |
+| | Pending Requests for Mentorship |
+| | 1. David Lee - "Looking for guidance in Advanced Kubernetes" [Accept] [Decline] |
++---------------------------------------------------------------------------------------------------------------+
+Page 71
+
+=== PAGE 87 ===
+CHAPTER 12. UI WIREFRAMES AND FRONTEND PORTAL CATALOG APNILEAP Enterprise Architecture Book
+12.2.5 College Admin Portal
+University administrators and placement ocers require a macro-view of their specic
+institution to ensure compliance, track departmental performance, and manage corporate
+Memorandums of Understanding (MoUs).
++---------------------------------------------------------------------------------------------------------------+
+| [APNILEAP LOGO] Global Search: [___________________] (/) [Notifs] [Reports] [Admin: Univ. A] |
++---------------------------------------------------------------------------------------------------------------+
+| | |
+| [ ] Dashboard | COLLEGE ADMINISTRATOR PORTAL - INSTITUTION OVERVIEW |
+| [x] Departments | ----------------------------------------------------------------------------------- |
+| - Comp. Sci. | Academic Year: 2026-2027 | Total Enrolled: 15,400 | Total Placed: 12,100 (78.5%) |
+| - Mech. Eng. | |
+| - Electrical | Departmental Placement & Engagement Metrics |
+| | +---------------------------------------------------------------------------------+ |
+| [ ] Corp. Tie-ups | | Department | Active MoUs | Students in Projects | Placement Rate | Trend | |
+| | |-------------------|-------------|----------------------|----------------|-------| |
+| [ ] Compliance | | Computer Science | 45 | 850 | 94% | [^] | |
+| - UGC Norms | | Mech. Engineering | 22 | 320 | 71% | [v] | |
+| - NBA Accr. | | Electrical Engg. | 18 | 410 | 82% | [^] | |
+| | | Bio-Technology | 12 | 150 | 65% | [-] | |
+| [ ] Financials | +---------------------------------------------------------------------------------+ |
+| - Grants Recv. | |
+| - Disbursements | Action Items & Compliance Alerts |
+| | [!] 3 Corporate MoUs expiring in 30 days. [Initiate Renewal Workflow] |
+| [ ] Analytics | [!] UGC Compliance Report Q3 is due in 5 days. [Auto-Generate Report] |
+| | [i] $50,000 grant from TechCorp received for AI Lab. [Acknowledge & Allocate] |
++---------------------------------------------------------------------------------------------------------------+
+12.2.6 Student Hub and Corporate Portal Renements
+While the student and corporate portals form the basis of the system, their implementa-
+tion relies on similar structural paradigms as the advanced portals above. The Student
+Hub focuses heavily on a "Portfolio View" allowing drag-and-drop artifact uploads, while
+the Corporate Portal leverages high-density Applicant Tracking System (ATS) interfaces.
+12.3 User Flow Interaction Models
+To further dene the UI interactions within these portals, we utilize specialized interaction
+ow models.
+12.4 Responsive Implementation Strategies
+The massive interfaces depicted in the ASCII wireframes require rigorous responsive
+engineering:
+Page 72
+
+=== PAGE 115 ===
+CHAPTER 13. DATABASE ARCHITECTURE APNILEAP Enterprise Architecture Book
+13.4.10 Community & Forums
+Table:com_forums
+Purpose:Discussion spaces
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Forum name
+Indexes:CREATE INDEX idx_com_forums_tenant ON com_forums(tenant_id);
+Table:com_threads
+Purpose:Forum topics
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Thread title
+Indexes:CREATE INDEX idx_com_threads_tenant ON com_threads(tenant_id);
+Table:com_posts
+Purpose:Thread replies
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Post content
+Indexes:CREATE INDEX idx_com_posts_tenant ON com_posts(tenant_id);
+Table:com_events
+Purpose:Seminars/workshops
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Event name
+Indexes:CREATE INDEX idx_com_events_tenant ON com_events(tenant_id);
+Page 100
+
+=== PAGE 116 ===
+CHAPTER 13. DATABASE ARCHITECTURE APNILEAP Enterprise Architecture Book
+Table:com_event_attendees
+Purpose:Event RSVPs
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+user_id UUID FK Linked user account
+title V ARCHAR(255) NOT NULL Attendee name
+Indexes:CREATE INDEX idx_com_event_attendees_tenant ON com_event_attendees(tenant_id);
+Table:com_announcements
+Purpose:Broadcasts
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Announcement
+Indexes:CREATE INDEX idx_com_announcements_tenant ON com_announcements(tenant_id);
+Table:com_messages
+Purpose:Direct messages
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Message body
+Indexes:CREATE INDEX idx_com_messages_tenant ON com_messages(tenant_id);
+Table:com_message_recipients
+Purpose:Message inbox
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Recipient
+Indexes:CREATE INDEX idx_com_message_recipients_tenant ON com_message_recipients(tenant_id);
+Page 101
+
+=== PAGE 117 ===
+CHAPTER 13. DATABASE ARCHITECTURE APNILEAP Enterprise Architecture Book
+Table:com_notifications
+Purpose:User alerts
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Notication text
+Indexes:CREATE INDEX idx_com_notifications_tenant ON com_notifications(tenant_id);
+Table:com_newsletters
+Purpose:Mailing lists
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Newsletter title
+Indexes:CREATE INDEX idx_com_newsletters_tenant ON com_newsletters(tenant_id);
+13.4.11 Infrastructure & Admin
+Table:adm_rooms
+Purpose:Campus facilities
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Room name
+Indexes:CREATE INDEX idx_adm_rooms_tenant ON adm_rooms(tenant_id);
+Table:adm_assets
+Purpose:Inventory
+Column Type Constraints Description
+id UUID PK Unique Identier
+tenant_id UUID FK Tenant ID for RLS
+title V ARCHAR(255) NOT NULL Asset name
+Indexes:CREATE INDEX idx_adm_assets_tenant ON adm_assets(tenant_id);
+Page 102
+
+=== PAGE 121 ===
+Chapter 14
+API Specications
+This chapter provides extremely detailed, implementation-level specications for the AP-
+NILEAP Industry-Academia Governance & Collaboration OS APIs. It covers endpoints
+across various domains including authentication, user management, project collaboration,
+grants, intellectual property, and more. All requests and responses are specied in JSON
+format. Authentication is handled via Bearer JWT tokens.
+14.1 Authentication & Authorization
+14.1.1 POST /api/v1/auth/login
+Description:Authenticate user and return JWT access and refresh tokens.
+Permissions:None
+Validation Rules:emailmust be a valid email format.passwordmust not be empty.
+Error Codes:400 Bad Request, 401 Unauthorized, 429 Too Many Requests
+Request Payload:
+1{
+2" email " : " u s e r @ e x a m p l e . com " ,
+3" password " : " S e c u r e P a s s w o r d 1 2 3 !"
+4}
+Response Payload:
+1{
+2" a c c e s s _ t o k e n " : " e y J h b G c i O i J I U z I 1 NiIsInR 5 cCI 6 IkpXVCJ 9 ..." ,
+3" r e f r e s h _ t o k e n " : " def 5 0 2 0 0 5 4 ..." ,
+4" expires_in " : 3 6 0 0 ,
+5" token_type " : " Bearer "
+6}
+14.1.2 POST /api/v1/auth/logout
+Description:Invalidate the current JWT access and refresh tokens.
+106
+
+=== PAGE 122 ===
+CHAPTER 14. API SPECIFICATIONS APNILEAP Enterprise Architecture Book
+Permissions:Authenticated User
+Validation Rules:Valid JWT must be present in Authorization header.
+Error Codes:401 Unauthorized
+Request Payload:
+1{ }
+Response Payload:
+1{
+2" message " : " S u c c e s s f u l l y logged out "
+3}
+14.1.3 POST /api/v1/auth/refresh
+Description:Exchange a valid refresh token for a new access token.
+Permissions:None
+Validation Rules:refresh_tokenmust be a valid, unexpired token string.
+Error Codes:400 Bad Request, 401 Unauthorized
+Request Payload:
+1{
+2" r e f r e s h _ t o k e n " : " def 5 0 2 0 0 5 4 ..."
+3}
+Response Payload:
+1{
+2" a c c e s s _ t o k e n " : " e y J h b G c i O i J I ..." ,
+3" expires_in " : 3 6 0 0
+4}
+14.1.4 POST /api/v1/auth/register
+Description:Register a new user in the APNILEAP OS.
+Permissions:None
+Validation Rules:emailmust be unique.passwordmust meet complexity rules (min
+8 chars, 1 uppercase, 1 special).
+Error Codes:400 Bad Request, 409 Conict
+Request Payload:
+1{
+2" email " : " n e w u s e r @ u n i v e r s i t y . edu " ,
+Page 107
+
+=== PAGE 123 ===
+CHAPTER 14. API SPECIFICATIONS APNILEAP Enterprise Architecture Book
+3" password " : " S t r o n g P a s s w o r d ! 1 " ,
+4" first_name " : " Jane " ,
+5" last_name " : " Doe " ,
+6" r o l e _ r e q u e s t e d " : " A C A D E M I C _ R E S E A R C H E R "
+7}
+Response Payload:
+1{
+2" user_id " : " 9 b 1 deb 4d - 3 b 7d - 4 bad - 9 bdd - 2 b 0 d 7 b 3 dcb 6 d " ,
+3" message " : " R e g i s t r a t i o n successful , pending email
+v e r i f i c a t i o n ."
+4}
+14.1.5 POST /api/v1/auth/forgot-password
+Description:Trigger a password reset email for the given user.
+Permissions:None
+Validation Rules:Valid email format.
+Error Codes:400 Bad Request, 404 Not Found, 429 Too Many Requests
+Request Payload:
+1{
+2" email " : " u s e r @ u n i v e r s i t y . edu "
+3}
+Response Payload:
+1{
+2" message " : " If the email exists , a reset link has been sent
+."
+3}
+14.1.6 POST /api/v1/auth/reset-password
+Description:Reset a password using the token sent via email.
+Permissions:None
+Validation Rules:tokenmust be valid and not expired.new_passwordmust pass
+complexity.
+Error Codes:400 Bad Request, 403 Forbidden
+Request Payload:
+1{
+2" token " : " reset - token - 1 2 3 4 5 " ,
+Page 108

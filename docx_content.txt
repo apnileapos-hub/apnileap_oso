@@ -1,0 +1,1102 @@
+﻿APNILEAP
+IndustryΓÇôAcademia Governance & Collaboration OS
+Project Design Document
+ΓÇ£ApniCartΓÇ¥ ΓÇö A B2C E-Commerce Storefront
+End-to-End Full-Stack, Jira & Confluence Delivery Blueprint
+Sponsoring Industry Partner:  Infosys Limited
+Delivering Academic Institution:  KLE Technological University
+Collaboration Broker / Governance OS:  APNILEAP Platform
+Version 1.0  ┬╖  Status: For Review  ┬╖  Classification: Confidential
+31 May 2026
+Document Control
+Revision History
+Version
+Date
+Description
+Author
+Status
+0.1
+24 May 2026
+Initial skeleton and scope
+KLE Project Team
+Draft
+0.5
+28 May 2026
+Architecture, data and API sections added
+KLE PI + Infosys Liaison
+Draft
+1.0
+31 May 2026
+Full design baselined for milestone gate M0
+KLE PI
+For Review
+Approvers
+Role
+Name / Body
+Approval Required For
+Industry Sponsor (Infosys)
+R&D / Engagement Director
+Scope, commercials, acceptance
+Principal Investigator (KLE)
+Faculty Project Lead
+Technical design, delivery plan
+APNILEAP PMO
+Programme Management Office
+Governance gates, provisioning
+Technology Transfer Office (KLE)
+TTO Executive
+IP, NDA, MoU/SOW sign-off
+Distribution
+This document is distributed to the Infosys engagement team, the KLE delivery team and the APNILEAP PMO through the projectΓÇÖs Confluence space (key ECOM). It is the single design reference governed by the change-control process in Section 13.
+Table of Contents
+1. Introduction
+1.1 Purpose
+This document is the authoritative design specification for ApniCart, a compact business-to-consumer (B2C) e-commerce storefront commissioned by Infosys and delivered by a student team at KLE Technological University. The engagement is brokered, governed and instrumented by the APNILEAP platform. The document describes both the application to be built and the collaboration machinery that surrounds it: how the work is sponsored, awarded, executed, tracked in Jira, documented in Confluence, version-controlled in GitHub, and accepted.
+It is written to serve three audiences simultaneously ΓÇö the Infosys sponsor who needs assurance on scope and governance, the KLE faculty and students who need an implementable blueprint, and the APNILEAP PMO that orchestrates the lifecycle. Where a section is primarily relevant to one audience it is flagged accordingly.
+1.2 Background: the APNILEAP collaboration model
+APNILEAP is a multi-tenant Software-as-a-Service governance and collaboration operating system that restructures how industry and academia work together. It positions itself as a central hub that connects two classes of autonomous spokes ΓÇö academic tenants (universities, research centres) and industry tenants (corporations and R&D labs) ΓÇö while retaining the master record for project metadata, governance approvals, identities and financial milestones.
+Rather than letting collaborations form through informal email and ad-hoc contracts, APNILEAP routes them through a structured marketplace. An industry partner publishes an opportunity; qualified academic teams bid; the platform awards, provisions tooling, tracks milestones against funding, and enforces data isolation between competing tenants. This project is one concrete instance of that model.
+Key principle ΓÇö APNILEAP is the system of record; Jira is the execution engine; Confluence is the knowledge base; GitHub is the source of truth for code. The platform keeps these three tools synchronised through automated provisioning and event-driven webhooks so that an executive dashboard reflects operational reality without manual status reporting.
+1.3 The parties
+Party
+Tenant Type
+Role in this Engagement
+Infosys Limited
+Industry tenant (spoke)
+Project sponsor. Defines requirements, funds the engagement, mentors via a Technical Liaison, verifies deliverables and grants final acceptance.
+KLE Technological University
+Academic tenant (spoke)
+Delivery institution. A Principal Investigator (faculty) leads a student development team that designs, builds and ships the application for academic credit and a stipend.
+APNILEAP
+Platform hub
+Neutral broker and governance OS. Hosts the marketplace, runs the award workflow, auto-provisions Jira/Confluence/GitHub, tracks milestones, releases funds and audits the engagement.
+1.4 Scope of this document
+In scope: the collaboration and governance model for this project; the functional and non-functional requirements of the ApniCart application; the full-stack solution, data and API design; the security design; the GitHub, Jira and Confluence setup; the delivery plan with milestones, sprints and a RACI; the test strategy; and the acceptance and closure criteria.
+Out of scope: the internal implementation of the APNILEAP platform itself (covered by the APNILEAP Enterprise Architecture Book), the legal text of the Master Services Agreement, and any tenant beyond the three named parties.
+1.5 Glossary
+Term
+Meaning
+Hub / Spoke
+APNILEAP is the hub; each tenant (Infosys, KLE) is a spoke. The hub routes and governs; spokes execute autonomously.
+RFP / Opportunity
+A project posted by an industry sponsor on the marketplace, open for academic bidding.
+PI
+Principal Investigator ΓÇö the faculty member at KLE who leads the team and is accountable for delivery.
+Technical Liaison
+The Infosys engineer who mentors the team and performs deliverable verification.
+PMO
+Programme Management Office ΓÇö APNILEAPΓÇÖs governance function that owns the gates.
+Milestone
+A funded, verifiable deliverable in APNILEAP; mapped 1:n to Jira Epics.
+MVP
+Minimum Viable Product ΓÇö the agreed first releasable scope of ApniCart.
+MoU / SOW
+Memorandum of Understanding / Statement of Work governing the engagement.
+2. The Collaboration Model
+This section describes how the project moves through APNILEAP from a posted opportunity to a closed, accepted deliverable. It is the governance backbone that the technical sections later hang from.
+2.1 Hub-and-spoke positioning
+Infosys and KLE never integrate directly. Every interaction ΓÇö the opportunity, the bid, the award, the workspace, the milestone sign-off and the disbursement ΓÇö is mediated by APNILEAP. This keeps a neutral audit trail, enforces data isolation, and means neither party has to trust the otherΓÇÖs internal systems. The flow below shows the three actors and the platform between them.
+        INDUSTRY SPOKE                 HUB (Governance OS)               ACADEMIC SPOKE
+   +---------------------+        +-----------------------+        +----------------------+
+   |   Infosys Tenant    |        |       APNILEAP        |        |     KLE Tenant       |
+   |  - Sponsor          | <----> |  Marketplace Service  | <----> |  - Principal Invest. |
+   |  - Tech Liaison     |  RFP   |  Bidding Engine       |  Bid   |  - Student Devs      |
+   |                     |  Award |  Workflow FSM         |  Work  |  - Faculty Mentor    |
+   +---------------------+        |  Provisioning Orch.   |        +----------------------+
+                                  |  Finance Gateway      |
+                                  +-----------+-----------+
+                                              | auto-provision + sync
+                            +-----------------+------------------+
+                            v                 v                  v
+                        [ Jira ]         [ Confluence ]      [ GitHub ]
+                      execution          knowledge base      source code
+2.2 Stakeholders and roles
+Each human actor maps to a role in APNILEAPΓÇÖs stakeholder taxonomy, which in turn drives access in every downstream tool. The mapping is deterministic so that provisioning can be fully automated.
+Person / Group
+APNILEAP Role
+Jira Role
+GitHub / Confluence
+Infosys R&D Director
+Industry Sponsor
+Viewer / Stakeholder
+Confluence: read; GitHub: read
+Infosys Tech Liaison
+Industry Liaison / Mentor
+Reviewer (transition on review)
+GitHub: write (review), Confluence: write
+KLE Faculty Lead
+Principal Investigator
+Project Admin
+GitHub: maintain, Confluence: admin (space)
+KLE Student (x3ΓÇô4)
+Student Developer / Researcher
+Developer
+GitHub: write, Confluence: contributor
+APNILEAP PMO
+Platform / Programme Admin
+Org Admin (global)
+Org owner; space provisioning
+2.3 Project lifecycle on the marketplace
+The marketplace governs the project through a finite state machine. Each transition is an auditable governance event; some transitions trigger automation (provisioning, notifications, disbursement).
+DRAFT ΓöÇΓöÇΓû║ PENDING_APPROVAL ΓöÇΓöÇΓû║ OPEN_FOR_BIDDING ΓöÇΓöÇΓû║ AWARDED ΓöÇΓöÇΓû║ IN_EXECUTION
+                                                                     Γöé
+                                          (per milestone)            Γû╝
+                                   MILESTONE_REVIEW ΓùäΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÿ
+                                          Γöé  approve
+                                          Γû╝
+                            (loop until last milestone) ΓöÇΓöÇΓû║ COMPLETED ΓöÇΓöÇΓû║ CLOSED
+State
+Meaning & Trigger
+DRAFT
+Infosys drafts the opportunity in the React Project Builder; saved with status DRAFT.
+PENDING_APPROVAL
+Infosys admin reviews scope/budget before it goes public.
+OPEN_FOR_BIDDING
+Published; synced to the Elasticsearch catalog; a ProjectPublishedEvent is broadcast on Kafka and matched academics are notified.
+AWARDED
+Infosys reviews bids ranked by the recommendation engine and awards KLE; contract digitally signed.
+IN_EXECUTION
+Workspaces are auto-provisioned (Jira, Confluence, GitHub). The team starts sprints.
+MILESTONE_REVIEW
+A milestone Epic is marked Done in Jira; a webhook opens a review in APNILEAP for the Liaison to verify.
+COMPLETED / CLOSED
+All milestones approved, final report submitted, ratings exchanged, funds fully disbursed, access revoked.
+2.4 End-to-end engagement flow
+Infosys publishes the ΓÇ£B2C E-Commerce StorefrontΓÇ¥ opportunity with budget band, required skills (React, Spring Boot, PostgreSQL) and a submission deadline.
+APNILEAP indexes it and notifies eligible academic teams. KLEΓÇÖs PI submits a bid: a proposal document, the proposed student team, and an indicative plan.
+Infosys reviews ranked bids, shortlists KLE, negotiates briefly over the collaboration messaging thread, and awards the project.
+On award, the provisioning orchestrator creates: a Jira project (key ECOM), a Confluence space (key ECOM) seeded with governance templates, and a GitHub repository from the standard baseline.
+The five funded milestones become Jira Epics; the kickoff and charter pages are generated in Confluence; the team begins Sprint 1.
+As each milestone Epic reaches Done, a Jira webhook fires a MILESTONE_REVIEW in APNILEAP. The Infosys Liaison verifies the deliverable against acceptance criteria.
+On approval, APNILEAP records the gate and triggers the Finance Gateway (RazorpayX) to release the milestone stipend tranche; the student credit ledger is updated.
+After the final milestone, APNILEAP closes the project, archives the Confluence space read-only, transfers the GitHub repository per the IP terms, and prompts both parties for a rating.
+2.5 Commercials and academic credit
+Funding is split across milestones so that payment tracks verified progress. The same gates that release money also unlock academic credit for the students, keeping incentives aligned across the industry and academic spokes.
+Milestone
+Deliverable summary
+Funding %
+Credits
+M1
+Foundation, auth, CI/CD skeleton deployed
+15%
+1
+M2
+Catalog, search and product detail
+20%
+1
+M3
+Cart and checkout
+20%
+1
+M4
+Payments and order management
+25%
+1
+M5
+Admin, hardening, UAT and handover
+20%
+2
+Total
+Accepted, deployed MVP
+100%
+6
+3. Product Scope: ApniCart
+3.1 Problem statement and objectives
+Infosys wants a clean, modern reference storefront that a small or mid-sized retailer could adopt: a shopper can discover products, add them to a cart, check out and pay; a store administrator can manage the catalogue, stock and orders. The goal is a deliberately small, production-shaped application that demonstrates sound full-stack engineering rather than feature breadth.
+Objectives: (a) ship a deployable MVP that handles the core purchase journey end-to-end; (b) demonstrate secure authentication, real payment integration and an auditable order lifecycle; (c) produce maintainable, well-tested code with CI/CD; and (d) exercise the full APNILEAP governance loop so the model itself is validated.
+3.2 In scope / out of scope
+In scope (MVP)
+Out of scope (future / stretch)
+Shopper registration, login, profile
+Multi-vendor / marketplace sellers
+Product catalogue with categories
+Product reviews and ratings
+Search, filter and sort
+Recommendation engine / personalisation
+Product detail with images and stock
+Wishlists, loyalty points, coupons engine
+Cart (guest + authenticated)
+Subscriptions and recurring billing
+Checkout with address and order summary
+Multi-currency and tax-by-jurisdiction
+Online payment via Razorpay
+Logistics / courier integration
+Order placement, history and status
+Returns and refunds workflow (manual only)
+Admin: product, inventory, order management
+Advanced analytics dashboards
+3.3 Personas
+Shopper (Riya, 24)
+Browses on her phone, wants fast search, clear product pages and a frictionless checkout. Cares that her payment is secure and that she can see her order status afterwards.
+Store Administrator (Mr. Kulkarni, store operations)
+Manages a few hundred SKUs from a laptop. Needs to add and edit products, adjust stock, and move orders through fulfilment states without touching a database.
+3.4 Functional requirements
+ID
+Area
+Requirement
+Priority
+FR-01
+Accounts
+A shopper can register, verify email, log in and log out using JWT-based sessions.
+Must
+FR-02
+Accounts
+A shopper can view and edit their profile and saved delivery addresses.
+Must
+FR-03
+Catalogue
+The system lists products with image, name, price and stock status, paginated.
+Must
+FR-04
+Catalogue
+A shopper can search by keyword and filter by category and price range, and sort by price or recency.
+Must
+FR-05
+Catalogue
+A product detail page shows description, gallery, price, availability and an add-to-cart control.
+Must
+FR-06
+Cart
+A shopper can add, update quantity and remove items; the cart persists for guests (cookie) and authenticated users (server).
+Must
+FR-07
+Checkout
+Checkout collects a delivery address, shows an itemised summary with totals, and creates an order.
+Must
+FR-08
+Payment
+The shopper pays online via Razorpay; the order is confirmed only after server-side signature verification.
+Must
+FR-09
+Orders
+A shopper can view order history and the current status of each order.
+Must
+FR-10
+Admin
+An admin can create, edit, deactivate and delete products and manage stock levels.
+Must
+FR-11
+Admin
+An admin can view all orders and advance their fulfilment status.
+Must
+FR-12
+Notify
+The shopper receives an order-confirmation email after successful payment.
+Should
+3.5 Non-functional requirements
+ID
+Quality attribute
+Target
+NFR-01
+Performance
+P95 API latency < 400 ms under 50 concurrent users; catalogue page interactive < 2.5 s on 4G.
+NFR-02
+Availability
+99.5% monthly for the production environment; graceful degradation if payment provider is down.
+NFR-03
+Security
+OWASP Top-10 mitigations; all secrets in a vault; HTTPS only; payment signature verified server-side.
+NFR-04
+Scalability
+Stateless API horizontally scalable; cart/session state in Redis, not in app memory.
+NFR-05
+Maintainability
+ΓëÑ 70% unit-test coverage on backend services; linted, formatted, code-reviewed via PRs.
+NFR-06
+Observability
+Structured logs, health/readiness probes, basic metrics exported to Prometheus.
+NFR-07
+Accessibility
+WCAG 2.1 AA for primary shopper journeys; keyboard navigable; semantic HTML.
+NFR-08
+Privacy
+Personal data minimised; passwords hashed (bcrypt/argon2); right-to-erasure supported on request.
+3.6 Assumptions and constraints
+Single currency (INR) and a single warehouse/inventory pool for the MVP.
+Razorpay test mode is used throughout development; production keys are injected only in the PROD environment.
+Email delivery uses a transactional provider sandbox (e.g., a test SMTP) during the engagement.
+The team comprises one faculty PI and three to four students for a 12-week window.
+4. Solution Architecture
+4.1 Architecture principles
+API-first: every UI capability is backed by a versioned REST endpoint, mirroring the APNILEAP imperative.
+Stateless services: the backend holds no per-user state in memory; sessions and carts live in Redis so any instance can serve any request.
+Modular monolith for the MVP: a single Spring Boot deployable organised into clear modules, chosen over microservices to keep a student team productive while preserving clean seams for later extraction.
+Secure by default: deny-by-default authorization, server-side validation of every mutation, and payment confirmation that never trusts the client.
+Twelve-factor configuration: all environment-specific values come from config/secret stores, never the code.
+4.2 System context
+ApniCart sits between its users and a small set of external services. APNILEAP surrounds the whole engagement as the governance layer but is not a runtime dependency of the application itself.
+                         +---------------------------+
+        Shopper  ΓöÇΓöÇΓöÇΓöÇΓöÇΓû║   |                           |  ΓöÇΓöÇΓöÇΓöÇΓöÇΓû║  Razorpay (payments)
+     (browser/mobile)     |       ApniCart MVP        |
+                         |  Next.js  +  Spring Boot  |  ΓöÇΓöÇΓöÇΓöÇΓöÇΓû║  Object storage (images)
+        Admin    ΓöÇΓöÇΓöÇΓöÇΓöÇΓû║   |  PostgreSQL + Redis       |
+      (web console)       |                           |  ΓöÇΓöÇΓöÇΓöÇΓöÇΓû║  Email provider (SMTP)
+                         +-------------+-------------+
+                                       Γöé governance events (out of band)
+                                       Γû╝
+                       APNILEAP  +  Jira  +  Confluence  +  GitHub
+4.3 Container view
+Container
+Technology
+Responsibility
+Web client
+Next.js 14 (App Router), React, TypeScript, Tailwind
+Server-rendered storefront and admin console; talks to the API over HTTPS/JSON.
+API service
+Spring Boot 3, Java 21, Spring Web/Security/Data
+All business logic: catalogue, cart, checkout, orders, payments, admin, auth.
+Relational DB
+PostgreSQL 16
+System of record for users, products, carts, orders, payments. Flyway-managed schema.
+Cache / session
+Redis 7
+Guest and user cart state, session/refresh-token store, hot catalogue fragments, rate-limit counters.
+Object storage
+Azure Blob (MinIO in dev)
+Product images and any uploaded assets, served via CDN/signed URLs.
+Payment gateway
+Razorpay
+Payment order creation and capture; webhooks confirm settlement.
+Email
+SMTP / transactional API
+Order confirmation and account emails.
+4.4 Backend module decomposition
+The single deployable is partitioned into cohesive modules. Each owns its entities and exposes a service interface; cross-module calls go through services, not repositories, so a module could later become its own microservice with minimal change.
+Module
+Responsibility
+auth
+Registration, login, JWT issue/refresh, password reset, role assignment.
+catalog
+Products, categories, inventory; full-text search and faceted filtering.
+cart
+Cart aggregate, line-item operations, guest-to-user cart merge on login.
+order
+Order creation from a cart, order state machine, history queries.
+payment
+Razorpay order creation, signature verification, payment records, webhook handling.
+admin
+Administrative product/inventory/order operations, guarded by ROLE_ADMIN.
+notification
+Outbound email composition and dispatch on domain events.
+platform
+Cross-cutting: security config, exception handling, audit log, health and metrics.
+4.5 Technology stack and rationale
+Layer
+Choice
+Why
+Frontend
+Next.js + TypeScript + Tailwind
+Matches the APNILEAP web stack (apnileap-web-app); SSR for SEO and fast first paint; type safety for a student team.
+State/data
+TanStack Query + Zustand
+Server-cache for API data; light client store for the cart UI.
+Backend
+Spring Boot 3 / Java 21
+Industry-standard at Infosys; rich security and data ecosystem; strong learning value.
+Persistence
+Spring Data JPA + Flyway
+Productive ORM plus versioned, reviewable migrations.
+Database
+PostgreSQL 16
+Reliable, free, supports full-text search and JSONB; same engine APNILEAP standardises on.
+Cache
+Redis 7
+Fast shared state for carts/sessions; keeps the API stateless.
+Payments
+Razorpay
+First-class India support; clean test mode; webhook + signature model.
+CI/CD
+GitHub Actions
+Native to the chosen source host; OIDC deploy to Azure with no long-lived secrets.
+Runtime
+Docker on Azure Container Apps
+Simple container hosting with autoscale; matches the platformΓÇÖs Azure posture.
+4.6 Order state machine
+An orderΓÇÖs lifecycle is explicit and guarded; only the transitions below are legal, and each is recorded for audit.
+CREATED ΓöÇΓöÇΓû║ PAYMENT_PENDING ΓöÇΓöÇΓû║ PAID ΓöÇΓöÇΓû║ PACKED ΓöÇΓöÇΓû║ SHIPPED ΓöÇΓöÇΓû║ DELIVERED
+    Γöé              Γöé                                                    
+    Γöé              ΓööΓöÇΓöÇΓû║ PAYMENT_FAILED ΓöÇΓöÇΓû║ (retry) ΓöÇΓöÇΓû║ PAYMENT_PENDING   
+    ΓööΓöÇΓöÇΓû║ CANCELLED  (allowed before SHIPPED)                            
+Transition
+Guard / effect
+CREATED ΓåÆ PAYMENT_PENDING
+Razorpay order created; awaiting client payment.
+PAYMENT_PENDING ΓåÆ PAID
+Server verifies the Razorpay signature; stock is decremented atomically; confirmation email queued.
+PAYMENT_PENDING ΓåÆ PAYMENT_FAILED
+Gateway reports failure or signature mismatch; stock is not touched.
+PAID ΓåÆ PACKED ΓåÆ SHIPPED ΓåÆ DELIVERED
+Admin-driven fulfilment progression.
+ΓåÆ CANCELLED
+Permitted up to SHIPPED; restores stock if it had been decremented.
+4.7 Key sequence flows
+4.7.1 Checkout and payment
+The client posts the cart to POST /api/v1/orders. The API validates stock and prices server-side and creates an order in CREATED.
+The API calls Razorpay to create a payment order and returns the Razorpay order id and amount to the client; the order moves to PAYMENT_PENDING.
+The client opens the Razorpay checkout widget and the shopper pays. Razorpay returns a payment id and signature to the client.
+The client posts these to POST /api/v1/payments/verify. The API recomputes the HMAC-SHA256 signature with the secret key and compares.
+On match, the order moves to PAID inside a single transaction that also decrements stock; a confirmation email is queued. On mismatch, the order moves to PAYMENT_FAILED and nothing is fulfilled.
+Independently, Razorpay calls POST /api/v1/payments/webhook; the API verifies that signature too, making settlement confirmation idempotent and resilient to a dropped client response.
+Client            API (Spring)         PostgreSQL        Razorpay
+  Γöé  POST /orders     Γöé                    Γöé                Γöé
+  Γöé ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓû║Γöé  validate+persist  Γöé                Γöé
+  Γöé                   Γöé ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓû║Γöé (order CREATED)Γöé
+  Γöé                   Γöé  create pay order  Γöé                Γöé
+  Γöé                   Γöé ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓû║Γöé
+  Γöé  rzp order id     ΓöéΓùäΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöé
+  ΓöéΓùäΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöé                    Γöé (PAYMENT_PENDING)
+  Γöé  pay (widget)     Γöé                    Γöé                Γöé
+  Γöé ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓö╝ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓû║Γöé
+  Γöé  id+signature     Γöé                    Γöé                Γöé
+  Γöé ΓöÇPOST /verifyΓöÇΓöÇΓöÇΓöÇΓû║Γöé verify HMAC        Γöé                Γöé
+  Γöé                   Γöé tx: PAID + stock-- Γöé                Γöé
+  Γöé  confirmed        Γöé ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓû║Γöé                Γöé
+  ΓöéΓùäΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöé                    Γöé                Γöé
+5. Data Design
+5.1 Entity-relationship overview
+The schema is normalised around a handful of aggregates. A user places many orders; an order is composed of order items that reference products; a cart mirrors that shape for the pre-purchase phase; a payment belongs to exactly one order.
+users ΓöÇΓöÇ1:nΓöÇΓöÇ orders ΓöÇΓöÇ1:nΓöÇΓöÇ order_items ΓöÇΓöÇn:1ΓöÇΓöÇ products ΓöÇΓöÇn:1ΓöÇΓöÇ categories
+  Γöé                Γöé                                  Γöé
+  Γöé 1:n            Γöé 1:1                               Γöé 1:n
+  Γû╝                Γû╝                                   Γû╝
+addresses       payments                          inventory (stock)
+carts ΓöÇΓöÇ1:nΓöÇΓöÇ cart_items ΓöÇΓöÇn:1ΓöÇΓöÇ products      (cart keyed by user_id or guest token)
+5.2 Core tables
+Representative DDL for the central entities (Flyway migration V1). Audit columns (created_at, updated_at) are present on every table.
+CREATE TABLE users (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email         VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  full_name     VARCHAR(160) NOT NULL,
+  role          VARCHAR(20)  NOT NULL DEFAULT 'CUSTOMER', -- CUSTOMER | ADMIN
+  email_verified BOOLEAN     NOT NULL DEFAULT FALSE,
+  created_at    TIMESTAMPTZ  NOT NULL DEFAULT now()
+);
+CREATE TABLE categories (
+  id    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name  VARCHAR(120) NOT NULL,
+  slug  VARCHAR(140) UNIQUE NOT NULL
+);
+CREATE TABLE products (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category_id UUID REFERENCES categories(id),
+  sku         VARCHAR(64) UNIQUE NOT NULL,
+  name        VARCHAR(200) NOT NULL,
+  description TEXT,
+  price       NUMERIC(12,2) NOT NULL CHECK (price >= 0),
+  stock_qty   INTEGER NOT NULL DEFAULT 0 CHECK (stock_qty >= 0),
+  image_urls  JSONB NOT NULL DEFAULT '[]',
+  active      BOOLEAN NOT NULL DEFAULT TRUE,
+  search_tsv  tsvector GENERATED ALWAYS AS
+              (to_tsvector('english', name || ' ' || coalesce(description,''))) STORED
+);
+CREATE INDEX idx_products_search ON products USING GIN (search_tsv);
+CREATE INDEX idx_products_category ON products (category_id) WHERE active;
+CREATE TABLE orders (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     UUID NOT NULL REFERENCES users(id),
+  status      VARCHAR(20) NOT NULL DEFAULT 'CREATED',
+  total_amount NUMERIC(12,2) NOT NULL,
+  ship_address JSONB NOT NULL,
+  placed_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TABLE order_items (
+  id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id   UUID NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  product_id UUID NOT NULL REFERENCES products(id),
+  unit_price NUMERIC(12,2) NOT NULL,  -- price captured at purchase time
+  quantity   INTEGER NOT NULL CHECK (quantity > 0)
+);
+CREATE TABLE payments (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  order_id      UUID NOT NULL UNIQUE REFERENCES orders(id),
+  rzp_order_id  VARCHAR(64) NOT NULL,
+  rzp_payment_id VARCHAR(64),
+  status        VARCHAR(20) NOT NULL,  -- PENDING | CAPTURED | FAILED
+  amount        NUMERIC(12,2) NOT NULL
+);
+5.3 Indexing and search strategy
+Product search uses a generated tsvector column with a GIN index for relevance-ranked full-text queries ΓÇö sufficient for the MVP catalogue. Elasticsearch is the documented upgrade path if the catalogue grows.
+Category and price filters are served by partial and composite B-tree indexes restricted to active products.
+Order-item prices are denormalised onto the line (unit_price) so historical orders are immune to later price changes.
+Hot reads (home page, category listings) are cached in Redis with short TTLs and explicit invalidation on admin writes.
+6. API Design
+6.1 Conventions
+Base path /api/v1; JSON request and response bodies; resource-oriented nouns.
+Authentication via a short-lived JWT access token (Authorization: Bearer) with a refresh token held in an HttpOnly cookie.
+Standard error envelope: { "timestamp", "status", "error", "message", "path", "traceId" }.
+List endpoints are paginated with page and size and return total counts; mutating endpoints validate input with Bean Validation and return 422 on violations.
+6.2 Endpoint catalogue
+Endpoint
+Method
+Purpose
+Access
+/auth/register
+POST
+Create a shopper account
+Public
+/auth/login
+POST
+Authenticate, issue tokens
+Public
+/auth/refresh
+POST
+Rotate access token
+Cookie
+/products
+GET
+List/search/filter products
+Public
+/products/{id}
+GET
+Product detail
+Public
+/categories
+GET
+List categories
+Public
+/cart
+GET
+Get current cart
+Public/Auth
+/cart/items
+POST
+Add item to cart
+Public/Auth
+/cart/items/{id}
+PUT / DELETE
+Update qty / remove item
+Public/Auth
+/orders
+POST
+Create order from cart
+Customer
+/orders
+GET
+List my orders
+Customer
+/orders/{id}
+GET
+Order detail + status
+Customer/Admin
+/payments/verify
+POST
+Verify Razorpay signature
+Customer
+/payments/webhook
+POST
+Razorpay settlement callback
+Razorpay (HMAC)
+/admin/products
+POST / PUT / DELETE
+Manage catalogue
+Admin
+/admin/orders/{id}/status
+PATCH
+Advance fulfilment
+Admin
+6.3 Representative payloads
+6.3.1 Create order ΓÇö request
+POST /api/v1/orders
+Authorization: Bearer <access-token>
+{
+  "items": [
+    { "productId": "a1f2...", "quantity": 2 },
+    { "productId": "b7c9...", "quantity": 1 }
+  ],
+  "shippingAddress": {
+    "line1": "5th Block, Hubballi", "city": "Hubballi",
+    "state": "Karnataka", "pincode": "580031", "phone": "+91..."
+  }
+}
+6.3.2 Create order ΓÇö response
+201 Created
+{
+  "orderId": "o-9931",
+  "status": "PAYMENT_PENDING",
+  "amount": 2598.00,
+  "currency": "INR",
+  "razorpayOrderId": "order_NcP..."   // hand off to the checkout widget
+}
+6.3.3 Payment verification
+POST /api/v1/payments/verify
+{
+  "razorpayOrderId":   "order_NcP...",
+  "razorpayPaymentId": "pay_NcQ...",
+  "razorpaySignature": "e9a8..."   // server recomputes HMAC_SHA256(order|payment, secret)
+}
+// 200 -> { "orderId": "o-9931", "status": "PAID" }
+// 400 -> signature mismatch, order moves to PAYMENT_FAILED
+7. Frontend Design
+7.1 Application structure and routing
+The web client uses the Next.js App Router with a route group for the storefront and a protected group for the admin console. Server components render catalogue pages for speed and SEO; interactive islands (cart, checkout, admin forms) are client components.
+app/
+  (shop)/                 # storefront
+    page.tsx              # home / featured
+    products/page.tsx     # listing + search + filters
+    products/[id]/page.tsx# product detail
+    cart/page.tsx
+    checkout/page.tsx
+    orders/page.tsx       # my orders (auth)
+  (admin)/                # ROLE_ADMIN only
+    admin/products/...
+    admin/orders/...
+  (auth)/ login, register
+components/   ui/, product/, cart/, admin/
+lib/          api-client.ts, auth.ts, money.ts
+store/        cart-store.ts (Zustand)
+7.2 State management and data fetching
+TanStack Query owns all server data ΓÇö caching, background refetch and optimistic updates for cart mutations.
+A small Zustand store mirrors the cart for instant UI feedback; it reconciles with the server cart on login (guest cart merge).
+A typed API client wraps fetch, attaches the bearer token, and transparently refreshes it on a 401 before retrying once.
+7.3 Key screens and components
+Screen
+Notable components / behaviour
+Home
+Featured products, category tiles, search bar; server-rendered.
+Listing
+Faceted filters (category, price), sort control, infinite or paged grid, skeleton loaders.
+Product detail
+Image gallery, price, stock badge, quantity stepper, add-to-cart with toast.
+Cart
+Editable line items, live subtotal, proceed-to-checkout guard for empty carts.
+Checkout
+Address form with validation, order summary, Razorpay widget, success/failure states.
+Orders
+Status timeline per order; reorder shortcut.
+Admin
+Data tables with inline edit, product form with image upload, order status transitions.
+7.4 Accessibility and responsiveness
+Mobile-first Tailwind breakpoints; the primary purchase journey is fully usable at 360 px width.
+Semantic landmarks, labelled form controls, visible focus states and keyboard-operable menus and dialogs to meet WCAG 2.1 AA (NFR-07).
+Colour contrast verified against AA; non-colour cues accompany status (icons + text).
+8. Security Design
+Security mirrors APNILEAPΓÇÖs zero-trust posture, scaled to an MVP. The guiding rule is that the server trusts nothing from the client ΓÇö every price, total and payment outcome is recomputed or verified server-side.
+8.1 Authentication and authorization
+Passwords are hashed with bcrypt (work factor ΓëÑ 12); plaintext is never stored or logged.
+A short-lived JWT access token (15 min) carries the user id and role; a rotating refresh token lives in an HttpOnly, Secure, SameSite cookie.
+Spring Security enforces method-level authorization: shopper endpoints require ROLE_CUSTOMER, admin endpoints require ROLE_ADMIN, deny-by-default everywhere else.
+Object-level checks ensure a shopper can only read their own orders and cart ΓÇö the equivalent of APNILEAPΓÇÖs row-level isolation at the application tier.
+8.2 Payment security
+The amount sent to Razorpay is computed from the server-side cart, never from a client-supplied total.
+Order confirmation requires a valid HMAC-SHA256 signature computed with the secret key; a mismatch fails the order.
+The webhook endpoint independently verifies its own signature and is idempotent, so a replayed or duplicated callback cannot double-fulfil or double-charge.
+Razorpay keys are environment secrets; the secret key never reaches the browser.
+8.3 Data protection
+TLS everywhere; HSTS on the production domain.
+Secrets (DB credentials, JWT signing key, Razorpay keys) come from Azure Key Vault / GitHub OIDC, never from the repository.
+Personal data is minimised; an erasure request anonymises the user record while preserving order integrity for accounting.
+Audit log records security-relevant events (login, role change, admin mutation, payment outcome).
+8.4 OWASP Top-10 mitigations
+Risk
+Mitigation in ApniCart
+Broken access control
+Deny-by-default Spring Security; per-resource ownership checks; admin routes role-gated.
+Cryptographic failures
+bcrypt password hashing; TLS in transit; secrets in a vault.
+Injection
+Parameterised JPA queries; Bean Validation on all inputs; output encoding in React.
+Insecure design
+Server-side price/total recomputation; explicit order state machine; idempotent webhooks.
+Security misconfiguration
+Hardened container images; no default credentials; environment-scoped config.
+Vulnerable components
+Dependabot + CodeQL in CI; pinned dependency versions.
+Auth failures
+Rate-limited login (Redis counters); short-lived tokens; refresh rotation.
+Integrity failures
+Signed commits on main; provenance via CI; verified webhook signatures.
+Logging/monitoring gaps
+Structured logs with trace ids; health/metrics endpoints; alerting on error spikes.
+SSRF
+No user-controlled outbound URLs; allow-listed external hosts (Razorpay, storage, SMTP).
+9. Tooling & Delivery Workflow
+This section is the heart of the APNILEAP value proposition: the same three Atlassian and developer tools the platform standardises on ΓÇö GitHub, Jira and Confluence ΓÇö are provisioned and kept in sync automatically so the engagement is auditable end to end.
+9.1 GitHub: source, branching and CI/CD
+9.1.1 Repository
+On award, APNILEAPΓÇÖs IaC provisioner creates apnileap-ecom-apnicart in the apnileap-os organization from the standard baseline. The baseline applies branch protection, a CODEOWNERS file, PR/issue templates, and enables Dependabot, secret scanning and CodeQL automatically.
+apnileap-ecom-apnicart/
+  apps/web/            # Next.js client
+  services/api/        # Spring Boot service
+  db/migrations/       # Flyway SQL
+  infra/               # Dockerfiles, container-app manifests
+  .github/workflows/   # ci.yml, deploy.yml
+  CODEOWNERS  README.md  CONTRIBUTING.md
+9.1.2 Branching and pull requests
+Trunk-based development on main, which is always deployable; direct commits to main are prohibited.
+Short-lived branches named feature/ECOM-<issue>-<slug>, tying every branch to a Jira issue so commits and PRs link back automatically.
+Merge to main requires: green CI, ΓëÑ 1 approval from a Core Maintainer (the PI or Liaison via CODEOWNERS), linear history and signed commits.
+9.1.3 CI/CD pipeline
+Stage
+Action
+CI ΓÇö on PR
+Install, lint, unit + integration tests, build both apps, CodeQL scan, Dependabot check. Status reported back to the PR and the linked Jira issue.
+CD ΓÇö on merge to main
+Build and push Docker images; deploy to DEV automatically; promote to QA/UAT on tag; PROD deploy is a manual approval gated by the PI and Liaison.
+Secrets
+GitHub OIDC federates to Azure ΓÇö no long-lived cloud credentials are stored in the repo.
+9.2 Jira: execution engine
+A dedicated Jira project (key ECOM, Scrum, team-managed) is created on award. Milestones become Epics; work breaks down into Stories and Tasks; the team runs two-week sprints. State changes flow back to APNILEAP through webhooks so governance dashboards stay current.
+9.2.1 Hierarchy and roles
+APNILEAP entity
+Jira primitive
+Synchronisation rule
+Collaboration project
+Jira project (key ECOM)
+1:1; key prefix generated by the platform.
+Milestone
+Epic
+1:n; one milestone may contain several Epics.
+Work package
+Story / Task
+Hierarchical children of an Epic.
+Principal Investigator
+Project Admin
+Full read/write and workflow-transition rights.
+Industry Liaison
+Reviewer
+Can move issues into/through review.
+Industry Sponsor
+Viewer / Stakeholder
+Read-only dashboard access.
+Student developer
+Developer
+Standard software-project permissions.
+9.2.2 Epics and sample stories
+Epic
+Title (= milestone)
+Representative stories
+ECOM-E1
+Foundation & Auth
+Repo + CI/CD skeleton; DB schema V1; register/login; JWT + refresh; deploy to DEV.
+ECOM-E2
+Catalogue & Search
+Product/category APIs; full-text search; listing UI; filters; product detail page.
+ECOM-E3
+Cart & Checkout
+Cart aggregate + Redis; add/update/remove; guest-cart merge; checkout + address; order creation.
+ECOM-E4
+Payments & Orders
+Razorpay order; verify signature; webhook; order state machine; order history; email.
+ECOM-E5
+Admin, Hardening & UAT
+Admin product/inventory/order screens; OWASP pass; a11y pass; load test; UAT + handover.
+9.2.3 Workflow and state synchronisation
+Issues follow To Do ΓåÆ In Progress ΓåÆ In Review ΓåÆ Done. When an Epic reaches Done, a Jira webhook notifies APNILEAP, which opens the corresponding MILESTONE_REVIEW. A reconciliation job polls Jira via JQL every 15 minutes as a fallback for any missed webhook, guaranteeing eventual consistency.
+Jira Epic: To Do ΓöÇΓû║ In Progress ΓöÇΓû║ In Review ΓöÇΓû║ Done
+                                                 Γöé webhook: jira:issue_updated (status=Done)
+                                                 Γû╝
+APNILEAP:  IN_EXECUTION ΓöÇΓû║ MILESTONE_REVIEW ΓöÇΓû║ (Liaison approves) ΓöÇΓû║ funds released ΓöÇΓû║ next milestone
+Fallback JQL (every 15 min):
+  project = ECOM AND issuetype = Epic AND status = Done AND updated >= -15m
+9.2.4 Provisioning payloads (illustrative)
+POST /rest/api/3/project          // create the Jira project on award
+{
+  "key": "ECOM",
+  "name": "ApniCart B2C Storefront (Infosys x KLE)",
+  "projectTypeKey": "software",
+  "projectTemplateKey": "com.pyxis.greenhopper.jira:gh-simplified-scrum",
+  "description": "Collaborative e-commerce project, brokered by APNILEAP.",
+  "leadAccountId": "<KLE PI account id>",
+  "url": "https://platform.apnileap.com/projects/ecom"
+}
+POST /rest/api/3/issue            // milestone -> Epic
+{ "fields": {
+    "project": { "key": "ECOM" },
+    "summary": "M2: Catalogue & Search",
+    "issuetype": { "name": "Epic" },
+    "duedate": "2026-08-15" } }
+9.3 Confluence: knowledge base
+A Confluence space (key ECOM) is provisioned under the engagementΓÇÖs tenancy on award, seeded from governance templates. Structured project data lives in APNILEAP and Jira; Confluence captures the unstructured knowledge ΓÇö decisions, minutes, designs and reports ΓÇö that an audit later depends on.
+9.3.1 Space page tree
+ECOM (space)
+Γö£ΓöÇ Project Charter
+Γö£ΓöÇ Statement of Work & MoU
+Γö£ΓöÇ Architecture Decision Records (ADR-001, ADR-002, ...)
+Γö£ΓöÇ Design
+Γöé   Γö£ΓöÇ This Design Document (linked)
+Γöé   ΓööΓöÇ API & Data references
+Γö£ΓöÇ Sprints
+Γöé   Γö£ΓöÇ Sprint 1 .. Sprint 6 (plan + review + retro)
+Γö£ΓöÇ Meeting Minutes (weekly sync, milestone gates)
+Γö£ΓöÇ Test Plan & Reports
+Γö£ΓöÇ Risk Register (synced view)
+ΓööΓöÇ Acceptance & Closure Report
+9.3.2 Integration mechanics
+APNILEAP talks to the Confluence Cloud REST API v2 through an egress gateway that injects OAuth tokens, throttles with a token-bucket and circuit-breaks on Atlassian downtime.
+Identities are synchronised via SCIM 2.0: when a student is onboarded in APNILEAP, a matching Atlassian account and space permission are provisioned; on closure they are de-provisioned.
+Confluence page-update webhooks are HMAC-SHA256 verified and published to a Kafka topic, keeping enterprise search and in-app notifications current.
+Governance artefacts (charter, milestone-gate minutes) are generated programmatically from templates so every project has a consistent, audit-ready record.
+9.4 Provisioning automation on award
+All three tools are created by a single asynchronous workflow when the marketplace transitions the project to AWARDED, so the team starts Sprint 1 against fully wired infrastructure with zero manual setup.
+Marketplace emits a ProjectAwardedEvent on Kafka.
+The provisioning orchestrator creates the GitHub repo (Terraform), the Jira project and its milestone Epics (REST v3), and the Confluence space with seeded pages (REST v2).
+SCIM provisions Atlassian accounts and maps APNILEAP roles to Jira roles, GitHub teams and Confluence permissions.
+Webhooks are registered on Jira and Confluence; the orchestrator persists the returned project key, repo URL and space key against the APNILEAP project record.
+A kickoff notification with all three links is dispatched to the team.
+10. Project Plan
+10.1 Milestones and acceptance gates
+The 12-week engagement is divided into five funded milestones. Each maps to a Jira Epic, has explicit acceptance criteria verified by the Infosys Liaison, and releases a funding tranche on approval (see Section 2.5).
+M
+Epic
+Acceptance criteria
+Gate
+M1
+ECOM-E1 Foundation & Auth
+CI/CD green; schema migrated; register/login works; app reachable on DEV.
+End wk 2
+M2
+ECOM-E2 Catalogue & Search
+Products list, search, filter and detail work against real data; cached reads.
+End wk 4
+M3
+ECOM-E3 Cart & Checkout
+Cart add/update/remove; guest merge; checkout creates an order with correct totals.
+End wk 6
+M4
+ECOM-E4 Payments & Orders
+End-to-end paid order via Razorpay test mode; signature + webhook verified; history visible.
+End wk 9
+M5
+ECOM-E5 Admin & UAT
+Admin manages catalogue/orders; OWASP + a11y pass; UAT signed; handover complete.
+End wk 12
+10.2 Sprint plan
+Six two-week sprints. Sprint 0 activities (charter, environments) are absorbed into Sprint 1 since provisioning is automated.
+Sprint
+Weeks
+Focus
+Milestone
+S1
+1ΓÇô2
+Repo, CI/CD, schema, auth, DEV deploy
+M1
+S2
+3ΓÇô4
+Catalogue APIs, search, listing + detail UI
+M2
+S3
+5ΓÇô6
+Cart, Redis, checkout, order creation
+M3
+S4
+7ΓÇô8
+Razorpay order + verify + webhook; order FSM
+M4
+S5
+9ΓÇô10
+Order history, email, admin product/order screens
+M4ΓåÆM5
+S6
+11ΓÇô12
+Hardening, a11y, load test, UAT, handover
+M5
+10.3 Indicative schedule
+Week:      1   2   3   4   5   6   7   8   9  10  11  12
+M1 Found.  ΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+M2 Catalog         ΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+M3 Cart                    ΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+M4 Pay/Ord                         ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+M5 Admin/UAT                                   ΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûêΓûê
+Gates:        Γû▓       Γû▓       Γû▓           Γû▓           Γû▓
+             M1      M2      M3          M4          M5
+10.4 RACI matrix
+R = Responsible, A = Accountable, C = Consulted, I = Informed.
+Activity
+Students
+PI (KLE)
+Liaison (Infosys)
+PMO
+Requirements clarification
+C
+A
+R
+I
+Design decisions / ADRs
+R
+A
+C
+I
+Implementation
+R
+A
+I
+I
+Code review / PR approval
+C
+R
+C
+I
+Milestone verification
+I
+C
+R
+A
+Funds release
+I
+I
+C
+A
+UAT sign-off
+C
+C
+A
+I
+Closure & IP transfer
+I
+C
+C
+A
+10.5 Definition of Done
+Code merged to main via an approved PR with green CI and no high/critical CodeQL findings.
+Unit/integration tests added; backend coverage held at ΓëÑ 70% (NFR-05).
+Acceptance criteria for the linked story met and demoed.
+Relevant Confluence page (sprint review / ADR) updated; the Jira issue transitioned to Done.
+Deployed to DEV and smoke-tested.
+11. Quality & Testing
+11.1 Test strategy
+Testing follows the pyramid: a broad base of fast unit tests, a focused band of integration tests around the API and database, and a thin layer of end-to-end tests covering the critical purchase journey. Quality gates in CI block merges that regress coverage or introduce known vulnerabilities.
+11.2 Test types and tooling
+Layer
+Tooling
+What it covers
+Unit (backend)
+JUnit 5 + Mockito
+Service logic: pricing, cart math, state transitions, signature verification.
+Integration
+Spring Boot Test + Testcontainers (PostgreSQL, Redis)
+Repositories, transactions, stock decrement, end-to-end controller flows against a real DB.
+Unit (frontend)
+Vitest + React Testing Library
+Components, cart store, formatting and validation.
+End-to-end
+Playwright
+Register ΓåÆ browse ΓåÆ cart ΓåÆ checkout ΓåÆ pay (test mode) ΓåÆ see order.
+Contract
+Schema assertions on OpenAPI
+Keeps client and server in step on request/response shapes.
+Non-functional
+k6 (load), axe (a11y), OWASP ZAP (baseline scan)
+NFR-01 latency, NFR-07 accessibility, NFR-03 security.
+11.3 Quality gates
+CI fails on any failing test, on coverage below the 70% threshold, or on a new high/critical vulnerability.
+The Razorpay flow is tested against test-mode keys; a mocked gateway covers failure and signature-mismatch paths.
+A pre-release k6 run must keep P95 latency within NFR-01 at the target concurrency.
+12. Risks & Mitigations
+The register is maintained live in Confluence and reviewed at every milestone gate. L = likelihood, I = impact (H/M/L).
+ID
+Risk
+L
+I
+Mitigation
+R1
+Student availability dips during exams
+H
+M
+Front-load critical-path work; buffer in S5; PI re-plans sprint scope.
+R2
+Payment integration edge cases (failed/duplicate)
+M
+H
+Idempotent webhook; explicit FAILED path; test-mode coverage of all branches.
+R3
+Scope creep beyond MVP boundary
+M
+M
+Section 3.2 boundary is contractual; new asks go through change control.
+R4
+Skill gap on Spring Security / JWT
+M
+M
+Liaison mentoring; pairing; ADRs capture decisions; spike in S1.
+R5
+Provisioning/webhook sync gaps
+L
+M
+15-min JQL reconciliation fallback; PMO monitors gate events.
+R6
+IP ambiguity on handover
+L
+H
+TTO + Liaison agree IP terms in the SOW before AWARDED; closure transfers per terms.
+R7
+Environment/secret misconfiguration
+M
+M
+Vault + OIDC; no secrets in repo; environment parity via containers.
+13. Acceptance & Closure
+13.1 Acceptance criteria
+All Must-have functional requirements (FR-01..FR-11) demonstrated end-to-end on UAT.
+Non-functional targets in Section 3.5 met and evidenced (test reports attached in Confluence).
+A successful, signature-verified payment produces a PAID order, decremented stock and a confirmation email.
+Admin can manage the catalogue and advance an order through its fulfilment states.
+Production deployment succeeds through the gated pipeline.
+13.2 IP and handover
+Intellectual-property ownership is fixed in the SOW before the project is awarded, with APNILEAP holding the immutable contribution ledger (commits, documents, approvals) as evidence of authorship. On closure, the GitHub repository is transferred to Infosys per those terms, with KLE and the students retaining the agreed academic and portfolio rights.
+13.3 Closure checklist
+Final milestone (M5) approved by the Liaison; all funds disbursed.
+Closure report published in Confluence; space archived read-only.
+Repository transferred; access for transient collaborators revoked via SCIM de-provisioning.
+Ratings exchanged by both parties to build platform reputation data.
+APNILEAP marks the project COMPLETED then CLOSED.
+13.4 Change control
+Any change to scope, design or plan after baseline is raised as a change request on the Confluence change log, assessed by the PI and Liaison for cost/schedule impact, and approved by the PMO before the affected Jira items are altered. This documentΓÇÖs revision history (Document Control) records each baselined version.
+Appendix A. Environment & Configuration
+Variable
+Purpose
+DATABASE_URL
+PostgreSQL connection string (per environment).
+REDIS_URL
+Redis endpoint for cart/session/cache.
+JWT_SIGNING_KEY
+Secret used to sign access tokens (vault-sourced).
+RAZORPAY_KEY_ID / RAZORPAY_KEY_SECRET
+Payment gateway credentials; secret is server-only.
+RAZORPAY_WEBHOOK_SECRET
+Used to verify inbound webhook signatures.
+STORAGE_BUCKET / STORAGE_KEY
+Object storage for product images.
+SMTP_URL
+Transactional email endpoint.
+Environment segregation: DEV (auto-deploy on merge) ΓåÆ QA ΓåÆ UAT (sponsor testing) ΓåÆ PROD (manual approval). Each environment has its own database, Redis and secrets; no production data flows downstream.
+Appendix B. Repository & Module Layout
+apnileap-ecom-apnicart
+Γö£ΓöÇ apps/web              Next.js storefront + admin
+Γöé   Γö£ΓöÇ app/  components/  lib/  store/
+Γö£ΓöÇ services/api          Spring Boot modular monolith
+Γöé   Γö£ΓöÇ auth/ catalog/ cart/ order/ payment/ admin/ notification/ platform/
+Γöé   ΓööΓöÇ src/test/...      JUnit + Testcontainers
+Γö£ΓöÇ db/migrations         Flyway V1__init.sql, V2__... 
+Γö£ΓöÇ infra                 Dockerfiles, container-app manifests, IaC
+ΓööΓöÇ .github/workflows     ci.yml, deploy.yml
+Appendix C. Traceability
+Each requirement traces to a milestone, an Epic and its verifying tests, so coverage can be audited at any gate.
+Requirement
+Milestone
+Jira Epic
+Verified by
+FR-01, FR-02
+M1
+ECOM-E1
+Auth unit + integration tests; E2E login
+FR-03ΓÇôFR-05
+M2
+ECOM-E2
+Catalogue integration tests; E2E browse
+FR-06, FR-07
+M3
+ECOM-E3
+Cart unit + integration; E2E checkout
+FR-08, FR-09, FR-12
+M4
+ECOM-E4
+Payment signature tests; webhook tests; E2E pay
+FR-10, FR-11
+M5
+ECOM-E5
+Admin integration tests; UAT scenarios
+NFR-01..NFR-08
+M1ΓÇôM5
+Cross-cutting
+k6, axe, ZAP, coverage gate, review checklist
+End of document ΓÇö ApniCart Project Design Document v1.0. Prepared for the Infosys ├ù KLE engagement, brokered by APNILEAP.

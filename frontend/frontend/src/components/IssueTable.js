@@ -63,7 +63,7 @@ function SkeletonRow() {
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
-export default function IssueTable({ issues = [], loading, limit }) {
+export default function IssueTable({ issues = [], loading, limit, onIssueClick }) {
   const [search, setSearch]     = useState('');
   const [sortKey, setSortKey]   = useState('key');
   const [sortDir, setSortDir]   = useState('asc');
@@ -209,7 +209,7 @@ export default function IssueTable({ issues = [], loading, limit }) {
                 const priorityMeta = getPriority(priority);
 
                 return (
-                  <tr key={issue.id || idx}>
+                  <tr key={issue.id || idx} onClick={() => onIssueClick?.(issue)} style={{ cursor: 'pointer' }}>
                     <td>
                       <span className="issue-key">{issue.key || '—'}</span>
                     </td>

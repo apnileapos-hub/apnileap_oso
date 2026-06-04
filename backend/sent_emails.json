@@ -1,0 +1,74 @@
+[
+  {
+    "id": "email-1780249502886-756",
+    "to": "team-test@college.edu",
+    "subject": "Project Assigned to Team: test",
+    "body": "Hi Team TEST,\n\nThe B2B project \"test\" has been assigned to your team.\nPlease review the Jira Epics and start working on tasks.\n\nBest regards,\nSpoke Administrator",
+    "type": "team_assignment",
+    "timestamp": "2026-05-31T17:45:02.886Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-1780249257225-304",
+    "to": "spoc-coep@college.edu",
+    "subject": "New Project Assigned: Apnicart",
+    "body": "Dear Prof. Sharad Joshi,\n\nThe B2B project \"Apnicart\" from Infosys has been assigned to COEP Spoke (Mock).\nPlease log into the portal to review the Epics, sync them to Jira, and assign a team.\n\nBest regards,\nApni Leap Moderator Portal",
+    "type": "allocation",
+    "timestamp": "2026-05-31T17:40:57.226Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-1780248958282-144",
+    "to": "spoc-kle@college.edu",
+    "subject": "New Project Assigned: test",
+    "body": "Dear Dr. Ramesh Patil,\n\nThe B2B project \"test\" from infosys has been assigned to KLE Spoke (Live).\nPlease log into the portal to review the Epics, sync them to Jira, and assign a team.\n\nBest regards,\nApni Leap Moderator Portal",
+    "type": "allocation",
+    "timestamp": "2026-05-31T17:35:58.282Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-1780034943824-237",
+    "to": "spoc-kle@college.edu",
+    "subject": "New Project Assigned: TESTING",
+    "body": "Dear Dr. Ramesh Patil,\n\nThe B2B project \"TESTING\" from NVIDIA has been assigned to KLE Spoke (Live).\nPlease log into the portal to review the Epics, sync them to Jira, and assign a team.\n\nBest regards,\nApni Leap Moderator Portal",
+    "type": "allocation",
+    "timestamp": "2026-05-29T06:09:03.824Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-1779860305962-876",
+    "to": "spoc-kle@college.edu",
+    "subject": "New Project Assigned: Edge AI Smart Agriculture System",
+    "body": "Dear Dr. Ramesh Patil,\n\nThe B2B project \"Edge AI Smart Agriculture System\" from NVIDIA has been assigned to KLE Spoke (Live).\nPlease log into the portal to review the Epics, sync them to Jira, and assign a team.\n\nBest regards,\nApni Leap Moderator Portal",
+    "type": "allocation",
+    "timestamp": "2026-05-27T05:38:25.962Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-1779859339112-445",
+    "to": "moderator@apnileap.com",
+    "subject": "Reminder: Project Cloud-Native Health Tracking API Awaiting Allocation",
+    "body": "The B2B proposal \"Cloud-Native Health Tracking API\" from Google is pending review. Please assign it to a Spoke.",
+    "type": "reminder",
+    "timestamp": "2026-05-27T05:22:19.112Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-1779859339110-444",
+    "to": "moderator@apnileap.com",
+    "subject": "Reminder: Project Edge AI Smart Agriculture System Awaiting Allocation",
+    "body": "The B2B proposal \"Edge AI Smart Agriculture System\" from NVIDIA is pending review. Please assign it to a Spoke.",
+    "type": "reminder",
+    "timestamp": "2026-05-27T05:22:19.110Z",
+    "status": "sent"
+  },
+  {
+    "id": "email-initial-01",
+    "to": "spoc-kle@college.edu",
+    "subject": "New Project Allocation: Automotive VLSI Controller Chip",
+    "body": "Dear Dr. Ramesh Patil,\n\nThe project 'Automotive VLSI Controller Chip' has been allocated to KLE Spoke (Live) by the Apni Leap Moderator Portal. Please review the project details, configure the Epics, and allocate to your development teams.\n\nBest Regards,\nApni Leap Hub",
+    "type": "allocation",
+    "timestamp": "2026-05-26T12:00:00.000Z",
+    "status": "sent"
+  }
+]

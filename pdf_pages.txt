@@ -1,0 +1,427 @@
+﻿Total pages: 208
+--- PAGE 2 ---
+Contents
+I Business Architecture 1
+1 Executive Summary 2
+1.1 Introduction to APNILEAP . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.2 Enterprise Vision and Mission . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.2.1 Implementation Objectives . . . . . . . . . . . . . . . . . . . . . . 2
+1.3 Stakeholder Taxonomy and Systemic Roles . . . . . . . . . . . . . . . . . 3
+1.3.1 The Academic Tenant Sphere . . . . . . . . . . . . . . . . . . . . 3
+1.3.2 The Industry Tenant Sphere . . . . . . . . . . . . . . . . . . . . . 4
+1.3.3 Platform Global Administration . . . . . . . . . . . . . . . . . . . 4
+1.4 Architectural Imperatives . . . . . . . . . . . . . . . . . . . . . . . . . . 5
+2 Business Architecture 6
+2.1 Governance Model . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+2.1.1 Multi-Tiered Administrative Hierarchy . . . . . . . . . . . . . . . 6
+2.1.2 Data Sovereignty and Privacy . . . . . . . . . . . . . . . . . . . . 6
+2.1.3 Compliance and Certi(cid:28)cation . . . . . . . . . . . . . . . . . . . . 7
+2.2 Hub & Spoke Architecture . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+2.2.1 The Hub: Central Intelligence and Routing . . . . . . . . . . . . . 7
+2.2.2 The Spokes: Autonomous Tenants . . . . . . . . . . . . . . . . . . 7
+2.3 Company Lifecycle . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+2.3.1 Lifecycle Phases . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+2.3.2 Company Lifecycle Diagram . . . . . . . . . . . . . . . . . . . . . 8
+2.4 College Lifecycle . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+2.4.1 Lifecycle Phases . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+2.4.2 College Lifecycle Diagram . . . . . . . . . . . . . . . . . . . . . . 9
+2.5 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+II Product Architecture 10
+3 Multi-Tenant SaaS Architecture 11
+3.1 Introduction to APNILEAP Multi-Tenancy . . . . . . . . . . . . . . . . . 11
+3.2 Data Isolation Strategy: Shared Database, Shared Schema . . . . . . . . 11
+3.2.1 PostgreSQL Row Level Security (RLS) Implementation . . . . . . 11
+3.3 Prisma ORM Integration for Multi-Tenancy . . . . . . . . . . . . . . . . 13
+3.3.1 Prisma Schema Con(cid:28)guration . . . . . . . . . . . . . . . . . . . . 13
+3.3.2 The Prisma Extension Implementation . . . . . . . . . . . . . . . 13
+3.4 Connection Pooling and pgBouncer . . . . . . . . . . . . . . . . . . . . . 15
+i
+
+--- PAGE 3 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+3.5 Security Considerations . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+3.5.1 Preventing Tenant Bleed . . . . . . . . . . . . . . . . . . . . . . . 15
+3.5.2 Bypassing RLS for System Processes . . . . . . . . . . . . . . . . 16
+3.6 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+4 User and Organization Management Architecture 17
+4.1 System Overview and Multi-Tenant Strategy . . . . . . . . . . . . . . . . 17
+4.1.1 Tenant Hierarchy . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+4.2 Organization Architecture . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+4.2.1 Hub (The Apex Body) . . . . . . . . . . . . . . . . . . . . . . . . 17
+4.2.2 Colleges (Academic Institutions) . . . . . . . . . . . . . . . . . . . 18
+4.2.3 Companies (Industry Partners) . . . . . . . . . . . . . . . . . . . 19
+4.3 User Architecture and Identity Management . . . . . . . . . . . . . . . . 19
+4.3.1 Identity Schema . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+4.3.2 Role Hierarchy and RBAC Implementation . . . . . . . . . . . . . 20
+4.3.3 Authentication Flow . . . . . . . . . . . . . . . . . . . . . . . . . 20
+4.4 User Onboarding and Provisioning . . . . . . . . . . . . . . . . . . . . . 22
+4.4.1 Bulk Import (Colleges) . . . . . . . . . . . . . . . . . . . . . . . . 22
+4.4.2 Self-Registration with Approval (Companies) . . . . . . . . . . . . 23
+4.5 Data Privacy and Isolation . . . . . . . . . . . . . . . . . . . . . . . . . . 23
+5 Role-Based Access Control (RBAC) 24
+5.1 Introduction to APNILEAP Security Model . . . . . . . . . . . . . . . . 24
+5.2 Core Architectural Principles of RBAC . . . . . . . . . . . . . . . . . . . 24
+5.3 System Role De(cid:28)nitions . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+5.3.1 Global Roles . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+5.3.2 Institutional Roles (Academia) . . . . . . . . . . . . . . . . . . . . 25
+5.3.3 Industrial Roles (Corporate) . . . . . . . . . . . . . . . . . . . . . 25
+5.3.4 Specialized and Operational Roles . . . . . . . . . . . . . . . . . . 25
+5.4 Implementation Level Permission Matrix . . . . . . . . . . . . . . . . . . 25
+5.5 Implementation Architecture and JWT Encoding . . . . . . . . . . . . . 27
+5.5.1 JWT Claims Structure . . . . . . . . . . . . . . . . . . . . . . . . 27
+5.5.2 Middleware Enforcement (Backend) . . . . . . . . . . . . . . . . . 27
+5.5.3 Frontend RBAC Integration . . . . . . . . . . . . . . . . . . . . . 27
+5.6 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+6 Project Marketplace Architecture 29
+6.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+6.2 Marketplace Architecture Overview . . . . . . . . . . . . . . . . . . . . . 29
+6.2.1 Core Components . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+6.2.2 Database Schema Design (Project Domain) . . . . . . . . . . . . 30
+6.3 Project Lifecycle Management . . . . . . . . . . . . . . . . . . . . . . . . 31
+6.3.1 Phase 1: Project Creation and Curation . . . . . . . . . . . . . . 31
+6.3.2 Phase 2: Publishing and Bidding . . . . . . . . . . . . . . . . . . 31
+6.3.3 Phase 3: Bid Evaluation and Award . . . . . . . . . . . . . . . . . 31
+6.3.4 Phase 4: Execution, Milestones, and Closure . . . . . . . . . . . . 32
+6.4 Search and Discovery Optimization . . . . . . . . . . . . . . . . . . . . . 32
+6.4.1 Index Mapping Strategy . . . . . . . . . . . . . . . . . . . . . . . 32
+6.4.2 Faceted Search API . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+Page ii
+
+--- PAGE 4 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+6.5 Security and Access Control in the Marketplace . . . . . . . . . . . . . . 33
+III Technology Architecture 35
+7 Jira Architecture and Integration Strategy 36
+7.1 Jira Architecture Overview . . . . . . . . . . . . . . . . . . . . . . . . . . 36
+7.2 Jira Provisioning Pipeline . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+7.2.1 Provisioning Sequence Diagram . . . . . . . . . . . . . . . . . . . 37
+7.3 Jira API Integrations and Data Models . . . . . . . . . . . . . . . . . . . 38
+7.3.1 Project Creation Payload . . . . . . . . . . . . . . . . . . . . . . 38
+7.3.2 Milestone Epic Creation Payload . . . . . . . . . . . . . . . . . . 38
+7.3.3 Webhook Event Schema . . . . . . . . . . . . . . . . . . . . . . . 39
+7.4 Jira Work(cid:29)ow Mapping . . . . . . . . . . . . . . . . . . . . . . . . . . . . 40
+7.4.1 Mapping Matrices . . . . . . . . . . . . . . . . . . . . . . . . . . . 40
+8 Con(cid:29)uence Architecture 41
+8.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+8.2 Multi-Tenant Provisioning and Isolation Strategy . . . . . . . . . . . . . 41
+8.2.1 Space-Based Tenancy Model . . . . . . . . . . . . . . . . . . . . . 41
+8.2.2 Automated Space Provisioning Work(cid:29)ow . . . . . . . . . . . . . . 42
+8.3 Con(cid:29)uence API Integration Architecture . . . . . . . . . . . . . . . . . . 42
+8.3.1 API Gateway and Request Routing . . . . . . . . . . . . . . . . . 42
+8.3.2 Event-Driven Synchronization via Webhooks . . . . . . . . . . . . 42
+8.4 Identity and Access Management (IAM) Synchronization . . . . . . . . . 42
+8.4.1 Atlassian Access and SCIM 2.0 . . . . . . . . . . . . . . . . . . . 44
+8.4.2 Granular Space Permissions . . . . . . . . . . . . . . . . . . . . . 44
+8.5 Template-Driven Content Generation . . . . . . . . . . . . . . . . . . . . 44
+8.5.1 Storage Format Abstraction . . . . . . . . . . . . . . . . . . . . . 44
+8.5.2 Automated Governance Artifacts . . . . . . . . . . . . . . . . . . 44
+8.6 Caching and Performance Optimization . . . . . . . . . . . . . . . . . . . 45
+8.6.1 Redis Document Cache . . . . . . . . . . . . . . . . . . . . . . . . 45
+8.7 Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 45
+9 GitHub Architecture & Developer Work(cid:29)ows 46
+9.1 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 46
+9.2 Repository Governance & Organization Model . . . . . . . . . . . . . . . 46
+9.2.1 Organization Structure . . . . . . . . . . . . . . . . . . . . . . . . 46
+9.2.2 Repository Topology: Domain-Driven Polyrepo . . . . . . . . . . 47
+9.3 Automated Repository Provisioning . . . . . . . . . . . . . . . . . . . . . 47
+9.3.1 Standardized Baselines . . . . . . . . . . . . . . . . . . . . . . . . 47
+9.4 Branching Strategy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 47
+9.4.1 Trunk-Based Flow . . . . . . . . . . . . . . . . . . . . . . . . . . 48
+9.5 Pull Request Work(cid:29)ow & Code Review Automation . . . . . . . . . . . . 48
+9.5.1 Pre-requisites for PR Merge . . . . . . . . . . . . . . . . . . . . . 48
+9.6 CI/CD Strategy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 49
+9.6.1 Continuous Integration (CI) Pipeline . . . . . . . . . . . . . . . . 49
+9.6.2 Continuous Deployment (CD) Pipeline . . . . . . . . . . . . . . . 49
+9.6.3 Secrets Management & OIDC . . . . . . . . . . . . . . . . . . . . 50
+Page iii
+
+--- PAGE 5 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+9.7 Summary of Governance Policies . . . . . . . . . . . . . . . . . . . . . . 50
+10 Rovo Architecture and Agentic AI Integration 51
+10.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+10.2 Rovo Core Architecture within APNILEAP . . . . . . . . . . . . . . . . 51
+10.2.1 System Topology Diagram . . . . . . . . . . . . . . . . . . . . . . 51
+10.3 Risk Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 51
+10.3.1 Role and AI Summaries . . . . . . . . . . . . . . . . . . . . . . . 52
+10.3.2 Speci(cid:28)c Prompts . . . . . . . . . . . . . . . . . . . . . . . . . . . 52
+10.3.3 Risk Detection Algorithms . . . . . . . . . . . . . . . . . . . . . . 53
+10.3.4 Executive Reporting and Recommendations . . . . . . . . . . . . 53
+10.4 Governance Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+10.4.1 Role and AI Summaries . . . . . . . . . . . . . . . . . . . . . . . 54
+10.4.2 Speci(cid:28)c Prompts . . . . . . . . . . . . . . . . . . . . . . . . . . . 54
+10.4.3 Risk Detection Algorithms . . . . . . . . . . . . . . . . . . . . . . 54
+10.4.4 Executive Reporting and Recommendations . . . . . . . . . . . . 56
+10.5 Reporting Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 56
+10.5.1 Role and AI Summaries . . . . . . . . . . . . . . . . . . . . . . . 56
+10.5.2 Speci(cid:28)c Prompts . . . . . . . . . . . . . . . . . . . . . . . . . . . 56
+10.5.3 Risk Detection Algorithms . . . . . . . . . . . . . . . . . . . . . . 57
+10.5.4 Executive Reporting and Recommendations . . . . . . . . . . . . 57
+10.6 Faculty Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+10.6.1 Role and AI Summaries . . . . . . . . . . . . . . . . . . . . . . . 57
+10.6.2 Speci(cid:28)c Prompts . . . . . . . . . . . . . . . . . . . . . . . . . . . 57
+10.6.3 Risk Detection Algorithms . . . . . . . . . . . . . . . . . . . . . . 58
+10.6.4 Executive Reporting and Recommendations . . . . . . . . . . . . 58
+10.7 Analytics Agent . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 58
+10.7.1 Role and AI Summaries . . . . . . . . . . . . . . . . . . . . . . . 58
+10.7.2 Speci(cid:28)c Prompts . . . . . . . . . . . . . . . . . . . . . . . . . . . 59
+10.7.3 Risk Detection Algorithms . . . . . . . . . . . . . . . . . . . . . . 59
+10.7.4 Executive Reporting and Recommendations . . . . . . . . . . . . 59
+10.8 Agent Communication and Orchestration Protocol . . . . . . . . . . . . . 59
+10.9 Implementation and Deployment Strategies . . . . . . . . . . . . . . . . . 60
+10.9.1 Model Routing and Cost Optimization . . . . . . . . . . . . . . . 60
+10.9.2 Security and Sandboxing . . . . . . . . . . . . . . . . . . . . . . . 60
+10.10Summary . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 60
+IV Communication Platform 62
+11 Communication Platform 63
+11.1 Real-Time Communication Architecture . . . . . . . . . . . . . . . . . . 63
+11.1.1 Selective Forwarding Unit (SFU) with LiveKit . . . . . . . . . . . 63
+11.2 Meeting Lifecycle and Authentication . . . . . . . . . . . . . . . . . . . . 63
+11.2.1 Room Provisioning and Token Generation . . . . . . . . . . . . . 63
+11.2.2 WebRTC Signaling and ICE Negotiation . . . . . . . . . . . . . . 64
+11.3 Chat and Messaging System . . . . . . . . . . . . . . . . . . . . . . . . . 64
+11.3.1 WebSocket Infrastructure . . . . . . . . . . . . . . . . . . . . . . 65
+11.3.2 Implementation of Message Persistence . . . . . . . . . . . . . . . 65
+Page iv
+
+--- PAGE 6 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+11.4 Recording and Media Processing Pipeline . . . . . . . . . . . . . . . . . . 65
+11.4.1 LiveKit Egress Integration . . . . . . . . . . . . . . . . . . . . . . 65
+11.4.2 Storage and Archiving . . . . . . . . . . . . . . . . . . . . . . . . 65
+11.5 AI Meeting Assistant . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 65
+11.5.1 Real-Time Audio Extraction and Transcription . . . . . . . . . . 66
+11.5.2 Large Language Model (LLM) Integration . . . . . . . . . . . . . 66
+V UI and Dashboard Architecture 67
+12 UI Wireframes and Frontend Portal Catalog 68
+12.1 Frontend Architecture and Implementation Paradigm . . . . . . . . . . . 68
+12.1.1 State Management and API Integration . . . . . . . . . . . . . . 68
+12.1.2 Design System and Component Library . . . . . . . . . . . . . . . 68
+12.2 Detailed Frontend Portal Wireframes . . . . . . . . . . . . . . . . . . . . 69
+12.2.1 Executive Portal . . . . . . . . . . . . . . . . . . . . . . . . . . . 69
+12.2.2 Project Management O(cid:30)ce (PMO) Portal . . . . . . . . . . . . . 70
+12.2.3 Faculty Portal . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 70
+12.2.4 Mentor Portal . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 71
+12.2.5 College Admin Portal . . . . . . . . . . . . . . . . . . . . . . . . . 72
+12.2.6 Student Hub and Corporate Portal Re(cid:28)nements . . . . . . . . . . 72
+12.3 User Flow Interaction Models . . . . . . . . . . . . . . . . . . . . . . . . 72
+12.4 Responsive Implementation Strategies . . . . . . . . . . . . . . . . . . . . 72
+12.5 Accessibility (a11y) and i18n Integration . . . . . . . . . . . . . . . . . . 73
+VI Database and APIs 75
+13 Database Architecture 76
+13.1 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 76
+13.2 Tenant Isolation Strategy . . . . . . . . . . . . . . . . . . . . . . . . . . . 76
+13.3 Entity-Relationship (ER) Diagrams . . . . . . . . . . . . . . . . . . . . . 76
+13.4 Database Schemas . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 76
+13.4.1 Core Platform & Authentication . . . . . . . . . . . . . . . . . . . 76
+13.4.2 Organizational Structure . . . . . . . . . . . . . . . . . . . . . . . 79
+13.4.3 Academic Structure . . . . . . . . . . . . . . . . . . . . . . . . . . 82
+13.4.4 Users & Pro(cid:28)les . . . . . . . . . . . . . . . . . . . . . . . . . . . . 84
+13.4.5 Courses & Curriculum . . . . . . . . . . . . . . . . . . . . . . . . 87
+13.4.6 Industry & Placement . . . . . . . . . . . . . . . . . . . . . . . . 90
+13.4.7 Projects & Research . . . . . . . . . . . . . . . . . . . . . . . . . 92
+13.4.8 Assessment & Exams . . . . . . . . . . . . . . . . . . . . . . . . . 95
+13.4.9 Accreditation & Compliance . . . . . . . . . . . . . . . . . . . . . 97
+13.4.10Community & Forums . . . . . . . . . . . . . . . . . . . . . . . . 100
+13.4.11Infrastructure & Admin . . . . . . . . . . . . . . . . . . . . . . . 102
+14 API Speci(cid:28)cations 106
+14.1 Authentication & Authorization . . . . . . . . . . . . . . . . . . . . . . . 106
+14.1.1 POST /api/v1/auth/login . . . . . . . . . . . . . . . . . . . . . . 106
+14.1.2 POST /api/v1/auth/logout . . . . . . . . . . . . . . . . . . . . . 106
+Page v
+
+--- PAGE 7 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+14.1.3 POST /api/v1/auth/refresh . . . . . . . . . . . . . . . . . . . . . 107
+14.1.4 POST /api/v1/auth/register . . . . . . . . . . . . . . . . . . . . . 107
+14.1.5 POST /api/v1/auth/forgot-password . . . . . . . . . . . . . . . . 108
+14.1.6 POST /api/v1/auth/reset-password . . . . . . . . . . . . . . . . . 108
+14.1.7 GET /api/v1/auth/mfa/setup . . . . . . . . . . . . . . . . . . . . 109
+14.1.8 POST /api/v1/auth/mfa/verify . . . . . . . . . . . . . . . . . . . 109
+14.1.9 POST /api/v1/auth/sso/saml/initiate . . . . . . . . . . . . . . . 110
+14.1.10POST /api/v1/auth/sso/saml/callback . . . . . . . . . . . . . . . 110
+14.2 User Management . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 111
+14.2.1 GET /api/v1/users . . . . . . . . . . . . . . . . . . . . . . . . . . 111
+14.2.2 GET /api/v1/users/{id} . . . . . . . . . . . . . . . . . . . . . . . 111
+14.2.3 PUT /api/v1/users/{id} . . . . . . . . . . . . . . . . . . . . . . . 112
+14.2.4 DELETE /api/v1/users/{id} . . . . . . . . . . . . . . . . . . . . 112
+14.2.5 POST /api/v1/users/invite . . . . . . . . . . . . . . . . . . . . . 113
+14.2.6 GET /api/v1/users/me/activity . . . . . . . . . . . . . . . . . . . 113
+14.2.7 PUT /api/v1/users/me/preferences . . . . . . . . . . . . . . . . . 114
+14.2.8 POST /api/v1/users/{id}/avatar . . . . . . . . . . . . . . . . . . 114
+14.3 Academic & University Management . . . . . . . . . . . . . . . . . . . . 115
+14.3.1 GET /api/v1/universities . . . . . . . . . . . . . . . . . . . . . . 115
+14.3.2 POST /api/v1/universities . . . . . . . . . . . . . . . . . . . . . . 115
+14.3.3 GET /api/v1/universities/{id}/departments . . . . . . . . . . . . 116
+14.3.4 POST /api/v1/universities/{id}/departments . . . . . . . . . . . 116
+14.3.5 GET /api/v1/courses . . . . . . . . . . . . . . . . . . . . . . . . . 117
+14.3.6 POST /api/v1/courses . . . . . . . . . . . . . . . . . . . . . . . . 117
+14.3.7 PUT /api/v1/courses/{id} . . . . . . . . . . . . . . . . . . . . . . 118
+14.3.8 POST /api/v1/courses/{id}/enroll . . . . . . . . . . . . . . . . . 118
+14.3.9 GET /api/v1/students . . . . . . . . . . . . . . . . . . . . . . . . 119
+14.3.10GET /api/v1/faculty . . . . . . . . . . . . . . . . . . . . . . . . . 119
+14.4 Industry Partner Management . . . . . . . . . . . . . . . . . . . . . . . . 120
+14.4.1 GET /api/v1/industries . . . . . . . . . . . . . . . . . . . . . . . 120
+14.4.2 POST /api/v1/industries . . . . . . . . . . . . . . . . . . . . . . 121
+14.4.3 GET /api/v1/industries/{id} . . . . . . . . . . . . . . . . . . . . 121
+14.4.4 PUT /api/v1/industries/{id} . . . . . . . . . . . . . . . . . . . . 121
+14.4.5 GET /api/v1/industries/{id}/requirements . . . . . . . . . . . . 122
+14.4.6 POST /api/v1/industries/{id}/requirements . . . . . . . . . . . . 122
+14.4.7 DELETE /api/v1/industries/{id}/requirements/{req_id} . . . . 123
+14.4.8 POST /api/v1/industries/verify . . . . . . . . . . . . . . . . . . . 123
+14.4.9 PUT /api/v1/industries/{id}/status . . . . . . . . . . . . . . . . 124
+14.4.10GET /api/v1/industries/{id}/collaborations . . . . . . . . . . . . 124
+14.5 Collaborative Projects Management . . . . . . . . . . . . . . . . . . . . . 125
+14.5.1 GET /api/v1/projects . . . . . . . . . . . . . . . . . . . . . . . . 125
+14.5.2 POST /api/v1/projects . . . . . . . . . . . . . . . . . . . . . . . 125
+14.5.3 GET /api/v1/projects/{id} . . . . . . . . . . . . . . . . . . . . . 126
+14.5.4 PUT /api/v1/projects/{id} . . . . . . . . . . . . . . . . . . . . . 126
+14.5.5 POST /api/v1/projects/{id}/members . . . . . . . . . . . . . . . 127
+14.5.6 DELETE /api/v1/projects/{id}/members/{user_id} . . . . . . . 127
+14.5.7 GET /api/v1/projects/{id}/documents . . . . . . . . . . . . . . . 128
+14.5.8 POST /api/v1/projects/{id}/documents . . . . . . . . . . . . . . 128
+Page vi
+
+--- PAGE 8 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+14.5.9 GET /api/v1/projects/{id}/tasks . . . . . . . . . . . . . . . . . . 129
+14.5.10POST /api/v1/projects/{id}/tasks . . . . . . . . . . . . . . . . . 129
+14.5.11PUT /api/v1/projects/tasks/{task_id} . . . . . . . . . . . . . . 130
+14.6 Grants & Funding Management . . . . . . . . . . . . . . . . . . . . . . . 130
+14.6.1 GET /api/v1/grants . . . . . . . . . . . . . . . . . . . . . . . . . 130
+14.6.2 POST /api/v1/grants . . . . . . . . . . . . . . . . . . . . . . . . 131
+14.6.3 GET /api/v1/grants/{id} . . . . . . . . . . . . . . . . . . . . . . 131
+14.6.4 POST /api/v1/grants/{id}/apply . . . . . . . . . . . . . . . . . . 132
+14.6.5 GET /api/v1/grants/applications . . . . . . . . . . . . . . . . . . 132
+14.6.6 PUT /api/v1/grants/applications/{app_id}/status . . . . . . . . 133
+14.6.7 POST /api/v1/grants/{id}/disburse . . . . . . . . . . . . . . . . 133
+14.6.8 GET /api/v1/grants/{id}/transactions . . . . . . . . . . . . . . . 134
+14.6.9 POST /api/v1/grants/{id}/reports . . . . . . . . . . . . . . . . . 134
+VII Security, Analytics, Deployment 136
+15 Security Architecture & Compliance Operations 137
+15.1 Zero Trust Architecture (ZTA) Implementation . . . . . . . . . . . . . . 137
+15.1.1 Core Zero Trust Principles . . . . . . . . . . . . . . . . . . . . . . 137
+15.1.2 Identity and Access Management (IAM) Integration . . . . . . . . 137
+15.2 Cryptographic Architecture and Key Management . . . . . . . . . . . . . 138
+15.2.1 Data in Transit Encryption . . . . . . . . . . . . . . . . . . . . . 138
+15.2.2 Data at Rest Encryption . . . . . . . . . . . . . . . . . . . . . . . 138
+15.2.3 Key Management Service (KMS) Infrastructure . . . . . . . . . . 139
+15.3 Security Operations and Threat Intelligence . . . . . . . . . . . . . . . . 139
+15.3.1 Continuous Monitoring and Logging . . . . . . . . . . . . . . . . 139
+15.3.2 Vulnerability Management and DevSecOps . . . . . . . . . . . . . 140
+15.4 Data Privacy and Compliance Framework . . . . . . . . . . . . . . . . . 140
+15.4.1 Data Sovereignty and Localization . . . . . . . . . . . . . . . . . 140
+15.4.2 Privacy by Design Mechanisms . . . . . . . . . . . . . . . . . . . 140
+16 Analytics Architecture and Key Performance Indicators 141
+16.1 System Architecture for Data Analytics . . . . . . . . . . . . . . . . . . . 141
+16.1.1 Data Ingestion Layer . . . . . . . . . . . . . . . . . . . . . . . . . 141
+16.1.2 Data Storage Layer: Lakehouse Architecture . . . . . . . . . . . . 141
+16.1.3 Data Processing Engine . . . . . . . . . . . . . . . . . . . . . . . 142
+16.1.4 Serving and Visualization Layer . . . . . . . . . . . . . . . . . . . 142
+16.2 Mathematical Formulation of Key Performance Indicators (KPIs) . . . . 142
+16.2.1 Student Engagement and Competency Metrics . . . . . . . . . . . 142
+16.2.2 Industry Collaboration Metrics . . . . . . . . . . . . . . . . . . . 143
+16.2.3 Institutional Performance Metrics . . . . . . . . . . . . . . . . . . 143
+16.3 Predictive Analytics and Machine Learning Pipeline . . . . . . . . . . . . 144
+16.3.1 At-Risk Student Identi(cid:28)cation . . . . . . . . . . . . . . . . . . . . 144
+16.3.2 Skill Demand Forecasting . . . . . . . . . . . . . . . . . . . . . . 144
+16.4 Implementation Protocol . . . . . . . . . . . . . . . . . . . . . . . . . . . 144
+Page vii
+
+--- PAGE 9 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+17 Deployment Architecture 145
+17.1 Azure Infrastructure Overview . . . . . . . . . . . . . . . . . . . . . . . . 145
+17.1.1 Virtual Network Architecture . . . . . . . . . . . . . . . . . . . . 145
+17.1.2 Compute and Containerization . . . . . . . . . . . . . . . . . . . 145
+17.2 Component-Level Architecture . . . . . . . . . . . . . . . . . . . . . . . . 146
+17.2.1 Frontend Architecture . . . . . . . . . . . . . . . . . . . . . . . . 146
+17.2.2 Backend Microservices . . . . . . . . . . . . . . . . . . . . . . . . 146
+17.2.3 Database and Persistence Tier . . . . . . . . . . . . . . . . . . . . 146
+17.2.4 Real-Time Communication (LiveKit) . . . . . . . . . . . . . . . . 147
+17.3 Environment Segregation . . . . . . . . . . . . . . . . . . . . . . . . . . . 147
+17.3.1 Development (DEV) . . . . . . . . . . . . . . . . . . . . . . . . . 147
+17.3.2 Quality Assurance (QA) . . . . . . . . . . . . . . . . . . . . . . . 147
+17.3.3 User Acceptance Testing (UAT) . . . . . . . . . . . . . . . . . . . 147
+17.3.4 Production (PROD) . . . . . . . . . . . . . . . . . . . . . . . . . 148
+17.4 Monitoring, Logging, and CI/CD Integration . . . . . . . . . . . . . . . . 148
+17.4.1 Observability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 148
+17.4.2 DevOps and Atlassian Integration . . . . . . . . . . . . . . . . . . 148
+17.5 Deployment Architecture Diagram . . . . . . . . . . . . . . . . . . . . . . 149
+VIII Roadmap 150
+18 Strategic Roadmap and Phased Rollout 151
+18.1 Phased Implementation Strategy . . . . . . . . . . . . . . . . . . . . . . 151
+18.1.1 Phase1: CorePlatformDevelopmentandMinimumViableEcosys-
+tem (Months 1(cid:21)6) . . . . . . . . . . . . . . . . . . . . . . . . . . . 151
+18.1.2 Phase2: EnterpriseScaling,Analytics,andIPManagement(Months
+7(cid:21)12) . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 152
+18.1.3 Phase 3: AI Integration and Predictive Governance (Months 13(cid:21)18) 153
+18.1.4 Phase 4: Global Rollout, Standardization, and Open Innovation
+(Months 19(cid:21)24) . . . . . . . . . . . . . . . . . . . . . . . . . . . . 153
+18.2 Implementation Gantt Chart . . . . . . . . . . . . . . . . . . . . . . . . . 154
+18.3 Critical Success Factors and Risk Mitigation . . . . . . . . . . . . . . . . 154
+18.3.1 Dependency Management . . . . . . . . . . . . . . . . . . . . . . 154
+18.3.2 Risk Mitigation Protocol . . . . . . . . . . . . . . . . . . . . . . . 155
+18.4 Resource Allocation Strategy . . . . . . . . . . . . . . . . . . . . . . . . 155
+IX Enterprise Governance and Operations 156
+19 PMO Governance Architecture 157
+19.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 157
+19.2 PMO Hierarchy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 157
+19.2.1 Enterprise PMO (EPMO) . . . . . . . . . . . . . . . . . . . . . . 157
+19.2.2 Divisional PMOs (DPMO) . . . . . . . . . . . . . . . . . . . . . . 157
+19.2.3 Program/Project PMOs (PPMO) . . . . . . . . . . . . . . . . . . 158
+19.3 Governance Committee Structure . . . . . . . . . . . . . . . . . . . . . . 158
+19.3.1 Executive Investment Committee (EIC) . . . . . . . . . . . . . . 158
+19.3.2 Portfolio Steering Group (PSG) . . . . . . . . . . . . . . . . . . . 158
+Page viii
+
+--- PAGE 10 ---
+CONTENTS APNILEAP Enterprise Architecture Book
+19.3.3 Program/Project Boards . . . . . . . . . . . . . . . . . . . . . . . 159
+19.4 Escalation Matrix . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 159
+19.4.1 Tolerance Levels and Thresholds . . . . . . . . . . . . . . . . . . . 159
+19.4.2 Escalation Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . . . . . 160
+19.5 Decision Management Framework . . . . . . . . . . . . . . . . . . . . . . 160
+19.5.1 Decision Rights Matrix (RACI Variant) . . . . . . . . . . . . . . . 160
+19.5.2 Decision Logs and Traceability . . . . . . . . . . . . . . . . . . . . 161
+19.6 Portfolio Review Process . . . . . . . . . . . . . . . . . . . . . . . . . . . 161
+19.6.1 Stage-Gate Reviews . . . . . . . . . . . . . . . . . . . . . . . . . . 161
+19.6.2 Portfolio Balancing and Reprioritization . . . . . . . . . . . . . . 161
+19.7 Steering Committee Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . . . . 161
+19.7.1 Pre-Meeting Rigor (T-minus 5 Days) . . . . . . . . . . . . . . . . 162
+19.7.2 Meeting Conduct and Post-Meeting Actions . . . . . . . . . . . . 162
+20 Work(cid:29)ow Governance 164
+20.1 Introduction to Enterprise Work(cid:29)ow Library . . . . . . . . . . . . . . . . 164
+20.2 Faculty Onboarding and Lifecycle Work(cid:29)ow . . . . . . . . . . . . . . . . 164
+20.2.1 State Transition Model . . . . . . . . . . . . . . . . . . . . . . . . 164
+20.2.2 Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . 164
+20.3 Curriculum Development Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . 164
+20.3.1 State Transition Model . . . . . . . . . . . . . . . . . . . . . . . . 164
+20.3.2 Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . 164
+20.4 Project Execution Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.4.1 State Transition Model . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.4.2 Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.5 Risk Management Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.5.1 State Transition Model . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.5.2 Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.6 Escalation Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.6.1 State Transition Model . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.6.2 Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . 165
+20.7 Industry Collaboration Work(cid:29)ow . . . . . . . . . . . . . . . . . . . . . . 167
+20.7.1 State Transition Model . . . . . . . . . . . . . . . . . . . . . . . . 167
+20.7.2 Implementation Details . . . . . . . . . . . . . . . . . . . . . . . . 167
+20.8 Conclusion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 167
+21 Automation Architecture 169
+21.1 Introduction . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 169
+21.2 Automation Catalog Overview . . . . . . . . . . . . . . . . . . . . . . . . 169
+21.3 Trigger-Condition-Action (TCA) Framework . . . . . . . . . . . . . . . . 169
+21.3.1 TCA Processing Architecture . . . . . . . . . . . . . . . . . . . . 170
+21.4 Detailed Automation Speci(cid:28)cations . . . . . . . . . . . . . . . . . . . . . 170
+21.4.1 Overdue Reminders . . . . . . . . . . . . . . . . . . . . . . . . . . 170
+21.4.2 Weekly Reports . . . . . . . . . . . . . . . . . . . . . . . . . . . . 171
+21.4.3 Escalation Triggers . . . . . . . . . . . . . . . . . . . . . . . . . . 172
+21.4.4 Sponsor Noti(cid:28)cations . . . . . . . . . . . . . . . . . . . . . . . . . 172
+21.4.5 SLA Breach Automation . . . . . . . . . . . . . . . . . . . . . . . 173
+21.4.6 Approval Automation . . . . . . . . . . . . . . . . . . . . . . . . . 173
+Page ix
+

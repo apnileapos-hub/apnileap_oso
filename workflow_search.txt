@@ -1,0 +1,182 @@
+PAGE 62:
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+External Collaborators (Academia/Partners):Granular, repository-level Read/Write
+access granted on a time-bound basis via automated provisioning workows.
+Security & Auditors:Read-only access across all repositories, specically for
+automated scanning, compliance audits, and incident response.
+9.2.2 Repository Topology: Domain-Driven Polyrepo
+APNILEAP adopts a Domain-Driven Polyrepo strategy over a monolithic repository to
+enable independent scaling, decoupled deployments, and strict boundary enforceme
+
+PAGE 63:
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+9.4.1 Trunk-Based Flow
+Main Branch (main):The single source of truth. It is heavily protected and must
+always be in a deployable state. Direct commits tomainare prohibited.
+Feature Branches (feature/<jira-id>-<short-desc>):Short-lived branches
+created frommainfor developing new capabilities.
+Fix Branches (fix/<jira-id>-<short-desc>):Branches for bug xes.
+Release Branches (release/vX.Y.Z):Cut frommainfor production deploy-
+ments, serving as immutable snapshots. Hotxes are applied here and cherry-pic
+
+PAGE 64:
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+5.Ephemeral Environments:For frontend/API changes, a preview deployment
+(e.g., via Vercel or A WS Amplify) is automatically generated and linked in the PR
+for functional testing.
+6.Conventional Commits:PR titles must adhere to Conventional Commits (e.g.,
+feat(auth): implement SSO) to drive automated semantic versioning.
+9.6 CI/CD Strategy
+APNILEAP leverages GitHub Actions as the primary orchestrator for Continuous In-
+tegration and Continuous Deployment, deeply integrated with the cloud infrastructure
+(A
+
+PAGE 65:
+CHAPTER 9. GITHUB ARCHITECTURE & DEVELOPER WORKFLOWS APNILEAP Enterprise Architecture Book
+Developer
+Push
+CI Pipeline
+(Test,
+Build, Scan)
+PR Approved
+& Merged
+Deploy
+to Dev
+(Auto)
+Deploy to
+Staging
+(Tag Trigger)
+Deploy
+to Prod
+(Manual
+Gate)
+Figure 9.2: APNILEAP GitHub Actions CI/CD Pipeline Flow
+9.6.3 Secrets Management & OIDC
+Hardcoded secrets and long-lived credentials are fundamentally banned in APNILEAP
+CI/CD.
+OpenID Connect (OIDC):GitHub Actions authenticate directly with the Cloud
+Provider (A WS IAM / Azure Workload Identity) using ephemeral OIDC tokens.
+GitHub Environments:Deployment 
+
+PAGE 74:
+CHAPTER 10. ROVO ARCHITECTURE AND AGENTIC AI INTEGRATION APNILEAP Enterprise Architecture Book
+10.7.2 Specic Prompts
+1< system_prompt >
+2You are the APNILEAP Analytics Agent .
+3Your role is to optimize platform usage and c o l l a b o r a t i o n
+efficiency .
+4
+5CRITICAL I N S T R U C T I O N S :
+61 . Analyze < platform_telemetry > including login frequency ,
+message latency ,
+7and document approval times .
+82 . Identify the top 3 workflow bot tle nec ks in the current
+c o l l a b o r a t i o n graph .
+93 . Propose actionable workflow o p t i m i z a t i o n s .
+10
+11JSON Schema :
+12{
+13" bot
+
+PAGE 87:
+CHAPTER 12. UI WIREFRAMES AND FRONTEND PORTAL CATALOG APNILEAP Enterprise Architecture Book
+12.2.5 College Admin Portal
+University administrators and placement ocers require a macro-view of their specic
+institution to ensure compliance, track departmental performance, and manage corporate
+Memorandums of Understanding (MoUs).
++---------------------------------------------------------------------------------------------------------------+
+| [APNILEAP LOGO] Global Search: [___________________] (/) [Notifs] [Reports] [Admin: Univ. A] |
++-----------------------------------------------------------
+
+PAGE 180:
+CHAPTER 20. WORKFLOW GOVERNANCE APNILEAP Enterprise Architecture Book
+gers notications to enrolled students and relevant faculty, and versions the curriculum
+document immutably in the storage layer.
+20.4 Project Execution Workow
+The Project Workow governs student and faculty projects, tracking progress from ideation
+to completion. It closely mirrors agile methodologies.
+20.4.1 State Transition Model
+20.4.2 Implementation Details
+This workow integrates tightly with the platform's issue tracking and Git repositories.
+Moving a task toReviewautomatically creates a pull request. Transitioning t
+
+PAGE 181:
+CHAPTER 20. WORKFLOW GOVERNANCE APNILEAP Enterprise Architecture Book
+Applied
+ Screening
+ Interview
+Rejected
+Oer Extended
+Onboarding
+Active
+Inactive/Oboarded
+Review Shortlist
+Reject
+Select
+Reject
+Accept
+Decline
+SetupDeactivate
+Figure 20.1: Faculty Lifecycle State Transition Diagram
+Drafting
+ Internal Review
+ Board of Studies
+ Approved
+Published
+Needs Revision
+Deprecated
+Submit Approve
+Reject
+Update
+Ratify
+Reject
+Deploy
+End of Life
+Figure 20.2: Curriculum Development and Approval Workow
+Ideation
+ Backlog
+ Planned
+ In Progress
+Review
+Testing
+Approved
+Done
+ Blocked
+Propose Plan Start
+SubmitIss
+
+PAGE 182:
+CHAPTER 20. WORKFLOW GOVERNANCE APNILEAP Enterprise Architecture Book
+20.7 Industry Collaboration Workow
+The Industry Collaboration Workow manages partnerships, MoUs, and joint ventures
+between APNILEAP and external corporate entities.
+20.7.1 State Transition Model
+20.7.2 Implementation Details
+Transitions into and out ofLegal Reviewenforce strict document management protocols,
+requiring encrypted storage of drafts and nal MoUs. The transition toActive Partner
+automatically provisions external user accounts and tenant namespaces within the AP-
+NILEAP platform, allowing industry mentors to i
+
+PAGE 183:
+CHAPTER 20. WORKFLOW GOVERNANCE APNILEAP Enterprise Architecture Book
+Prospect
+ Negotiation
+ Legal Review
+Dropped
+MoU Signed
+Active Partner
+Renewal Pending
+Terminated
+Engage
+Pass
+Draft
+Stall
+Approve
+Reject
+Initiate
+Expiring
+Renew
+Lapse
+Breach
+Figure 20.6: Industry Collaboration and Partnership Workow
+Page 168

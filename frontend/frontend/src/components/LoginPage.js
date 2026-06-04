@@ -10,6 +10,7 @@ export default function LoginPage({ onLogin }) {
   const [remember, setRemember] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
+  const [modalType, setModalType] = useState(null); // 'terms' | 'privacy' | null
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,17 +26,28 @@ export default function LoginPage({ onLogin }) {
     }
 
     setLoading(true);
-    // Simulate enterprise SSO auth delay
-    await new Promise((r) => setTimeout(r, 1800));
-    setLoading(false);
-
-    const name = email
-      .split('@')[0]
-      .replace(/[._-]/g, ' ')
-      .replace(/\b\w/g, (c) => c.toUpperCase());
-
-    onLogin({ name, email, role: 'Project Manager', avatar: name.charAt(0).toUpperCase() });
+    try {
+      const API = process.env.REACT_APP_API_URL || (window.location.port === '3000' ? 'http://localhost:5000' : '');
+      const res = await fetch(`${API}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || 'Login failed');
+      }
+      
+      const data = await res.json();
+      onLogin({ ...data.user, token: data.token, avatar: data.user.name.charAt(0).toUpperCase() });
+    } catch (err) {
+      setError(err.message || 'Login failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
 
   const fillDemo = () => {
     setEmail(DEMO_EMAIL);
@@ -61,8 +73,8 @@ export default function LoginPage({ onLogin }) {
               </svg>
             </div>
             <div>
-              <div className="login-logo-name">DevCobra</div>
-              <div className="login-logo-tagline">Analytics Platform</div>
+              <div className="login-logo-name">APNILEAP</div>
+              <div className="login-logo-tagline">Enterprise Platform</div>
             </div>
           </div>
 
@@ -127,10 +139,10 @@ export default function LoginPage({ onLogin }) {
                 <path d="M14 2L25 8V20L14 26L3 20V8L14 2Z" fill="rgba(88,166,255,0.3)" stroke="#58a6ff" strokeWidth="1.5"/>
                 <circle cx="14" cy="14" r="3" fill="#58a6ff"/>
               </svg>
-              <span>DevCobra</span>
+              <span>APNILEAP</span>
             </div>
             <h2 className="login-form-title">Welcome back</h2>
-            <p className="login-form-subtitle">Sign in to your analytics dashboard</p>
+            <p className="login-form-subtitle">Sign in to your APNILEAP portal</p>
           </div>
 
           {error && (
@@ -241,30 +253,138 @@ export default function LoginPage({ onLogin }) {
             </button>
           </form>
 
-          <div className="login-divider"><span>or continue with</span></div>
+          <div className="login-divider"><span>or quick sign-in</span></div>
 
-          <button id="login-demo-btn" className="demo-btn" onClick={fillDemo} type="button">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-              <path d="M8 1L9.8 5.5H15L10.9 8.3L12.5 13L8 10L3.5 13L5.1 8.3L1 5.5H6.2L8 1Z" fill="#d29922" opacity=".8"/>
-            </svg>
-            Use demo credentials
-          </button>
-
-          <p className="login-hint">
-            Demo&nbsp;&nbsp;
-            <code>admin@devcobra.io</code>
-            &nbsp;/&nbsp;
-            <code>Admin@123</code>
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <button
+              className="demo-btn"
+              onClick={() => {
+                setEmail('moderator@apnileap.com');
+                setPassword('Vanyx@1512');
+                setError('');
+              }}
+              type="button"
+              style={{ padding: '8px', fontSize: '12px' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+              </svg>
+              Platform Moderator
+            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                className="demo-btn"
+                onClick={() => {
+                  setEmail('spoc-kle@college.edu');
+                  setPassword('Admin@123');
+                  setError('');
+                }}
+                type="button"
+                style={{ flex: 1, padding: '8px', fontSize: '11px' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+                </svg>
+                KLE Coordinator
+              </button>
+              <button
+                className="demo-btn"
+                onClick={() => {
+                  setEmail('spoc-coep@college.edu');
+                  setPassword('Admin@123');
+                  setError('');
+                }}
+                type="button"
+                style={{ flex: 1, padding: '8px', fontSize: '11px' }}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', verticalAlign: 'middle' }}>
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+                  <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"></path>
+                </svg>
+                COEP Coordinator
+              </button>
+            </div>
+            <button id="login-demo-btn" className="demo-btn" onClick={fillDemo} type="button" style={{ padding: '8px', fontSize: '12px' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: 'middle' }}>
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              Jira Administrator
+            </button>
+          </div>
 
           <p className="login-footer-note">
-            By signing in you agree to DevCobra's&nbsp;
-            <span className="login-link">Terms of Service</span>
+            By signing in you agree to APNILEAP's&nbsp;
+            <span className="login-link" onClick={() => setModalType('terms')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Terms of Service</span>
             &nbsp;and&nbsp;
-            <span className="login-link">Privacy Policy</span>
+            <span className="login-link" onClick={() => setModalType('privacy')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Privacy Policy</span>
           </p>
         </div>
       </div>
+
+      {/* ── Terms / Privacy Modal ── */}
+      {modalType && (
+        <div style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999,
+          padding: '20px'
+        }} onClick={() => setModalType(null)}>
+          <div style={{
+            background: '#1c2128',
+            border: '1px solid #30363d',
+            borderRadius: '12px',
+            padding: '30px',
+            maxWidth: '500px',
+            width: '100%',
+            maxHeight: '80vh',
+            overflowY: 'auto',
+            color: '#c9d1d9',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
+          }} onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #30363d', paddingBottom: '10px' }}>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>
+                {modalType === 'terms' ? '📄 Terms of Service' : '🔒 Privacy Policy'}
+              </h3>
+              <button onClick={() => setModalType(null)} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+            </div>
+            <div style={{ fontSize: '13.5px', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {modalType === 'terms' ? (
+                <>
+                  <p>Welcome to APNILEAP! By using our platform, you agree to these terms.</p>
+                  <strong>1. Account Security</strong>
+                  <p>You must maintain the confidentiality of your account credentials. All activities under your account are your responsibility.</p>
+                  <strong>2. Prohibited Uses</strong>
+                  <p>You agree not to bypass security controls, automate actions without explicit API authorization, or upload malicious files.</p>
+                  <strong>3. Service Modification</strong>
+                  <p>APNILEAP reserves the right to modify, suspend, or terminate services at any time for platform maintenance or security updates.</p>
+                </>
+              ) : (
+                <>
+                  <p>APNILEAP values your privacy. This policy explains how we protect your information.</p>
+                  <strong>1. Information Collection</strong>
+                  <p>We collect credentials, active campus assignments, and system audit history to ensure safe execution tracking.</p>
+                  <strong>2. Data Encryption</strong>
+                  <p>All sensitive information, including active session tokens and passwords, is encrypted using industry-standard protocols.</p>
+                  <strong>3. Cookies and Storage</strong>
+                  <p>We use localized browser storage (such as localStorage) solely to maintain active login states and enhance session persistence.</p>
+                </>
+              )}
+            </div>
+            <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'flex-end' }}>
+              <button onClick={() => setModalType(null)} style={{ padding: '8px 20px', background: '#238636', border: 'none', borderRadius: '6px', color: '#fff', fontWeight: '600', cursor: 'pointer' }}>
+                I Understand
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

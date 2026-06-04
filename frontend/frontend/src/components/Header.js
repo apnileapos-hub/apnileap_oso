@@ -5,15 +5,37 @@ const VIEW_TITLES = {
   issues:    { title: 'Issue Tracker',          subtitle: 'All Jira issues — searchable & sortable' },
   analytics: { title: 'Analytics',             subtitle: 'Charts, trends and workload distribution' },
   settings:  { title: 'Settings',              subtitle: 'Application preferences' },
+  calls:     { title: 'Chat',                   subtitle: 'Direct discussions & meeting channels' },
+  teams:     { title: 'Teams Workspace',        subtitle: 'Colleague workgroups & backlog tracking' },
 };
 
-export default function Header({ user, activeView, onLogout, onRefresh, isRefreshing, lastUpdated, notifications = [], setNotifications }) {
+export default function Header({ user, activeView, onLogout, onRefresh, isRefreshing, lastUpdated, notifications = [], setNotifications, onCreateIssueClick }) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifMenu, setShowNotifMenu] = useState(false);
+  const [jiraProjectKey, setJiraProjectKey] = useState('SCRUM');
+  const [jiraBaseUrl, setJiraBaseUrl] = useState('devcobraaa.atlassian.net');
   const menuRef = useRef(null);
   const notifMenuRef = useRef(null);
+
+  useEffect(() => {
+    const API = process.env.REACT_APP_API_URL || (window.location.port === '3000' ? 'http://localhost:5000' : '');
+    fetch(`${API}/settings`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.jiraProjectKey) setJiraProjectKey(data.jiraProjectKey);
+        if (data.jiraBaseUrl) {
+          const cleanUrl = data.jiraBaseUrl.replace(/^https?:\/\//, '');
+          setJiraBaseUrl(cleanUrl);
+        }
+      })
+      .catch(err => console.warn("Failed to load header JIRA settings", err));
+  }, []);
   
-  const { title, subtitle } = VIEW_TITLES[activeView] || VIEW_TITLES.dashboard;
+  const { title } = VIEW_TITLES[activeView] || VIEW_TITLES.dashboard;
+  const dynamicSubtitle = activeView === 'dashboard' 
+    ? `${jiraProjectKey} project · ${jiraBaseUrl} · Real-time data`
+    : (VIEW_TITLES[activeView] || VIEW_TITLES.dashboard).subtitle;
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   // Close dropdown on outside click
@@ -115,6 +137,17 @@ export default function Header({ user, activeView, onLogout, onRefresh, isRefres
             </svg>
           </span>
           {isRefreshing ? 'Refreshing…' : 'Refresh Data'}
+        </button>
+
+        <button
+          id="create-issue-btn"
+          className="create-issue-btn"
+          onClick={onCreateIssueClick}
+        >
+          <svg width="12" height="12" viewBox="0 0 14 14" fill="none" style={{ marginRight: 2 }}>
+            <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+          </svg>
+          Create Issue
         </button>
 
         {/* Notification bell + dropdown */}

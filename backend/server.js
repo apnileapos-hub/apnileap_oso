@@ -1531,6 +1531,20 @@ app.use(rovoRouter);
 // When 'npm run build' is run from the root, the React app is built into
 // frontend/frontend/build and Express serves it alongside the API.
 const buildPath = path.join(__dirname, "..", "frontend", "frontend", "build");
+console.log(`[Diagnostic] checking buildPath: ${buildPath}`);
+console.log(`[Diagnostic] buildPath exists: ${fs.existsSync(buildPath)}`);
+
+if (!fs.existsSync(buildPath)) {
+  const parentDir = path.join(__dirname, "..", "frontend", "frontend");
+  console.log(`[Diagnostic] parentDir exists: ${fs.existsSync(parentDir)}`);
+  if (fs.existsSync(parentDir)) {
+    try {
+      console.log(`[Diagnostic] parentDir contents: ${fs.readdirSync(parentDir).join(', ')}`);
+    } catch (e) {
+      console.log(`[Diagnostic] failed to read parentDir: ${e.message}`);
+    }
+  }
+}
 
 if (fs.existsSync(buildPath)) {
   // Serve static assets (JS, CSS, images, etc.)

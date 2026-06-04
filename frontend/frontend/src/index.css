@@ -43,6 +43,44 @@
   --transition: 0.2s ease;
 }
 
+[data-theme="light"] {
+  /* Colors */
+  --bg-primary:    #f6f8fa;
+  --bg-secondary:  #ffffff;
+  --bg-card:       #ffffff;
+  --bg-card-hover: #f0f3f6;
+  --border:        #d0d7de;
+  --border-light:  #e1e4e8;
+
+  /* Accent palette */
+  --accent:        #0969da;
+  --accent-dim:    rgba(9, 105, 218, 0.12);
+  --success:       #1a7f37;
+  --success-dim:   rgba(26, 127, 55, 0.12);
+  --warning:       #9a6700;
+  --warning-dim:   rgba(154, 103, 0, 0.12);
+  --danger:        #cf222e;
+  --danger-dim:    rgba(207, 34, 46, 0.12);
+  --purple:        #8250df;
+  --purple-dim:    rgba(130, 80, 223, 0.12);
+
+  /* Text */
+  --text-primary:   #24292f;
+  --text-secondary: #57606a;
+  --text-muted:     #8c959f;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+}
+
+/* Smooth Transitions for Theme Toggle */
+body, input, select, textarea, button, header, aside, section, div, span, p, h1, h2, h3, h4, h5, h6, a, svg {
+  transition: background-color var(--transition), border-color var(--transition), color var(--transition), fill var(--transition), stroke var(--transition), box-shadow var(--transition);
+}
+
+
 /* ── Reset ──────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

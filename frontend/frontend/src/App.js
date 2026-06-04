@@ -165,6 +165,12 @@ function App() {
   const [notifications, setNotifications] = useState([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState(null);
+  const [theme, setTheme] = useState(() => localStorage.getItem("app-theme") || "dark");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("app-theme", theme);
+  }, [theme]);
 
   // Subscribe to real-time Server-Sent Events (SSE) updates
   useEffect(() => {
@@ -296,6 +302,8 @@ function App() {
           notifications={notifications}
           setNotifications={setNotifications}
           onCreateIssueClick={() => setIsCreateModalOpen(true)}
+          theme={theme}
+          toggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
         />
         <div className="dashboard-content">
           {activeView === 'moderator-portal' && <ModeratorPortalView user={user} onRefresh={handleRefresh} initialTab="projects" />}
@@ -319,6 +327,8 @@ function App() {
               onIssuesLoaded={handleIssuesLoaded}
               user={user}
               onIssueClick={setSelectedIssue}
+              theme={theme}
+              toggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : 'dark')}
             />
           )}
         </div>

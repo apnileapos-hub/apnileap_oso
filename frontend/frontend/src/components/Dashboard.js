@@ -32,7 +32,7 @@ function ErrorBanner({ message, onRetry }) {
   );
 }
 
-export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetchEnd, onIssuesLoaded, user, onIssueClick }) {
+export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetchEnd, onIssuesLoaded, user, onIssueClick, theme, toggleTheme }) {
   const [metrics, setMetrics]       = useState(null);
   const [statusData, setStatusData] = useState([]);
   const [assigneeData, setAssigneeData] = useState([]);
@@ -276,8 +276,8 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
       <div className="settings-panel" style={{ display: 'flex', flexDirection: 'column', gap: '24px', maxWidth: '800px' }}>
         <div className="section-title">Atlassian Integration Settings</div>
         
-        <form onSubmit={handleSaveConnection} className="settings-section" style={{ padding: '24px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
-          <div className="settings-section-title" style={{ fontSize: '16px', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px', color: '#c9d1d9' }}>
+        <form onSubmit={handleSaveConnection} className="settings-section" style={{ padding: '24px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+          <div className="settings-section-title" style={{ fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', color: 'var(--text-primary)' }}>
             Jira Cloud Connection Control Panel
           </div>
 
@@ -312,7 +312,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {/* Site URL */}
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
-              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Atlassian Site URL</label>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Atlassian Site URL</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <input
                   type="url"
@@ -323,21 +323,21 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                   style={{
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
-                    color: '#c9d1d9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: '14px',
                     width: '100%',
                     boxSizing: 'border-box'
                   }}
                 />
-                <span style={{ fontSize: '11px', color: '#484f58' }}>Standard Jira Cloud URL, e.g. https://devcobraaa.atlassian.net</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Standard Jira Cloud URL, e.g. https://devcobraaa.atlassian.net</span>
               </div>
             </div>
 
             {/* Project Key */}
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
-              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Jira Project Key</label>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Jira Project Key</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <input
                   type="text"
@@ -347,15 +347,15 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                   style={{
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
-                    color: '#c9d1d9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: '14px',
                     width: '150px',
                     boxSizing: 'border-box'
                   }}
                 />
-                <span style={{ fontSize: '11px', color: '#58a6ff' }}>
+                <span style={{ fontSize: '11px', color: 'var(--accent)' }}>
                   💡 <strong>Optional:</strong> Leave blank to automatically create and provision a brand new Software Kanban project on your Atlassian site!
                 </span>
               </div>
@@ -363,7 +363,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
 
             {/* Organization ID */}
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
-              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Atlassian Org ID</label>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Atlassian Org ID</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <input
                   type="text"
@@ -373,21 +373,21 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                   style={{
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
-                    color: '#c9d1d9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: '14px',
                     width: '100%',
                     boxSizing: 'border-box'
                   }}
                 />
-                <span style={{ fontSize: '11px', color: '#484f58' }}>Required for Atlassian teams syncing. Retained from system organization.</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Required for Atlassian teams syncing. Retained from system organization.</span>
               </div>
             </div>
 
             {/* Email */}
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
-              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Atlassian Registered Email</label>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Atlassian Registered Email</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <input
                   type="email"
@@ -398,21 +398,21 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                   style={{
                     padding: '8px 12px',
                     borderRadius: '6px',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
-                    color: '#c9d1d9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: '14px',
                     width: '100%',
                     boxSizing: 'border-box'
                   }}
                 />
-                <span style={{ fontSize: '11px', color: '#484f58' }}>Email address of the administrator account on the specified Jira instance</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Email address of the administrator account on the specified Jira instance</span>
               </div>
             </div>
 
             {/* API Token */}
             <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', alignItems: 'center', gap: '16px' }}>
-              <label style={{ fontSize: '14px', fontWeight: '500', color: '#8b949e' }}>Jira API Token</label>
+              <label style={{ fontSize: '14px', fontWeight: '500', color: 'var(--text-secondary)' }}>Jira API Token</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                 <div style={{ position: 'relative', display: 'flex', width: '100%' }}>
                   <input
@@ -424,9 +424,9 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                     style={{
                       padding: '8px 45px 8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #30363d',
-                      background: '#0d1117',
-                      color: '#c9d1d9',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
                       fontSize: '14px',
                       width: '100%',
                       boxSizing: 'border-box'
@@ -442,7 +442,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                       transform: 'translateY(-50%)',
                       background: 'none',
                       border: 'none',
-                      color: '#8b949e',
+                      color: 'var(--text-secondary)',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
@@ -462,7 +462,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
                     )}
                   </button>
                 </div>
-                <span style={{ fontSize: '11px', color: '#484f58' }}>Generate an API Token from your Atlassian Account Security settings page</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Generate an API Token from your Atlassian Account Security settings page</span>
               </div>
             </div>
 
@@ -508,12 +508,12 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
           </div>
         </form>
 
-        <div className="settings-section" style={{ padding: '24px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
-          <div className="settings-section-title" style={{ fontSize: '16px', borderBottom: '1px solid #30363d', paddingBottom: '12px', marginBottom: '20px', color: '#c9d1d9' }}>
+        <div className="settings-section" style={{ padding: '24px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+          <div className="settings-section-title" style={{ fontSize: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px', color: 'var(--text-primary)' }}>
             System Information
           </div>
-          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #21262d' }}>
-            <div className="settings-label" style={{ color: '#8b949e' }}>Connection Status</div>
+          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+            <div className="settings-label" style={{ color: 'var(--text-secondary)' }}>Connection Status</div>
             <div className="settings-value">
               {settings ? (
                 <span className={`badge ${settings.status === 'Connected' ? 'badge-done' : 'badge-failed'}`} style={{
@@ -539,13 +539,35 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
               ) : "Loading..."}
             </div>
           </div>
-          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #21262d' }}>
-            <div className="settings-label" style={{ color: '#8b949e' }}>Integration Standard</div>
-            <div className="settings-value" style={{ color: '#c9d1d9' }}>{settings?.apiVersion || "Jira Cloud REST v3"}</div>
+          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+            <div className="settings-label" style={{ color: 'var(--text-secondary)' }}>Integration Standard</div>
+            <div className="settings-value" style={{ color: 'var(--text-primary)' }}>{settings?.apiVersion || "Jira Cloud REST v3"}</div>
           </div>
-          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid #21262d' }}>
-            <div className="settings-label" style={{ color: '#8b949e' }}>Theme Setting</div>
-            <div className="settings-value" style={{ color: '#c9d1d9' }}>Dark (Enterprise Governance OS)</div>
+          <div className="settings-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid var(--border)' }}>
+            <div className="settings-label" style={{ color: 'var(--text-secondary)' }}>Theme Setting</div>
+            <div className="settings-value" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{ color: 'var(--text-primary)', fontWeight: '500' }}>
+                {theme === 'dark' ? 'Dark Theme' : 'Light Theme'}
+              </span>
+              <button
+                type="button"
+                onClick={toggleTheme}
+                style={{
+                  padding: '4px 10px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)',
+                  color: 'var(--text-primary)',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+              </button>
+            </div>
           </div>
         </div>
       </div>

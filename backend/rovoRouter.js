@@ -116,6 +116,58 @@ Try asking me to:
       const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.name.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
       project.confluence_space_url = confluenceSpaceUrl;
 
+      // Automate GitHub Private Repository Creation
+      const cleanName = project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
+      const repoName = `apnileap-${cleanName}`;
+      let repoUrl = `https://github.com/apnileapos-hub/${repoName}`;
+      const githubToken = process.env.GITHUB_TOKEN;
+      const githubOrg = process.env.GITHUB_ORG || 'apnileapos-hub';
+
+      if (githubToken) {
+        try {
+          console.log(`[Rovo] Attempting to automate GitHub repository creation for: ${repoName}`);
+          let createUrl = 'https://api.github.com/user/repos';
+          if (githubOrg) {
+            createUrl = `https://api.github.com/orgs/${githubOrg}/repos`;
+          }
+          
+          const ghRes = await axios.post(
+            createUrl,
+            {
+              name: repoName,
+              description: `Automated repository for APNILEAP project: ${project.name}`,
+              private: true,
+              auto_init: true
+            },
+            {
+              headers: {
+                'Authorization': `token ${githubToken}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'User-Agent': 'APNILEAP-App'
+              }
+            }
+          );
+          if (ghRes.data && ghRes.data.html_url) {
+            repoUrl = ghRes.data.html_url;
+            console.log(`[Rovo] Successfully created GitHub repository: ${repoUrl}`);
+          }
+        } catch (ghErr) {
+          console.error("[Rovo] Failed to automatically create repository on GitHub:", ghErr.response?.data || ghErr.message);
+        }
+      }
+
+      // Save Repository details to Database
+      try {
+        await db.query(
+          `INSERT INTO repositories (project_id, repo_name, repo_url) 
+           VALUES ($1, $2, $3)
+           ON CONFLICT (repo_name) DO UPDATE SET repo_url = EXCLUDED.repo_url`,
+          [project.id, repoName, repoUrl]
+        );
+      } catch (dbErr) {
+        console.error("[Rovo] Failed to insert repository in DB:", dbErr.message);
+      }
+
       await db.query(
         `UPDATE projects 
          SET status = 'ACCEPTED', accepted_by = $1, confluence_space_url = $2, jira_board_url = $3, jira_project_key = $4, updated_at = CURRENT_TIMESTAMP
@@ -132,7 +184,7 @@ Try asking me to:
       }
 
       return res.json({
-        reply: `✅ **Project Accepted Successfully!**\n\n• **Project:** ${project.name}\n• **Accepted By:** ${acceptedBy}\n• **New Status:** ACCEPTED\n• **Jira Project Key:** ${autoKey}\n• **Jira Link:** [Jira Board](${jiraBoardUrl})\n• **Confluence Link:** [Space Link](${confluenceSpaceUrl})\n• **Rovo Auto-Tasks:** Automated task lists have been generated and synced under each epic!\n• **Timestamp:** ${new Date().toLocaleString()}`
+        reply: `✅ **Project Accepted Successfully!**\n\n• **Project:** ${project.name}\n• **Accepted By:** ${acceptedBy}\n• **New Status:** ACCEPTED\n• **Jira Project Key:** ${autoKey}\n• **Jira Link:** [Jira Board](${jiraBoardUrl})\n• **Confluence Link:** [Space Link](${confluenceSpaceUrl})\n• **Git Repository:** [Repository Link](${repoUrl})\n• **Rovo Auto-Tasks:** Automated task lists have been generated and synced under each epic!\n• **Timestamp:** ${new Date().toLocaleString()}`
       });
     }
 

@@ -4,7 +4,7 @@ import axios from 'axios';
 const API = process.env.REACT_APP_API_URL || 
   (window.location.port === '3000' ? 'http://localhost:5000' : '');
 
-export default function ModeratorPortalView({ user }) {
+export default function ModeratorPortalView({ user, initialTab }) {
   const [projects, setProjects] = useState([]);
   const [spokes, setSpokes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function ModeratorPortalView({ user }) {
   const [error, setError] = useState('');
 
   // User Management State
-  const [activeTab, setActiveTab] = useState('projects'); // 'projects' | 'users'
+  const [activeTab, setActiveTab] = useState(initialTab || 'projects'); // 'projects' | 'users'
   const [usersList, setUsersList] = useState([]);
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserName, setNewUserName] = useState('');
@@ -23,6 +23,50 @@ export default function ModeratorPortalView({ user }) {
   const [newUserCollege, setNewUserCollege] = useState('');
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
+
+  // Edit User State
+  const [editingUser, setEditingUser] = useState(null);
+  const [editUserName, setEditUserName] = useState('');
+  const [editUserEmail, setEditUserEmail] = useState('');
+  const [editUserRole, setEditUserRole] = useState('Super-admin');
+  const [editUserPass, setEditUserPass] = useState('');
+  const [editUserCollege, setEditUserCollege] = useState('');
+
+  const handleUserEditClick = (u) => {
+    setEditingUser(u);
+    setEditUserName(u.name);
+    setEditUserEmail(u.email);
+    setEditUserRole(u.role);
+    setEditUserCollege(u.college_id || '');
+    setEditUserPass('');
+  };
+
+  const handleEditUserSubmit = async (e) => {
+    e.preventDefault();
+    if (!editUserEmail || !editUserName || !editUserRole) return;
+    setSubmitting(true);
+    try {
+      const token = user?.token;
+      const payload = {
+        email: editUserEmail,
+        name: editUserName,
+        role: editUserRole,
+        collegeId: editUserCollege || null
+      };
+      if (editUserPass) {
+        payload.password = editUserPass;
+      }
+      await axios.put(`${API}/api/v1/users/${editingUser.id}`, payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setEditingUser(null);
+      fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update user.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -104,6 +148,12 @@ export default function ModeratorPortalView({ user }) {
     fetchUsers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   const handleAssignClick = (project) => {
     setAssigningProject(project);
@@ -316,6 +366,12 @@ export default function ModeratorPortalView({ user }) {
                                 ) : (
                                   <div style={{ fontSize: '10px', color: '#8b949e', fontStyle: 'italic' }}>Awaiting Intake</div>
                                 )}
+                                <button
+                                  onClick={() => handleAssignClick(proj)}
+                                  style={{ background: 'none', border: 'none', color: '#58a6ff', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', marginTop: '6px', padding: 0 }}
+                                >
+                                  🔄 Re-assign
+                                </button>
                               </div>
                             )}
                           </td>
@@ -446,6 +502,13 @@ export default function ModeratorPortalView({ user }) {
                       </td>
                       <td style={{ padding: '12px 8px', textAlign: 'center' }}>
                         <button 
+                          onClick={() => handleUserEditClick(u)}
+                          style={{ background: 'none', border: 'none', color: '#58a6ff', cursor: 'pointer', fontSize: '14px', marginRight: '10px' }}
+                          title="Edit User"
+                        >
+                          ✏️
+                        </button>
+                        <button 
                           onClick={() => handleDeleteUser(u.id)}
                           style={{ background: 'none', border: 'none', color: '#ff7b72', cursor: 'pointer', fontSize: '14px' }}
                           title="Delete User"
@@ -490,9 +553,15 @@ export default function ModeratorPortalView({ user }) {
                       <select value={newUserRole} onChange={e => setNewUserRole(e.target.value)}
                         style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}>
                         <option value="Super-admin">Super Admin</option>
-                        <option value="College-SPOC">College SPOC</option>
                         <option value="Admin">Admin</option>
+                        <option value="College-SPOC">College SPOC</option>
+                        <option value="Faculty">Faculty SPOC</option>
+                        <option value="Principal-Investigator">Principal Investigator</option>
+                        <option value="Corporate-Mentor">Corporate Mentor</option>
+                        <option value="Sponsor">Sponsor</option>
                         <option value="Project Manager">Project Manager</option>
+                        <option value="Team-Lead">Team Lead</option>
+                        <option value="Student Developer">Student Developer</option>
                       </select>
                     </div>
                     <div>
@@ -513,6 +582,72 @@ export default function ModeratorPortalView({ user }) {
                     </button>
                     <button type="submit" style={{ background: '#238636', color: '#ffffff', border: 'none', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
                       Add User
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
+
+          {/* Edit User Modal */}
+          {editingUser && (
+            <div className="chat-modal-overlay" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={() => setEditingUser(null)}>
+              <div className="chat-modal-content" style={{ width: '400px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }} onClick={e => e.stopPropagation()}>
+                <div className="chat-header" style={{ borderBottom: '1px solid #30363d', padding: '14px 20px' }}>
+                  <h3 style={{ margin: 0, fontSize: '16px', color: '#f0f6fc' }}>✏️ Edit Platform User</h3>
+                  <button className="close-chat-btn" onClick={() => setEditingUser(null)} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+                </div>
+                <form onSubmit={handleEditUserSubmit}>
+                  <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Full Name</label>
+                      <input type="text" value={editUserName} onChange={e => setEditUserName(e.target.value)} required placeholder="e.g. John Doe"
+                        style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Email Address</label>
+                      <input type="email" value={editUserEmail} onChange={e => setEditUserEmail(e.target.value)} required placeholder="e.g. john@gmail.com"
+                        style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>New Password (Leave blank to keep current)</label>
+                      <input type="password" value={editUserPass} onChange={e => setEditUserPass(e.target.value)} placeholder="e.g. Password123"
+                        style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>System Role</label>
+                      <select value={editUserRole} onChange={e => setEditUserRole(e.target.value)}
+                        style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}>
+                        <option value="Super-admin">Super Admin</option>
+                        <option value="Admin">Admin</option>
+                        <option value="College-SPOC">College SPOC</option>
+                        <option value="Faculty">Faculty SPOC</option>
+                        <option value="Principal-Investigator">Principal Investigator</option>
+                        <option value="Corporate-Mentor">Corporate Mentor</option>
+                        <option value="Sponsor">Sponsor</option>
+                        <option value="Project Manager">Project Manager</option>
+                        <option value="Team-Lead">Team Lead</option>
+                        <option value="Student Developer">Student Developer</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '4px' }}>Campus Scope</label>
+                      <select value={editUserCollege} onChange={e => setEditUserCollege(e.target.value)}
+                        style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}>
+                        <option value="">GLOBAL (No Spoke restriction)</option>
+                        <option value="kle-spoke">KLE Spoke</option>
+                        <option value="coep-spoke">COEP Spoke</option>
+                        <option value="mmcoep-spoke">MMCOEP Spoke</option>
+                        <option value="rit-spoke">RIT Spoke</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', padding: '14px 20px', background: '#0d1117', borderTop: '1px solid #30363d', borderBottomLeftRadius: '8px', borderBottomRightRadius: '8px' }}>
+                    <button type="button" onClick={() => setEditingUser(null)} style={{ background: 'none', border: '1px solid #30363d', color: '#c9d1d9', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px' }}>
+                      Cancel
+                    </button>
+                    <button type="submit" style={{ background: '#238636', color: '#ffffff', border: 'none', padding: '6px 16px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: '600' }}>
+                      Save Changes
                     </button>
                   </div>
                 </form>

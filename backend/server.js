@@ -575,16 +575,17 @@ app.put("/api/v1/users/:id", verifyToken, async (req, res) => {
   const { email, name, role, password, collegeId } = req.body;
   try {
     const db = require('./db');
+    const hasCollegeId = req.body.hasOwnProperty('collegeId');
     const updateResult = await db.query(
       `UPDATE users 
        SET email = COALESCE($1, email),
            name = COALESCE($2, name),
            role = COALESCE($3, role),
            password = COALESCE($4, password),
-           college_id = COALESCE($5, college_id)
+           college_id = ${hasCollegeId ? '$5' : 'college_id'}
        WHERE id = $6
        RETURNING id, email, name, role, college_id`,
-      [email ? email.toLowerCase().trim() : null, name, role, password, collegeId, id]
+      [email ? email.toLowerCase().trim() : null, name, role, password, collegeId || null, id]
     );
     if (updateResult.rows.length === 0) {
       return res.status(404).json({ error: "User not found" });
@@ -660,6 +661,7 @@ app.get("/teams", async (req, res) => {
       id: row.id,
       name: row.name,
       members: row.members || [],
+      collegeId: row.college_id,
       messages: messagesByTeam[row.id] || []
     }));
     
@@ -670,6 +672,7 @@ app.get("/teams", async (req, res) => {
         name: atTeam.displayName,
         description: atTeam.description,
         members: [], 
+        collegeId: matchingLocal.collegeId || null,
         messages: matchingLocal.messages || []
       };
     });
@@ -688,10 +691,21 @@ app.get("/teams", async (req, res) => {
 });
 
 // ── POST /teams ───────────────────────────────────────────────────────────────
-app.post("/teams", async (req, res) => {
+app.post("/teams", verifyToken, async (req, res) => {
   try {
     const db = require('./db');
-    const { name, members } = req.body;
+    const { name, members, collegeId } = req.body;
+    const { role, collegeId: userCollegeId } = req.user;
+
+    if (role !== 'Super-admin' && role !== 'Admin' && role !== 'College-SPOC') {
+      return res.status(403).json({ error: "Forbidden. Unauthorized to manage teams." });
+    }
+
+    let targetCollegeId = collegeId || null;
+    if (role === 'College-SPOC') {
+      targetCollegeId = userCollegeId;
+    }
+
     if (!name) {
       return res.status(400).json({ error: "Team name is required" });
     }
@@ -731,14 +745,17 @@ app.post("/teams", async (req, res) => {
     const newTeamMembers = Array.isArray(members) ? members : [];
 
     await db.query(
-      'INSERT INTO teams (id, name, members) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET name = $2, members = $3',
-      [newTeamId, name, newTeamMembers]
+      `INSERT INTO teams (id, name, members, college_id) 
+       VALUES ($1, $2, $3, $4) 
+       ON CONFLICT (id) DO UPDATE SET name = $2, members = $3, college_id = $4`,
+      [newTeamId, name, newTeamMembers, targetCollegeId]
     );
 
     res.json({
       id: newTeamId,
       name,
       members: newTeamMembers,
+      collegeId: targetCollegeId,
       messages: []
     });
   } catch (error) {
@@ -748,32 +765,77 @@ app.post("/teams", async (req, res) => {
 });
 
 // ── PUT /teams/:id ────────────────────────────────────────────────────────────
-app.put("/teams/:id", async (req, res) => {
+app.put("/teams/:id", verifyToken, async (req, res) => {
   try {
     const db = require('./db');
     const { id } = req.params;
-    const { name, members } = req.body;
+    const { name, members, collegeId } = req.body;
+    const { role, collegeId: userCollegeId } = req.user;
+
+    if (role !== 'Super-admin' && role !== 'Admin' && role !== 'College-SPOC') {
+      return res.status(403).json({ error: "Forbidden. Unauthorized to manage teams." });
+    }
     
     const checkTeam = await db.query('SELECT * FROM teams WHERE id = $1', [id]);
     if (checkTeam.rows.length === 0) {
       return res.status(404).json({ error: "Team not found" });
     }
+
+    if (role === 'College-SPOC' && checkTeam.rows[0].college_id !== userCollegeId) {
+      return res.status(403).json({ error: "Forbidden. You can only edit teams for your college." });
+    }
     
     const updatedName = name || checkTeam.rows[0].name;
     const updatedMembers = members !== undefined ? (Array.isArray(members) ? members : []) : checkTeam.rows[0].members;
     
+    let updatedCollegeId = checkTeam.rows[0].college_id;
+    if (role === 'Super-admin' || role === 'Admin') {
+      if (req.body.hasOwnProperty('collegeId')) {
+        updatedCollegeId = collegeId || null;
+      }
+    }
+    
     await db.query(
-      'UPDATE teams SET name = $1, members = $2 WHERE id = $3',
-      [updatedName, updatedMembers, id]
+      'UPDATE teams SET name = $1, members = $2, college_id = $3 WHERE id = $4',
+      [updatedName, updatedMembers, updatedCollegeId, id]
     );
     
     res.json({
       id,
       name: updatedName,
-      members: updatedMembers
+      members: updatedMembers,
+      collegeId: updatedCollegeId
     });
   } catch (error) {
     console.error("Error updating team:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── DELETE /teams/:id ─────────────────────────────────────────────────────────
+app.delete("/teams/:id", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { id } = req.params;
+    const { role, collegeId: userCollegeId } = req.user;
+
+    if (role !== 'Super-admin' && role !== 'Admin' && role !== 'College-SPOC') {
+      return res.status(403).json({ error: "Forbidden. Unauthorized to manage teams." });
+    }
+
+    const checkTeam = await db.query('SELECT * FROM teams WHERE id = $1', [id]);
+    if (checkTeam.rows.length === 0) {
+      return res.status(404).json({ error: "Team not found" });
+    }
+
+    if (role === 'College-SPOC' && checkTeam.rows[0].college_id !== userCollegeId) {
+      return res.status(403).json({ error: "Forbidden. You can only delete teams for your college." });
+    }
+
+    await db.query('DELETE FROM teams WHERE id = $1', [id]);
+    res.json({ success: true, message: "Team deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting team:", error);
     res.status(500).json({ error: error.message });
   }
 });

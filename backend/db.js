@@ -204,6 +204,7 @@ const initDb = async () => {
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS epics JSONB DEFAULT '[]';
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS reminders JSONB DEFAULT '[]';
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS jira_project_key VARCHAR(100);
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS college_id VARCHAR(50);
     `);
     console.log('PostgreSQL tables initialized successfully!');
 

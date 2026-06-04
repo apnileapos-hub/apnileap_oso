@@ -294,13 +294,14 @@ function App() {
           onCreateIssueClick={() => setIsCreateModalOpen(true)}
         />
         <div className="dashboard-content">
-          {activeView === 'moderator-portal' && <ModeratorPortalView user={user} onRefresh={handleRefresh} />}
+          {activeView === 'moderator-portal' && <ModeratorPortalView user={user} onRefresh={handleRefresh} initialTab="projects" />}
+          {activeView === 'users' && <ModeratorPortalView user={user} onRefresh={handleRefresh} initialTab="users" />}
           {activeView === 'executive-hub' && <ExecutiveHubView user={user} />}
           {activeView === 'faculty-portal' && <FacultyPortalView user={user} />}
           {activeView === 'mentor-portal' && <MentorPortalView user={user} />}
           {activeView.startsWith('spoke-') && <SpokeBoardView user={user} spokeId={activeView.replace('spoke-', '') + '-spoke'} onRefresh={handleRefresh} />}
-          {activeView === 'simulator' && <CompanySimulatorView user={user} onRefresh={handleRefresh} />}
-          {activeView === 'email-logs' && <AutomationLogsView user={user} />}
+          {activeView === 'simulator' && (user?.role === 'Super-admin' || user?.role === 'Admin') && <CompanySimulatorView user={user} onRefresh={handleRefresh} />}
+          {activeView === 'email-logs' && (user?.role === 'Super-admin' || user?.role === 'Admin') && <AutomationLogsView user={user} />}
 
           {['dashboard', 'issues', 'analytics', 'teams', 'calls', 'meet', 'settings'].includes(activeView) && (
             <Dashboard

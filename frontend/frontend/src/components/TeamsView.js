@@ -20,6 +20,8 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
   const [teamName, setTeamName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState([]);
   const [editingTeamId, setEditingTeamId] = useState(null);
+  const [teamCollegeId, setTeamCollegeId] = useState('');
+  const [spokes, setSpokes] = useState([]);
   
   // Chat State
   const [chatMessages, setChatMessages] = useState([]);
@@ -32,22 +34,34 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
   const [successMsg, setSuccessMsg] = useState('');
 
   const isSuperAdmin = user?.role === 'Super-admin';
+  const canManageTeams = isSuperAdmin || user?.role === 'College-SPOC';
   const myName = user?.name || user?.email || 'Unknown';
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [teamsRes, usersRes, projectsRes] = await Promise.all([
+      const [teamsRes, usersRes, projectsRes, spokesRes] = await Promise.all([
         axios.get(`${API}/teams`),
         axios.get(`${API}/users`),
         axios.get(`${API}/projects`, {
           headers: { Authorization: `Bearer ${user?.token}` }
-        })
+        }),
+        axios.get(`${API}/spokes`)
       ]);
       const fetchedTeams = teamsRes.data || [];
-      setTeams(fetchedTeams);
+      const fetchedSpokes = spokesRes.data || [];
+      
+      let userTeams = fetchedTeams;
+      if (user?.role === 'College-SPOC') {
+        const mySpoke = fetchedSpokes.find(s => s.id === user.collegeId);
+        const myStaticTeams = mySpoke ? (mySpoke.teams || []) : [];
+        userTeams = fetchedTeams.filter(t => t.collegeId === user.collegeId || myStaticTeams.includes(t.id));
+      }
+      
+      setTeams(userTeams);
       setUsers(usersRes.data || []);
       setProjects(projectsRes.data || []);
+      setSpokes(fetchedSpokes);
       
       // Auto-select first team if available and none selected yet
       if (fetchedTeams.length > 0 && !selectedTeam) {
@@ -106,8 +120,8 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
 
   const handleCreateOrEditTeam = async (e) => {
     e.preventDefault();
-    if (!isSuperAdmin) {
-      setError("Permission denied. Only Super-admins can manage teams.");
+    if (!canManageTeams) {
+      setError("Permission denied. You are not authorized to manage teams.");
       return;
     }
     if (!teamName.trim()) {
@@ -123,11 +137,19 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
     setError('');
     setSuccessMsg('');
 
+    let targetCollegeId = teamCollegeId || null;
+    if (user?.role === 'College-SPOC') {
+      targetCollegeId = user.collegeId;
+    }
+
     try {
       if (editingTeamId) {
         const res = await axios.put(`${API}/teams/${editingTeamId}`, {
           name: teamName,
-          members: selectedMembers
+          members: selectedMembers,
+          collegeId: targetCollegeId
+        }, {
+          headers: { Authorization: `Bearer ${user?.token}` }
         });
         setTeams(prev => prev.map(t => t.id === editingTeamId ? res.data : t));
         setSelectedTeam(res.data);
@@ -135,7 +157,10 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
       } else {
         const res = await axios.post(`${API}/teams`, {
           name: teamName,
-          members: selectedMembers
+          members: selectedMembers,
+          collegeId: targetCollegeId
+        }, {
+          headers: { Authorization: `Bearer ${user?.token}` }
         });
         setTeams(prev => [...prev, res.data]);
         setSelectedTeam(res.data);
@@ -156,6 +181,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
     setTeamName('');
     setSelectedMembers([]);
     setEditingTeamId(null);
+    setTeamCollegeId('');
     setError('');
     setSuccessMsg('');
   };
@@ -164,10 +190,29 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
     setEditingTeamId(team.id);
     setTeamName(team.name);
     setSelectedMembers(team.members || []);
+    setTeamCollegeId(team.collegeId || '');
     setShowCreateForm(true);
     setSelectedTeam(null);
     setError('');
     setSuccessMsg('');
+  };
+
+  const handleDeleteTeam = async (teamId) => {
+    if (!window.confirm("Are you sure you want to delete this team? This action is permanent and will unassign any active projects.")) return;
+    setSubmitting(true);
+    try {
+      await axios.delete(`${API}/teams/${teamId}`, {
+        headers: { Authorization: `Bearer ${user?.token}` }
+      });
+      setSuccessMsg("Team deleted successfully!");
+      setSelectedTeam(null);
+      fetchData();
+      setTimeout(() => setSuccessMsg(''), 4000);
+    } catch (err) {
+      setError(err.response?.data?.error || "Failed to delete team.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSendMessage = async (e) => {
@@ -362,7 +407,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
         </div>
 
         {/* Sidebar Footer Action */}
-        {isSuperAdmin && (
+        {canManageTeams && (
           <div style={{ padding: '12px', borderTop: '1px solid #2d2d2d', background: '#141517' }}>
             <button
               onClick={() => { setShowCreateForm(true); setSelectedTeam(null); resetForm(); }}
@@ -424,6 +469,22 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                     required
                   />
                 </div>
+
+                {user?.role === 'Super-admin' && (
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', color: '#c9d1d9', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>College Spoke Association</label>
+                    <select
+                      value={teamCollegeId}
+                      onChange={(e) => setTeamCollegeId(e.target.value)}
+                      style={{ width: '100%', padding: '8px 12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff' }}
+                    >
+                      <option value="">GLOBAL (No college restriction)</option>
+                      {spokes.map(s => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div style={{ marginBottom: '20px' }}>
                   <label style={{ display: 'block', color: '#c9d1d9', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>Assign Members</label>
@@ -520,22 +581,40 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
               </div>
 
               <div style={{ display: 'flex', gap: '8px' }}>
-                {isSuperAdmin && (
-                  <button
-                    onClick={() => handleEditClick(selectedTeam)}
-                    style={{
-                      background: '#21262d',
-                      border: '1px solid #30363d',
-                      color: '#c9d1d9',
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontSize: '12px',
-                      fontWeight: '600',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    ✏️ Edit Team
-                  </button>
+                {canManageTeams && (
+                  <>
+                    <button
+                      onClick={() => handleEditClick(selectedTeam)}
+                      style={{
+                        background: '#21262d',
+                        border: '1px solid #30363d',
+                        color: '#c9d1d9',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      ✏️ Edit Team
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTeam(selectedTeam.id)}
+                      disabled={submitting}
+                      style={{
+                        background: '#da3637',
+                        border: 'none',
+                        color: '#fff',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '12px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      🗑️ Delete Team
+                    </button>
+                  </>
                 )}
               </div>
             </div>

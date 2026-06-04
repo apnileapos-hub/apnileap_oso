@@ -8,7 +8,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
   // Determine if a particular Spoke should be visible to this user
   const canViewSpoke = (spokeId) => {
     if (isSuperAdmin) return true;
-    if (isSpokeSpoc && userCollegeId === spokeId) return true;
+    if ((isSpokeSpoc || user?.role === 'Faculty' || user?.role === 'Principal-Investigator') && userCollegeId === spokeId) return true;
     return false;
   };
 
@@ -33,7 +33,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
     activeCategory = 'jira';
     showSubMenu = true;
     subMenuTitle = 'JIRA & ANALYTICS';
-  } else if (['executive-hub', 'moderator-portal', 'faculty-portal', 'mentor-portal'].includes(activeView) || activeView.startsWith('spoke-')) {
+  } else if (['executive-hub', 'moderator-portal', 'users', 'faculty-portal', 'mentor-portal'].includes(activeView) || activeView.startsWith('spoke-')) {
     activeCategory = 'portfolio';
     showSubMenu = true;
     subMenuTitle = 'ENTERPRISE DASHBOARDS';
@@ -345,34 +345,36 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
             </div>
 
             {/* 8. Activity Bell icon (Automation logs) */}
-            <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
-              <div 
-                onClick={() => onNavigate('email-logs')}
-                title="Activity Logs & Alerts"
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: 'pointer',
-                  background: activeCategory === 'activity' ? '#292a2c' : 'transparent',
-                  color: activeCategory === 'activity' ? '#fff' : '#8b949e',
-                  transition: 'background 0.2s, color 0.2s'
-                }}
-                onMouseEnter={(e) => { if (activeCategory !== 'activity') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-                onMouseLeave={(e) => { if (activeCategory !== 'activity') e.currentTarget.style.background = 'transparent'; }}
-              >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z" />
-                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                </svg>
+            {(isSuperAdmin || user?.role === 'Admin') && (
+              <div style={{ position: 'relative', width: '100%', display: 'flex', justifyContent: 'center' }}>
+                <div 
+                  onClick={() => onNavigate('email-logs')}
+                  title="Activity Logs & Alerts"
+                  style={{
+                    width: '40px',
+                    height: '40px',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    background: activeCategory === 'activity' ? '#292a2c' : 'transparent',
+                    color: activeCategory === 'activity' ? '#fff' : '#8b949e',
+                    transition: 'background 0.2s, color 0.2s'
+                  }}
+                  onMouseEnter={(e) => { if (activeCategory !== 'activity') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                  onMouseLeave={(e) => { if (activeCategory !== 'activity') e.currentTarget.style.background = 'transparent'; }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9z" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                </div>
+                {activeCategory === 'activity' && (
+                  <div style={{ position: 'absolute', left: 0, top: '8px', width: '3px', height: '24px', background: '#7f85f5', borderRadius: '0 4px 4px 0' }} />
+                )}
               </div>
-              {activeCategory === 'activity' && (
-                <div style={{ position: 'absolute', left: 0, top: '8px', width: '3px', height: '24px', background: '#7f85f5', borderRadius: '0 4px 4px 0' }} />
-              )}
-            </div>
+            )}
 
           </div>
         </div>
@@ -381,29 +383,31 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '14px', width: '100%' }}>
           
           {/* Settings gear */}
-          <div 
-            onClick={() => onNavigate('settings')}
-            title="Settings"
-            style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              cursor: 'pointer',
-              background: activeCategory === 'settings' ? '#292a2c' : 'transparent',
-              color: activeCategory === 'settings' ? '#fff' : '#8b949e',
-              transition: 'background 0.2s, color 0.2s'
-            }}
-            onMouseEnter={(e) => { if (activeCategory !== 'settings') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
-            onMouseLeave={(e) => { if (activeCategory !== 'settings') e.currentTarget.style.background = 'transparent'; }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </div>
+          {(isSuperAdmin || user?.role === 'Admin') && (
+            <div 
+              onClick={() => onNavigate('settings')}
+              title="Settings"
+              style={{
+                width: '40px',
+                height: '40px',
+                borderRadius: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                background: activeCategory === 'settings' ? '#292a2c' : 'transparent',
+                color: activeCategory === 'settings' ? '#fff' : '#8b949e',
+                transition: 'background 0.2s, color 0.2s'
+              }}
+              onMouseEnter={(e) => { if (activeCategory !== 'settings') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+              onMouseLeave={(e) => { if (activeCategory !== 'settings') e.currentTarget.style.background = 'transparent'; }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </div>
+          )}
 
           {/* Logout */}
           <div 
@@ -598,6 +602,28 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                     }}
                   >
                     👑 Super Admin Dashboard
+                  </button>
+                )}
+
+                {isSuperAdmin && (
+                  <button
+                    className={`sidebar-nav-item ${activeView === 'users' ? 'active' : ''}`}
+                    onClick={() => onNavigate('users')}
+                    style={{
+                      padding: '8px 12px',
+                      fontSize: '13px',
+                      fontWeight: '500',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: activeView === 'users' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
+                      color: activeView === 'users' ? '#7f85f5' : '#c9d1d9',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      width: '100%',
+                      marginBottom: '4px'
+                    }}
+                  >
+                    👥 Manage Users
                   </button>
                 )}
 

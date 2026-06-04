@@ -151,7 +151,8 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
 
   // Enforce access control permissions:
   // Super-admin can see all. Spoke SPOC can only see their matching collegeId.
-  const hasAccess = user?.role === 'Super-admin' || (user?.role === 'College-SPOC' && user?.collegeId === spokeId);
+  const hasAccess = user?.role === 'Super-admin' || 
+                    ((user?.role === 'College-SPOC' || user?.role === 'Faculty' || user?.role === 'Principal-Investigator') && user?.collegeId === spokeId);
 
   if (!hasAccess) {
     return (
@@ -166,7 +167,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
 
   // Filter teams permitted for this Spoke
   const SpokeTeamIds = currentSpoke.teams || [];
-  const SpokeTeams = teams.filter(t => SpokeTeamIds.includes(t.id));
+  const SpokeTeams = teams.filter(t => t.collegeId === spokeId || SpokeTeamIds.includes(t.id));
 
   return (
     <div className="spoke-board-view" style={{ color: '#c9d1d9' }}>

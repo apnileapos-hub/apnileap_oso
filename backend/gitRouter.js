@@ -45,7 +45,16 @@ router.post("/projects/:id/award", async (req, res) => {
     const cleanProjectName = project.name.toLowerCase().replace(/[^a-z0-9]/g, '-');
     const repoName = `apnileap-${cleanProjectName}`;
     const repoUrl = `https://github.com/${githubOrg}/${repoName}`;
-    const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${cleanProjectName.toUpperCase()}`;
+    
+    // Auto-provision Confluence Space
+    let confluenceSpaceUrl = `https://confluence.apnileap.com/display/${cleanProjectName.toUpperCase()}`;
+    try {
+      const { createConfluenceSpace } = require('./confluenceService');
+      const spaceKey = project.jira_project_key || project.jiraProjectKey || cleanProjectName.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      confluenceSpaceUrl = await createConfluenceSpace(spaceKey, project.name, project.description);
+    } catch (confErr) {
+      console.error("Failed to automatically provision Confluence Space, falling back to stub:", confErr.message);
+    }
 
     // 2. Update status and provision URLs
     const updatedProj = await db.query(

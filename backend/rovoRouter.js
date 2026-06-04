@@ -112,7 +112,14 @@ Try asking me to:
         project.jira_board_url = jiraBoardUrl;
       }
 
-      const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.name.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+      // Auto-provision Confluence Space
+      let confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.name.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+      try {
+        const { createConfluenceSpace } = require('./confluenceService');
+        confluenceSpaceUrl = await createConfluenceSpace(autoKey, project.name, project.description);
+      } catch (confErr) {
+        console.error("[Rovo] Failed to automatically provision Confluence Space, falling back to stub:", confErr.message);
+      }
       project.confluence_space_url = confluenceSpaceUrl;
 
       // Automate GitHub Private Repository Creation
@@ -364,8 +371,15 @@ Try asking me to:
         }
       }
 
-      // Generate Confluence Page space link
-      const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${title.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+      // Generate Confluence Page space link & Auto-provision Confluence Space
+      let confluenceSpaceUrl = `https://confluence.apnileap.com/display/${title.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+      try {
+        const { createConfluenceSpace } = require('./confluenceService');
+        const spaceKey = jiraKey || title.toUpperCase().replace(/[^A-Z0-9]/g, '');
+        confluenceSpaceUrl = await createConfluenceSpace(spaceKey, title, `Project proposed by Rovo Copilot for ${collegeName}`);
+      } catch (confErr) {
+        console.error("[Rovo] Failed to automatically provision Confluence Space during proposal, falling back to stub:", confErr.message);
+      }
 
       const projectId = Date.now();
       const projRes = await db.query(

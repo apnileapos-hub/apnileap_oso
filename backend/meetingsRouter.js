@@ -440,4 +440,19 @@ router.post("/meetings/:id/remind", verifyToken, async (req, res) => {
   }
 });
 
+// DELETE: Delete a meeting
+router.delete("/meetings/:meetId", verifyToken, async (req, res) => {
+  const { meetId } = req.params;
+  try {
+    const result = await db.query('DELETE FROM meetings WHERE id = $1 RETURNING *', [meetId]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Meeting not found" });
+    }
+    res.json({ success: true, message: "Meeting deleted successfully" });
+  } catch (error) {
+    console.error("Failed to delete meeting:", error);
+    res.status(500).json({ error: "Failed to delete meeting" });
+  }
+});
+
 module.exports = router;

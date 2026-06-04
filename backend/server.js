@@ -1885,9 +1885,15 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
       project.jiraBoardUrl = jiraBoardUrl;
     }
 
-    // 2. Generate Confluence Space link
+    // 2. Generate Confluence Space link & Auto-provision Confluence Space
     const cleanName = project.title.toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.title.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+    let confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.title.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+    try {
+      const { createConfluenceSpace } = require('./confluenceService');
+      confluenceSpaceUrl = await createConfluenceSpace(autoKey, project.title, project.description);
+    } catch (confErr) {
+      console.error("Failed to automatically provision Confluence Space, falling back to stub:", confErr.message);
+    }
     project.confluenceSpaceUrl = confluenceSpaceUrl;
 
     // 3. Automate GitHub Private Repository Creation
@@ -2764,6 +2770,567 @@ server.on("error", (err) => {
     console.error(`\n❌  Server error: ${err.message}\n`);
   }
   process.exit(1);
+});
+
+// ── Compatibility Aliases for Premium React UI ───────────────────────────────
+const SPOKES_MAP = {
+  "3": "KLE Spoke",
+  "101": "COEP Spoke",
+  "102": "MMCOEP Spoke",
+  "103": "RIT Spoke",
+  "kle-spoke": "KLE Spoke",
+  "coep-spoke": "COEP Spoke",
+  "mmcoep-spoke": "MMCOEP Spoke",
+  "rit-spoke": "RIT Spoke"
+};
+const getSpokeName = (id) => SPOKES_MAP[id] || id || "Campus Spoke";
+const getSpokeId = (name) => {
+  if (!name) return null;
+  if (name.includes("KLE")) return "3";
+  if (name.includes("COEP") && !name.includes("MM")) return "101";
+  if (name.includes("MMCOEP")) return "102";
+  if (name.includes("RIT")) return "103";
+  return name;
+};
+
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: "Email and password are required" });
+  }
+  try {
+    const db = require('./db');
+    const result = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [email.toLowerCase().trim()]);
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: "User not found." });
+    }
+    const user = result.rows[0];
+    if (user.password !== password) {
+      return res.status(401).json({ error: "Invalid password." });
+    }
+    const userPayload = {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      collegeId: user.college_id,
+      campusId: user.college_id
+    };
+    const token = jwt.sign(userPayload, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ token, user: userPayload });
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({ error: `Internal server login error: ${error.message}` });
+  }
+});
+
+app.post("/api/register", async (req, res) => {
+  const { name, email, password, role, campusId } = req.body;
+  if (!email || !name || !role || !password) {
+    return res.status(400).json({ error: "Missing required registration fields" });
+  }
+  try {
+    const db = require('./db');
+    const check = await db.query('SELECT * FROM users WHERE LOWER(email) = $1', [email.toLowerCase().trim()]);
+    if (check.rows.length > 0) {
+      return res.status(400).json({ error: "Email is already registered." });
+    }
+    const collegeId = campusId || null;
+    const result = await db.query(
+      `INSERT INTO users (email, name, role, password, college_id) 
+       VALUES ($1, $2, $3, $4, $5) 
+       RETURNING id, email, name, role, college_id`,
+      [email.toLowerCase().trim(), name, role, password, collegeId]
+    );
+    const newUser = result.rows[0];
+    try {
+      await inviteAndSyncUserToJira(newUser.email, newUser.name, newUser.college_id, ["jira-software", "confluence"]);
+    } catch (syncErr) {
+      console.error(`[Jira Sync Error] Failed to invite user during registration:`, syncErr);
+    }
+    res.json({ message: "Registration successful! Account is active." });
+  } catch (error) {
+    console.error("Register error:", error);
+    res.status(500).json({ error: `Internal server error during registration: ${error.message}` });
+  }
+});
+
+app.get("/me", verifyToken, async (req, res) => {
+  res.json({
+    id: req.user.id,
+    email: req.user.email,
+    name: req.user.name,
+    role: req.user.role,
+    collegeId: req.user.collegeId,
+    campusId: req.user.campusId || req.user.collegeId
+  });
+});
+
+app.get("/moderator/projects", async (req, res) => {
+  try {
+    const db = require('./db');
+    const result = await db.query(
+      `SELECT p.id, p.name as title, c.name as company, c.logo_url,
+              p.description, p.budget as funding, p.duration_weeks || ' Weeks' as duration, 
+              p.status, p.confluence_space_url, p.jira_board_url,
+              p.created_by, p.accepted_by, p.spoke_id, p.team_id, p.jira_project_key, p.created_at
+       FROM projects p
+       LEFT JOIN companies c ON p.company_id = c.id
+       ORDER BY p.created_at DESC`
+    );
+    const projects = result.rows.map(row => {
+      const budgetStr = row.funding ? `$${parseFloat(row.funding).toLocaleString()}` : "$0";
+      const spokeName = getSpokeName(row.spoke_id);
+      const campusId = getSpokeId(row.spoke_id);
+      const statusFormatted = row.status === 'ACCEPTED' || row.status === 'IN_PROGRESS' || row.status === 'active' ? 'Active' : (row.status === 'ALLOCATED' || row.status === 'proposed' ? 'Proposed' : 'Pending Assignment');
+      
+      const allocations = row.spoke_id ? [{
+        targetCampusId: campusId,
+        assignedTo: spokeName,
+        status: statusFormatted,
+        proposedDueDate: '2026-08-25',
+        assignedKey: row.jira_project_key || null
+      }] : [];
+
+      return {
+        id: `proj-${row.id}`,
+        company: row.company || "NVIDIA",
+        logoUrl: row.logo_url || "https://logo.clearbit.com/nvidia.com?size=80",
+        title: row.title,
+        description: row.description || "",
+        budget: budgetStr,
+        duration: row.duration || "12 Weeks",
+        status: statusFormatted,
+        assignedTo: row.spoke_id ? spokeName : null,
+        targetCampusId: campusId,
+        proposedDueDate: '2026-08-25',
+        assignedKey: row.jira_project_key || null,
+        dateAdded: row.created_at ? row.created_at.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        allocations: allocations
+      };
+    });
+    res.json(projects);
+  } catch (err) {
+    console.error("Failed to fetch moderator projects:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/moderator/projects", verifyToken, async (req, res) => {
+  const { company, title, description, budget, duration, proposedDueDate } = req.body;
+  try {
+    const db = require('./db');
+    let companyId = null;
+    const compCheck = await db.query('SELECT id FROM companies WHERE name ILIKE $1', [company.trim()]);
+    if (compCheck.rows.length > 0) {
+      companyId = compCheck.rows[0].id;
+    } else {
+      const compInsert = await db.query('INSERT INTO companies (name) VALUES ($1) RETURNING id', [company.trim()]);
+      companyId = compInsert.rows[0].id;
+    }
+    const numericId = Date.now();
+    const cleanBudget = parseFloat(budget.replace(/[^0-9.]/g, "")) || 50000;
+    const cleanDuration = parseInt(duration) || 12;
+    await db.query(
+      `INSERT INTO projects (id, name, description, budget, duration_weeks, status, company_id) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [numericId, title, description, cleanBudget, cleanDuration, 'OPEN_FOR_BIDDING', companyId]
+    );
+    res.json({
+      success: true,
+      project: {
+        id: `proj-${numericId}`,
+        company,
+        logoUrl: "https://logo.clearbit.com/nvidia.com?size=80",
+        title,
+        description,
+        budget: `$${cleanBudget.toLocaleString()}`,
+        duration,
+        status: "Pending Assignment",
+        allocations: []
+      }
+    });
+  } catch (err) {
+    console.error("Failed to create moderator project:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put("/moderator/projects/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { company, title, description, budget, duration, proposedDueDate, status } = req.body;
+  const cleanId = parseInt(id.replace("proj-", ""));
+  try {
+    const db = require('./db');
+    const cleanBudget = budget ? parseFloat(budget.replace(/[^0-9.]/g, "")) : null;
+    const cleanDuration = duration ? parseInt(duration) : null;
+    
+    await db.query(
+      `UPDATE projects 
+       SET name = COALESCE($1, name), 
+           description = COALESCE($2, description), 
+           budget = COALESCE($3, budget), 
+           duration_weeks = COALESCE($4, duration_weeks),
+           status = COALESCE($5, status),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = $6`,
+      [title, description, cleanBudget, cleanDuration, status ? status.toUpperCase() : null, cleanId]
+    );
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to update moderator project:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/moderator/projects/:id", verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const cleanId = parseInt(id.replace("proj-", ""));
+  try {
+    const db = require('./db');
+    await db.query("DELETE FROM projects WHERE id = $1", [cleanId]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to delete moderator project:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/moderator/assign", verifyToken, async (req, res) => {
+  const { projectId, targetBoardId, dueDate } = req.body;
+  const cleanId = parseInt(projectId.replace("proj-", ""));
+  const spokeKey = targetBoardId === "3" ? "kle-spoke" : (targetBoardId === "101" ? "coep-spoke" : (targetBoardId === "102" ? "mmcoep-spoke" : "rit-spoke"));
+  try {
+    const db = require('./db');
+    await db.query(
+      `UPDATE projects 
+       SET spoke_id = $1, status = 'ALLOCATED', updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2`,
+      [spokeKey, cleanId]
+    );
+    res.json({
+      success: true,
+      message: "Successfully assigned project to Spoke.",
+      status: "Proposed"
+    });
+  } catch (err) {
+    console.error("Failed to assign project to spoke:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST: Run real-time audit scan of B2B projects and trigger warnings if incomplete/overdue
+app.post("/moderator/alerts/check", async (req, res) => {
+  const triggeredAlerts = [];
+  try {
+    const db = require('./db');
+    // Fetch all allocated/accepted projects
+    const projResult = await db.query(
+      `SELECT p.id, p.name as title, c.name as company, p.spoke_id as spoke_id, p.jira_project_key
+       FROM projects p
+       LEFT JOIN companies c ON p.company_id = c.id
+       WHERE p.status = 'ACCEPTED' OR p.status = 'IN_PROGRESS' OR p.status = 'active' OR p.status = 'ALLOCATED'`
+    );
+
+    const projects = projResult.rows;
+
+    const hasSmtpConfig = process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS;
+    const nodemailer = require('nodemailer');
+    let transporter;
+    let isTestAccount = false;
+
+    if (hasSmtpConfig) {
+      transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || "587"),
+        secure: process.env.SMTP_SECURE === "true",
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+    } else {
+      isTestAccount = true;
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: "smtp.ethereal.email",
+        port: 587,
+        secure: false,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+    }
+
+    const JIRA_BASE = process.env.JIRA_BASE_URL || process.env.JIRA_DOMAIN || "https://apnileapos.atlassian.net";
+    const JIRA_EMAIL = process.env.JIRA_EMAIL;
+    const JIRA_API_TOKEN = process.env.JIRA_API_TOKEN;
+    const authBase64 = Buffer.from(`${JIRA_EMAIL}:${JIRA_API_TOKEN}`).toString('base64');
+
+    for (const project of projects) {
+      if (!project.spoke_id || !project.jira_project_key) continue;
+
+      const boardId = project.spoke_id.includes("kle") ? "3" : (project.spoke_id.includes("coep") && !project.spoke_id.includes("mm") ? "101" : (project.spoke_id.includes("mmcoep") ? "102" : "103"));
+      const spokeName = project.spoke_id === "kle-spoke" || project.spoke_id === "3" ? "KLE Spoke" : (project.spoke_id === "coep-spoke" || project.spoke_id === "101" ? "COEP Spoke" : (project.spoke_id === "mmcoep-spoke" || project.spoke_id === "102" ? "MMCOEP Spoke" : "RIT Spoke"));
+
+      let tasks = [];
+      if (JIRA_EMAIL && JIRA_API_TOKEN) {
+        try {
+          const boardIdNum = boardId === "3" ? 75 : (boardId === "101" ? 76 : (boardId === "102" ? 77 : 78));
+          const response = await axios.get(
+            `${JIRA_BASE}/rest/agile/1.0/board/${boardIdNum}/issue`,
+            {
+              headers: {
+                Authorization: `Basic ${authBase64}`,
+                Accept: "application/json",
+              },
+              timeout: 10000
+            }
+          );
+          tasks = response.data.issues || [];
+        } catch (err) {
+          console.warn(`Failed to fetch tasks for alerts scan:`, err.message);
+        }
+      }
+
+      // Merge local mock tasks for spoke
+      try {
+        const mockRes = await db.query('SELECT * FROM mock_tasks WHERE board_id = $1', [boardId]);
+        const mockTasks = mockRes.rows.map(row => ({
+          key: row.key,
+          fields: typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields
+        }));
+        mockTasks.forEach(mockTask => {
+          if (!tasks.some(t => t.key === mockTask.key)) {
+            tasks.push(mockTask);
+          }
+        });
+      } catch (dbErr) {
+        console.error("Local mock tasks check error:", dbErr.message);
+      }
+
+      const projectEpic = tasks.find(t => t.key === project.jira_project_key && (t.fields?.issuetype?.name === "Epic" || t.fields?.issueType === "Epic"));
+      if (!projectEpic) continue;
+
+      const childTasks = tasks.filter(t => {
+        const parentKey = t.fields?.parent?.key || t.parent?.key;
+        return parentKey === project.jira_project_key;
+      });
+
+      const totalChildren = childTasks.length;
+      const completedChildren = childTasks.filter(t => {
+        const status = t.fields?.status?.name || t.fields?.status || "Backlog";
+        return status === "Done";
+      }).length;
+
+      const completionRate = totalChildren > 0 ? Math.round((completedChildren / totalChildren) * 100) : 0;
+      const isCompleted = totalChildren > 0 && completedChildren === totalChildren;
+
+      const epicDueDate = projectEpic.fields?.duedate || projectEpic.fields?.dueDate || projectEpic.dueDate || null;
+      let isBreached = false;
+      let daysOverdue = 0;
+
+      if (!isCompleted && epicDueDate) {
+        const today = new Date("2026-05-27");
+        const due = new Date(epicDueDate);
+        if (due.getTime() < today.getTime()) {
+          isBreached = true;
+          daysOverdue = Math.ceil((today.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
+        }
+      }
+
+      if (isBreached) {
+        // Update project status to breached
+        await db.query(
+          `UPDATE projects SET status = 'Assigned (BREACHED - Incomplete)' WHERE id = $1`,
+          [project.id]
+        );
+
+        const notifyCoordinators = new Set(["manasa@apnileap.com", "coordinator@" + (project.spoke_id.split("-")[0] || "kle") + ".edu"]);
+
+        // Resolve database users
+        try {
+          const userRes = await db.query("SELECT email FROM users WHERE college_id = $1", [project.spoke_id]);
+          userRes.rows.forEach(u => {
+            if (u.email) notifyCoordinators.add(u.email.toLowerCase().trim());
+          });
+        } catch (dbErr) {
+          console.error("Gather user emails error:", dbErr.message);
+        }
+
+        const recipientList = Array.from(notifyCoordinators);
+        const redirectEmail = process.env.SMTP_REDIRECT_TO || null;
+        const finalTo = redirectEmail ? redirectEmail : recipientList.join(", ");
+
+        const redirectBannerHtml = redirectEmail ? `
+          <div style="background: rgba(251, 146, 60, 0.08); border: 1px dashed rgba(251, 146, 60, 0.25); border-radius: 12px; padding: 16px; margin-bottom: 24px; font-size: 13px; color: #fb923c; text-align: center; line-height: 1.5;">
+            ⚙️ <strong>[Demo Rerouting Mode Active]</strong><br/>
+            This email was originally addressed to: <span style="font-family: monospace; font-weight: 750; color: #f97316;">${recipientList.join(", ")}</span>.<br/>
+            It has been rerouted to your administrator address (<strong style="color: white;">${redirectEmail}</strong>) for live verification.
+          </div>
+        ` : "";
+
+        const htmlTemplate = `
+          <div style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #07090e; padding: 40px; color: #f3f4f6; min-height: 100%;">
+            <div style="max-width: 650px; margin: 0 auto; background: rgba(17, 24, 39, 0.9); border-radius: 16px; border: 1px solid rgba(255,255,255,0.08); overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);">
+              <div style="background: linear-gradient(135deg, #ef4444, #b91c1c); padding: 30px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h1 style="margin: 0; font-size: 26px; font-weight: 800; color: white;">ApniLeap Hub</h1>
+                <p style="margin: 6px 0 0 0; opacity: 0.9; font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #fee2e2;">⚠️ URGENT DEADLINE BREACH WARNING</p>
+              </div>
+              <div style="padding: 40px 30px; line-height: 1.6;">
+                ${redirectBannerHtml}
+                <div style="border-left: 4px solid #ef4444; padding-left: 16px; margin-bottom: 24px;">
+                  <h2 style="margin: 0; color: white; font-size: 18px; font-weight: 700;">Deadline Breached - Incomplete Project</h2>
+                  <p style="margin: 4px 0 0 0; font-size: 14px; color: #fca5a5;">Your campus has breached the target deadline for this industry-sponsored FIP.</p>
+                </div>
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                  <h3 style="margin-top: 0; margin-bottom: 12px; font-size: 15px; color: white;">📋 Project Information</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+                    <tr>
+                      <td style="padding: 6px 0; color: #9ca3af; font-weight: 600; width: 140px;">Company Project:</td>
+                      <td style="padding: 6px 0; color: #f3f4f6; font-weight: 700;">${project.title}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #9ca3af; font-weight: 600;">Sponsoring Partner:</td>
+                      <td style="padding: 6px 0; color: #ef4444; font-weight: 700;">${project.company || "NVIDIA"}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #9ca3af; font-weight: 600;">Assigned Space:</td>
+                      <td style="padding: 6px 0; color: #f3f4f6;">${spokeName} (<span style="font-family: monospace; color: #fca5a5;">${project.jira_project_key}</span>)</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #9ca3af; font-weight: 600;">Target Deadline:</td>
+                      <td style="padding: 6px 0; color: #f3f4f6; font-weight: 700;">${epicDueDate}</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 6px 0; color: #9ca3af; font-weight: 600;">Breach Duration:</td>
+                      <td style="padding: 6px 0; color: #ef4444; font-weight: 700;">Overdue by ${daysOverdue} days!</td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+
+        const warningBody = `
+          ⚠️ URGENT DEADLINE BREACH WARNING - INCOMPLETE PROJECT
+          ---------------------------------------------------------
+          Company Project: ${project.title}
+          Sponsoring Partner: ${project.company || "NVIDIA"}
+          Assigned Space: ${spokeName} (Jira Key: ${project.jira_project_key})
+          Project Target Deadline was: ${epicDueDate}
+          Breach Duration: Overdue by ${daysOverdue} days!
+        `;
+
+        const mailInfo = await transporter.sendMail({
+          from: hasSmtpConfig
+            ? `"${process.env.SMTP_FROM_NAME || 'ApniLeap Hub'}" <${process.env.SMTP_USER}>`
+            : '"ApniLeap Deadline Auditor" <no-reply@apnileap.com>',
+          to: finalTo,
+          subject: `⚠️ [URGENT BREACH WARNING] Target Deadline Overdue: ${project.title} (${spokeName})`,
+          text: warningBody,
+          html: htmlTemplate
+        });
+
+        let previewUrl = "";
+        if (isTestAccount) {
+          previewUrl = nodemailer.getTestMessageUrl(mailInfo);
+        }
+
+        triggeredAlerts.push({
+          projectId: `proj-${project.id}`,
+          title: project.title,
+          company: project.company || "NVIDIA",
+          assignedTo: spokeName,
+          epicKey: project.jira_project_key,
+          dueDate: epicDueDate,
+          completionRate,
+          daysOverdue,
+          emailAlertBody: warningBody,
+          previewUrl: isTestAccount ? previewUrl : undefined
+        });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Audit scan completed! Triggered ${triggeredAlerts.length} overdue campus alerts.`,
+      alerts: triggeredAlerts
+    });
+  } catch (error) {
+    console.error("Alerts Scanner Error:", error.message);
+    res.status(500).json({ error: `Alerts scan failed: ${error.message}` });
+  }
+});
+
+app.post("/spoke/project/:projectId/accept", async (req, res) => {
+  const { projectId } = req.params;
+  const cleanId = projectId.replace("proj-", "");
+  req.url = `/projects/proj-${cleanId}/accept`;
+  app.handle(req, res);
+});
+
+app.post("/spoke/project/:projectId/decline", async (req, res) => {
+  const { projectId } = req.params;
+  const cleanId = projectId.replace("proj-", "");
+  req.url = `/projects/proj-${cleanId}/decline`;
+  app.handle(req, res);
+});
+
+app.get("/spokes/:boardId/members", async (req, res) => {
+  const { boardId } = req.params;
+  const spokeKey = boardId === "3" ? "kle-spoke" : (boardId === "101" ? "coep-spoke" : (boardId === "102" ? "mmcoep-spoke" : "rit-spoke"));
+  try {
+    const db = require('./db');
+    const result = await db.query('SELECT email, name, role FROM users WHERE college_id = $1', [spokeKey]);
+    res.json(result.rows.map(r => ({
+      accountId: r.email,
+      displayName: r.name,
+      emailAddress: r.email
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/teams", async (req, res) => {
+  try {
+    const db = require('./db');
+    const result = await db.query('SELECT * FROM teams');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/teams", verifyToken, async (req, res) => {
+  const { name, members, boardId } = req.body;
+  const teamId = "team-" + Date.now();
+  try {
+    const db = require('./db');
+    await db.query('INSERT INTO teams (id, name, members) VALUES ($1, $2, $3)', [teamId, name, members || []]);
+    res.json({ id: teamId, name, members });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/teams/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const db = require('./db');
+    await db.query('DELETE FROM teams WHERE id = $1', [id]);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/hub/metrics", async (req, res) => {
+  req.url = "/dashboard-metrics";
+  app.handle(req, res);
 });
 
 // ── Graceful shutdown on Ctrl+C / SIGTERM ─────────────────────────────────────

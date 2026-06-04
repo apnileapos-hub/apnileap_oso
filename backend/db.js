@@ -1,5 +1,6 @@
 const { Pool } = require('pg');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const isProduction = process.env.NODE_ENV === 'production';
 
@@ -222,6 +223,18 @@ const initDb = async () => {
       `);
       console.log('PostgreSQL users table seeded with initial users.');
     }
+
+    // Ensure the 5 real Atlassian users exist in the users table
+    await query(`
+      INSERT INTO users (email, name, role, password, college_id) VALUES
+      ('apnileapos@gmail.com', 'apnileapos', 'Student', 'Admin@123', 'kle-spoke'),
+      ('renuka.k@college.edu', 'Renuka Kagadal', 'Student', 'Admin@123', 'kle-spoke'),
+      ('ananya.b@college.edu', 'Ananya Bhat', 'Student', 'Admin@123', 'kle-spoke'),
+      ('divya.k@college.edu', 'Divya Kumari', 'Student', 'Admin@123', 'kle-spoke'),
+      ('manasa.v@college.edu', 'Manasa B Vasare', 'Student', 'Admin@123', 'kle-spoke')
+      ON CONFLICT (email) DO NOTHING
+    `);
+    console.log('Ensured 5 real Atlassian users exist in PostgreSQL.');
 
 
     // Seed projects from projects.json to PostgreSQL

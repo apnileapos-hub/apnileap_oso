@@ -447,8 +447,8 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                           </div>
                         ))}
                       </div>
-                      {proj.jiraProjectKey && !proj.jiraProjectKey.startsWith('APNI') && (
-                        <a href={`https://apnileapos.atlassian.net/jira/software/projects/${proj.jiraProjectKey}/boards`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#58a6ff', textDecoration: 'none', fontWeight: '600' }}>
+                      {(proj.jiraBoardUrl || proj.jiraProjectKey) && (
+                        <a href={proj.jiraBoardUrl || `https://apnileapos.atlassian.net/jira/software/projects/${proj.jiraProjectKey}/boards`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#58a6ff', textDecoration: 'none', fontWeight: '600' }}>
                           📋 Open Jira Board ↗
                         </a>
                       )}
@@ -622,7 +622,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                           Link your CI/CD pipeline with Jira by including the issue key in commit messages.<br />
                           Use key <code style={{ background: 'var(--bg-card)', padding: '1px 6px', borderRadius: '3px', color: '#58a6ff' }}>{proj.jiraProjectKey || 'KEY'}</code> in deployments.
                         </div>
-                        {proj.jiraProjectKey && !proj.jiraProjectKey.startsWith('APNI') && (
+                        {proj.jiraProjectKey && (
                           <a href={`https://apnileapos.atlassian.net/jira/software/projects/${proj.jiraProjectKey}/deployments`} target="_blank" rel="noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '6px 14px', background: '#238636', color: '#fff', fontSize: '11px', fontWeight: '600', borderRadius: '4px', textDecoration: 'none' }}>
                             View in Jira ↗
                           </a>

@@ -93,19 +93,47 @@ const getAtlassianOrgHeaders = () => {
 
 // ── Helper: fetch all issues with rich fields ─────────────────────────────────
 async function fetchAllIssues() {
-  const response = await axios.post(
-    `${getJiraBase()}/rest/api/3/search/jql`,
-    {
-      jql: `project = ${getJiraProject()} ORDER BY created DESC`,
-      maxResults: 100,
-      fields: [
-        "summary", "status", "assignee", "priority",
-        "issuetype", "created", "updated", "resolution",
-      ],
-    },
-    { auth: getJiraAuth(), headers: jiraHeaders }
-  );
-  return response.data.issues || [];
+  const db = require('./db');
+  try {
+    const response = await axios.post(
+      `${getJiraBase()}/rest/api/3/search/jql`,
+      {
+        jql: `project = '${getJiraProject()}' ORDER BY created DESC`,
+        maxResults: 100,
+        fields: [
+          "summary", "status", "assignee", "priority",
+          "issuetype", "created", "updated", "resolution",
+        ],
+      },
+      { auth: getJiraAuth(), headers: jiraHeaders, timeout: 4000 }
+    );
+    return response.data.issues || [];
+  } catch (error) {
+    console.warn("Jira fetchAllIssues failed, falling back to database mock tasks:", error.message);
+    try {
+      const result = await db.query('SELECT * FROM mock_tasks ORDER BY created_at DESC');
+      return result.rows.map(row => {
+        const fields = typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields;
+        return {
+          id: row.id,
+          key: row.key,
+          fields: {
+            summary: fields.summary || "",
+            description: fields.description || "",
+            status: { name: fields.status?.name || "To Do" },
+            priority: { name: fields.priority?.name || "Medium" },
+            issuetype: { name: fields.issuetype?.name || "Task" },
+            created: fields.created || row.created_at,
+            updated: fields.updated || row.updated_at || row.created_at,
+            assignee: fields.assignee ? { displayName: fields.assignee.displayName } : null
+          }
+        };
+      });
+    } catch (dbErr) {
+      console.error("Postgres mock tasks fallback failed:", dbErr.message);
+      return [];
+    }
+  }
 }
 
 // ── GET /health ───────────────────────────────────────────────────────────────
@@ -455,9 +483,13 @@ app.get("/users", verifyToken, async (req, res) => {
       collegeId: u.college_id
     }));
 
-    // Mock/Simulated campus team members
     const CAMPUS_TEAM_MEMBERS = {
       "kle-spoke": [
+        { accountId: "557058:apnileapos", displayName: "apnileapos", email: "apnileapos@gmail.com", collegeId: "kle-spoke" },
+        { accountId: "557058:renuka", displayName: "Renuka Kagadal", email: "renuka.k@college.edu", collegeId: "kle-spoke" },
+        { accountId: "557058:ananya", displayName: "Ananya Bhat", email: "ananya.b@college.edu", collegeId: "kle-spoke" },
+        { accountId: "557058:divya", displayName: "Divya Kumari", email: "divya.k@college.edu", collegeId: "kle-spoke" },
+        { accountId: "557058:manasa", displayName: "Manasa B Vasare", email: "manasa.v@college.edu", collegeId: "kle-spoke" },
         { accountId: "mock-kle-1", displayName: "Rahul Sharma (Student)", email: "rahul@kle.edu", collegeId: "kle-spoke" },
         { accountId: "mock-kle-2", displayName: "Priya Patel (Student)", email: "priya@kle.edu", collegeId: "kle-spoke" },
         { accountId: "mock-kle-3", displayName: "Prof. Deshpande (Faculty)", email: "mentor@kle.edu", collegeId: "kle-spoke" }
@@ -583,8 +615,55 @@ app.post("/issues", async (req, res) => {
 
     res.json({ id: issueId, key: issueKey, message: "Issue created successfully" });
   } catch (error) {
-    console.error("Error /issues (POST):", error.response?.data || error.message);
-    res.status(500).json({ error: error.response?.data || error.message });
+    console.warn("Jira issue creation failed, falling back to PostgreSQL mock_tasks:", error.message);
+    try {
+      const db = require('./db');
+      const issueKey = `APNI-${100 + Math.floor(Math.random() * 900)}`;
+      const issueId = `mock-intake-${Date.now()}`;
+      
+      // Resolve assignee displayName
+      let assigneeName = null;
+      if (assigneeId) {
+        const uRes = await db.query('SELECT name FROM users WHERE id::text = $1 OR email = $1 LIMIT 1', [assigneeId]);
+        if (uRes.rows.length > 0) {
+          assigneeName = uRes.rows[0].name;
+        } else {
+          const simulatedUser = [
+            { accountId: "557058:apnileapos", displayName: "apnileapos" },
+            { accountId: "557058:renuka", displayName: "Renuka Kagadal" },
+            { accountId: "557058:ananya", displayName: "Ananya Bhat" },
+            { accountId: "557058:divya", displayName: "Divya Kumari" },
+            { accountId: "557058:manasa", displayName: "Manasa B Vasare" }
+          ].find(u => u.accountId === assigneeId);
+          if (simulatedUser) {
+            assigneeName = simulatedUser.displayName;
+          } else {
+            assigneeName = assigneeId;
+          }
+        }
+      }
+
+      const fields = {
+        summary: summary,
+        description: description || "",
+        status: { name: status || "To Do" },
+        priority: { name: priority || "Medium" },
+        issuetype: { name: "Task" },
+        created: new Date().toISOString(),
+        assignee: assigneeName ? { displayName: assigneeName } : null
+      };
+
+      await db.query(
+        `INSERT INTO mock_tasks (id, key, board_id, fields)
+         VALUES ($1, $2, $3, $4)`,
+        [issueId, issueKey, '3', JSON.stringify(fields)]
+      );
+
+      res.json({ id: issueId, key: issueKey, message: "Issue created successfully in mock database fallback" });
+    } catch (dbErr) {
+      console.error("Failed to insert mock task on fallback:", dbErr.message);
+      res.status(500).json({ error: error.response?.data || error.message });
+    }
   }
 });
 
@@ -1153,8 +1232,58 @@ app.put("/issues/:key", async (req, res) => {
 
     res.json({ message: `Issue ${key} updated successfully` });
   } catch (error) {
-    console.error(`Error updating issue ${req.params.key}:`, error.response?.data || error.message);
-    res.status(500).json({ error: error.response?.data || error.message });
+    console.warn(`Jira issue update failed for ${req.params.key}, falling back to Postgres mock_tasks:`, error.message);
+    try {
+      const db = require('./db');
+      const { key } = req.params;
+      const { assigneeId, status } = req.body;
+
+      const tRes = await db.query('SELECT * FROM mock_tasks WHERE key = $1', [key]);
+      if (tRes.rows.length > 0) {
+        const task = tRes.rows[0];
+        const fields = typeof task.fields === 'string' ? JSON.parse(task.fields) : task.fields;
+
+        if (assigneeId !== undefined) {
+          if (assigneeId === null) {
+            fields.assignee = null;
+          } else {
+            // Find displayName
+            let assigneeName = assigneeId;
+            const uRes = await db.query('SELECT name FROM users WHERE id::text = $1 OR email = $1 LIMIT 1', [assigneeId]);
+            if (uRes.rows.length > 0) {
+              assigneeName = uRes.rows[0].name;
+            } else {
+              const simulatedUser = [
+                { accountId: "557058:apnileapos", displayName: "apnileapos" },
+                { accountId: "557058:renuka", displayName: "Renuka Kagadal" },
+                { accountId: "557058:ananya", displayName: "Ananya Bhat" },
+                { accountId: "557058:divya", displayName: "Divya Kumari" },
+                { accountId: "557058:manasa", displayName: "Manasa B Vasare" }
+              ].find(u => u.accountId === assigneeId);
+              if (simulatedUser) {
+                assigneeName = simulatedUser.displayName;
+              }
+            }
+            fields.assignee = { displayName: assigneeName };
+          }
+        }
+
+        if (status) {
+          fields.status = { name: status };
+        }
+
+        await db.query(
+          'UPDATE mock_tasks SET fields = $1, updated_at = CURRENT_TIMESTAMP WHERE key = $2',
+          [JSON.stringify(fields), key]
+        );
+
+        return res.json({ message: `Issue ${key} updated successfully in mock database fallback` });
+      }
+      res.status(500).json({ error: error.response?.data || error.message });
+    } catch (dbErr) {
+      console.error("Failed to update mock task on fallback:", dbErr.message);
+      res.status(500).json({ error: error.response?.data || error.message });
+    }
   }
 });
 

@@ -1,6 +1,7 @@
 const db = require('./db');
 const axios = require('axios');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const getJiraBase = () => process.env.JIRA_BASE_URL || "https://devcobraaa.atlassian.net";
 const getJiraProject = () => process.env.JIRA_PROJECT_KEY || "SCRUM";
@@ -21,7 +22,7 @@ const jiraHeaders = {
 async function autoGenerateIssuesForProject(project, jiraProjectKey) {
   const jiraBase = getJiraBase();
   const jiraAuth = getJiraAuth();
-  const mainSpaceKey = getJiraProject(); // e.g. "SCRUM" or "AK"
+  const mainSpaceKey = jiraProjectKey || project.jira_project_key || project.jiraProjectKey || getJiraProject();
   const hasJira = !!(jiraAuth.username && jiraAuth.password);
 
   const projectId = typeof project.id === 'string' ? parseInt(project.id.replace("proj-", "")) : project.id;
@@ -170,6 +171,8 @@ async function autoGenerateIssuesForProject(project, jiraProjectKey) {
   }
 
   // Update project board details in local database
+  project.jira_board_url = jiraBoardUrl;
+  project.jiraBoardUrl = jiraBoardUrl;
   try {
     await db.query(
       `UPDATE projects 

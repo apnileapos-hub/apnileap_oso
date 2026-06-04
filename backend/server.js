@@ -3350,8 +3350,169 @@ app.delete("/api/teams/:id", async (req, res) => {
 });
 
 app.get("/hub/metrics", async (req, res) => {
-  req.url = "/dashboard-metrics";
-  app.handle(req, res);
+  try {
+    const db = require('./db');
+
+    // 1. Fetch B2B projects from PostgreSQL
+    const projResult = await db.query(
+      `SELECT p.id, p.name as title, c.name as company, c.logo_url,
+              p.description, p.budget as funding, p.duration_weeks || ' Weeks' as duration, 
+              p.status, p.confluence_space_url, p.jira_board_url,
+              p.created_by, p.accepted_by, p.spoke_id, p.team_id, p.jira_project_key, p.created_at
+       FROM projects p
+       LEFT JOIN companies c ON p.company_id = c.id
+       ORDER BY p.created_at DESC`
+    );
+
+    const b2bProjects = [];
+    const SPOKES_MAP = {
+      "3": "KLE Spoke", "101": "COEP Spoke", "102": "MMCOEP Spoke", "103": "RIT Spoke",
+      "kle-spoke": "KLE Spoke", "coep-spoke": "COEP Spoke", "mmcoep-spoke": "MMCOEP Spoke", "rit-spoke": "RIT Spoke"
+    };
+    const getSpokeName = (id) => SPOKES_MAP[id] || id || "Campus Spoke";
+    const getSpokeId = (name) => {
+      if (!name) return null;
+      if (name.includes("KLE")) return "3";
+      if (name.includes("COEP") && !name.includes("MM")) return "101";
+      if (name.includes("MMCOEP")) return "102";
+      if (name.includes("RIT")) return "103";
+      return name;
+    };
+
+    for (const row of projResult.rows) {
+      const budgetStr = row.funding ? `$${parseFloat(row.funding).toLocaleString()}` : "$0";
+      const spokeName = getSpokeName(row.spoke_id);
+      const campusId = getSpokeId(row.spoke_id);
+      const statusFormatted = row.status === 'ACCEPTED' || row.status === 'IN_PROGRESS' || row.status === 'active' ? 'Active' : (row.status === 'ALLOCATED' || row.status === 'proposed' ? 'Proposed' : 'Pending Assignment');
+      
+      let allocations = [];
+      if (row.spoke_id) {
+        const mentorUsersRes = await db.query('SELECT id FROM users WHERE college_id = $1 AND role = $2', [row.spoke_id, 'College-SPOC']);
+        const mentorAssignments = mentorUsersRes.rows.map(mu => ({ facultyId: mu.id }));
+
+        const teamsRes = await db.query('SELECT * FROM teams WHERE project_id = $1', [row.id]);
+        const teams = teamsRes.rows.map(t => ({
+          id: t.id,
+          name: t.name,
+          studentAssignments: (t.members || []).map(mId => ({ studentId: parseInt(mId) }))
+        }));
+
+        allocations = [{
+          id: row.id.toString(),
+          targetCampusId: row.spoke_id,
+          assignedTo: spokeName,
+          status: statusFormatted,
+          proposedDueDate: '2026-08-25',
+          assignedKey: row.jira_project_key || null,
+          progressPercent: 75,
+          doneTasks: 6,
+          mentorAssignments,
+          teams
+        }];
+      }
+
+      b2bProjects.push({
+        id: `proj-${row.id}`,
+        company: row.company || "NVIDIA",
+        logoUrl: row.logo_url || "https://logo.clearbit.com/nvidia.com?size=80",
+        title: row.title,
+        description: row.description || "",
+        budget: budgetStr,
+        duration: row.duration || "12 Weeks",
+        status: statusFormatted,
+        assignedTo: row.spoke_id ? spokeName : null,
+        targetCampusId: campusId,
+        proposedDueDate: '2026-08-25',
+        assignedKey: row.jira_project_key || null,
+        dateAdded: row.created_at ? row.created_at.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
+        allocations
+      });
+    }
+
+    // 2. Fetch all spokes tasks to aggregate progress statistics
+    const spokesList = [
+      { id: "3", name: "KLE Spoke", key: "AK" },
+      { id: "101", name: "COEP Spoke", key: "AK" },
+      { id: "102", name: "MMCOEP Spoke", key: "AK" },
+      { id: "103", name: "RIT Spoke", key: "AK" }
+    ];
+
+    const spokesMetrics = [];
+    const blockers = [];
+
+    for (const sp of spokesList) {
+      const mockRes = await db.query('SELECT * FROM mock_tasks WHERE board_id = $1', [sp.id]);
+      const mockTasks = mockRes.rows.map(row => {
+        const fields = typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields;
+        return {
+          id: row.id,
+          key: row.key,
+          fields: {
+            summary: fields.summary || "",
+            status: { name: fields.status?.name || "To Do" },
+            priority: { name: fields.priority?.name || "Medium" },
+            issuetype: { name: fields.issuetype?.name || "Task" },
+            assignee: fields.assignee ? { displayName: fields.assignee.displayName } : null,
+            flagged: fields.flagged || false
+          }
+        };
+      });
+
+      let total = 0;
+      let done = 0;
+      let progress = 0;
+      let backlog = 0;
+      let blockersCount = 0;
+
+      mockTasks.forEach(t => {
+        const status = (t.fields.status?.name || "To Do").toLowerCase();
+        total++;
+        if (status.includes("done") || status.includes("closed") || status.includes("resolved")) {
+          done++;
+        } else if (status.includes("progress") || status.includes("review") || status.includes("testing")) {
+          progress++;
+        } else {
+          backlog++;
+        }
+
+        if (t.fields.flagged) {
+          blockersCount++;
+          blockers.push({
+            id: t.id,
+            key: t.key,
+            summary: t.fields.summary,
+            statusName: t.fields.status?.name || "To Do",
+            priority: t.fields.priority?.name || "Medium",
+            spokeName: sp.name,
+            assignee: t.fields.assignee
+          });
+        }
+      });
+
+      spokesMetrics.push({
+        id: sp.id,
+        name: sp.name,
+        key: sp.key,
+        total,
+        done,
+        progress,
+        backlog,
+        blockersCount,
+        completionRate: total > 0 ? Math.round((done / total) * 100) : 0
+      });
+    }
+
+    res.json({
+      spokes: spokesMetrics,
+      workstreams: [],
+      blockers: blockers,
+      b2bProjects: b2bProjects
+    });
+
+  } catch (err) {
+    console.error("Hub Metrics aggregation error:", err);
+    res.status(500).json({ error: "Failed to aggregate Hub metrics" });
+  }
 });
 
 // ── GET /students/:studentId/projects ──────────────────────────────────────────

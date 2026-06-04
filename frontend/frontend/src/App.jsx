@@ -865,7 +865,11 @@ function App() {
   const fetchSpokeMembers = async (boardId) => {
     try {
       const res = await axios.get(`http://localhost:5000/spokes/${boardId}/members`);
-      setSpokeMembers(Array.isArray(res.data) ? res.data : []);
+      const normalized = (Array.isArray(res.data) ? res.data : []).map(m => ({
+        ...m,
+        displayName: m.displayName || m.emailAddress || "Team Member"
+      }));
+      setSpokeMembers(normalized);
     } catch (err) {
       console.error("Failed to retrieve campus team members:", err);
     }
@@ -6649,7 +6653,7 @@ function App() {
                           <DashboardCard
                             title="Need Review"
                             value={allSubmissions.filter(sub => {
-                              const userPersona = currentPersona.replace("spoke-", "");
+                              const userPersona = (currentPersona || "").replace("spoke-", "");
                               const subSpoke = sub.studentName && sub.studentName.toLowerCase();
                               const targetSpoke = userPersona === "kle" ? "kle" : userPersona === "coep" ? "coep" : userPersona === "mmcoep" ? "mmcoep" : "rit";
                               const isMatch = subSpoke && (subSpoke.includes(targetSpoke) || subSpoke.includes("student"));
@@ -6658,7 +6662,7 @@ function App() {
                             subtitle="Awaiting coordinator review"
                             themeColor="var(--status-progress-text)"
                             pulse={allSubmissions.filter(sub => {
-                              const userPersona = currentPersona.replace("spoke-", "");
+                              const userPersona = (currentPersona || "").replace("spoke-", "");
                               const subSpoke = sub.studentName && sub.studentName.toLowerCase();
                               const targetSpoke = userPersona === "kle" ? "kle" : userPersona === "coep" ? "coep" : userPersona === "mmcoep" ? "mmcoep" : "rit";
                               const isMatch = subSpoke && (subSpoke.includes(targetSpoke) || subSpoke.includes("student"));
@@ -6676,7 +6680,7 @@ function App() {
 
                         {/* Student Deliverables Verification Queue */}
                         {(() => {
-                          const userPersona = currentPersona.replace("spoke-", "");
+                          const userPersona = (currentPersona || "").replace("spoke-", "");
                           const targetSpoke = userPersona === "kle" ? "kle" : userPersona === "coep" ? "coep" : userPersona === "mmcoep" ? "mmcoep" : "rit";
                           
                           const spokeSubmissions = allSubmissions.filter(sub => {
@@ -10579,7 +10583,7 @@ function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerT
   // B2B Stats calculations
   const b2bList = metrics.b2bProjects || [];
   const totalB2BFunding = b2bList.reduce((sum, p) => {
-    const val = parseInt(p.budget.replace(/[^0-9]/g, "")) || 0;
+    const val = parseInt((p.budget || "").toString().replace(/[^0-9]/g, "")) || 0;
     return sum + val;
   }, 0);
   const activeB2BPlacements = b2bList.reduce((sum, p) => {
@@ -11760,7 +11764,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
 
   // Sum of budget for committed funding
   const totalFunding = sponsorProjects.reduce((sum, p) => {
-    const val = parseInt(p.budget.replace(/[^0-9]/g, "")) || 0;
+    const val = parseInt((p.budget || "").toString().replace(/[^0-9]/g, "")) || 0;
     return sum + val;
   }, 0);
 

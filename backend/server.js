@@ -2878,21 +2878,42 @@ app.get("/moderator/projects", async (req, res) => {
        LEFT JOIN companies c ON p.company_id = c.id
        ORDER BY p.created_at DESC`
     );
-    const projects = result.rows.map(row => {
+    const projects = [];
+    for (const row of result.rows) {
       const budgetStr = row.funding ? `$${parseFloat(row.funding).toLocaleString()}` : "$0";
       const spokeName = getSpokeName(row.spoke_id);
       const campusId = getSpokeId(row.spoke_id);
       const statusFormatted = row.status === 'ACCEPTED' || row.status === 'IN_PROGRESS' || row.status === 'active' ? 'Active' : (row.status === 'ALLOCATED' || row.status === 'proposed' ? 'Proposed' : 'Pending Assignment');
       
-      const allocations = row.spoke_id ? [{
-        targetCampusId: campusId,
-        assignedTo: spokeName,
-        status: statusFormatted,
-        proposedDueDate: '2026-08-25',
-        assignedKey: row.jira_project_key || null
-      }] : [];
+      let allocations = [];
+      if (row.spoke_id) {
+        // Query mentor assignments for this college spoke
+        const mentorUsersRes = await db.query('SELECT id FROM users WHERE college_id = $1 AND role = $2', [row.spoke_id, 'College-SPOC']);
+        const mentorAssignments = mentorUsersRes.rows.map(mu => ({ facultyId: mu.id }));
 
-      return {
+        // Query teams for this project/allocation
+        const teamsRes = await db.query('SELECT * FROM teams WHERE project_id = $1', [row.id]);
+        const teams = teamsRes.rows.map(t => ({
+          id: t.id,
+          name: t.name,
+          studentAssignments: (t.members || []).map(mId => ({ studentId: parseInt(mId) }))
+        }));
+
+        allocations = [{
+          id: row.id.toString(),
+          targetCampusId: row.spoke_id,
+          assignedTo: spokeName,
+          status: statusFormatted,
+          proposedDueDate: '2026-08-25',
+          assignedKey: row.jira_project_key || null,
+          progressPercent: 75,
+          doneTasks: 6,
+          mentorAssignments: mentorAssignments,
+          teams: teams
+        }];
+      }
+
+      projects.push({
         id: `proj-${row.id}`,
         company: row.company || "NVIDIA",
         logoUrl: row.logo_url || "https://logo.clearbit.com/nvidia.com?size=80",
@@ -2907,8 +2928,8 @@ app.get("/moderator/projects", async (req, res) => {
         assignedKey: row.jira_project_key || null,
         dateAdded: row.created_at ? row.created_at.toISOString().split("T")[0] : new Date().toISOString().split("T")[0],
         allocations: allocations
-      };
-    });
+      });
+    }
     res.json(projects);
   } catch (err) {
     console.error("Failed to fetch moderator projects:", err);
@@ -3331,6 +3352,252 @@ app.delete("/api/teams/:id", async (req, res) => {
 app.get("/hub/metrics", async (req, res) => {
   req.url = "/dashboard-metrics";
   app.handle(req, res);
+});
+
+// ── GET /students/:studentId/projects ──────────────────────────────────────────
+app.get("/students/:studentId/projects", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { studentId } = req.params;
+    
+    // Find student's college_id
+    const userRes = await db.query('SELECT college_id FROM users WHERE id = $1', [studentId]);
+    if (userRes.rows.length === 0) {
+      return res.status(404).json({ error: "Student not found" });
+    }
+    const collegeId = userRes.rows[0].college_id;
+    if (!collegeId) {
+      return res.json([]);
+    }
+    
+    // Find all projects allocated to this college_id
+    const projectsRes = await db.query(
+      `SELECT p.*, c.name as company_name, c.logo_url as company_logo 
+       FROM projects p 
+       LEFT JOIN companies c ON p.company_id = c.id 
+       WHERE p.spoke_id = $1 AND p.status IN ('ACCEPTED', 'IN_PROGRESS', 'ALLOCATED', 'OPEN_FOR_BIDDING')`,
+      [collegeId]
+    );
+    
+    // For each project, fetch its allocation and mentor details
+    const allocations = [];
+    for (const row of projectsRes.rows) {
+      // Find the mentor (College-SPOC) for this college
+      const mentorRes = await db.query('SELECT id, name, email FROM users WHERE college_id = $1 AND role = $2 LIMIT 1', [collegeId, 'College-SPOC']);
+      const mentor = mentorRes.rows[0] ? { name: mentorRes.rows[0].name, email: mentorRes.rows[0].email } : null;
+      
+      allocations.push({
+        id: row.id.toString(),
+        projectId: row.id.toString(),
+        project: {
+          title: row.name,
+          description: row.description,
+          logoUrl: row.company_logo || "https://logo.clearbit.com/nvidia.com?size=80"
+        },
+        mentor: mentor
+      });
+    }
+    
+    res.json(allocations);
+  } catch (error) {
+    console.error("Error fetching student projects:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── GET /allocations/:id ────────────────────────────────────────────────────────
+app.get("/allocations/:id", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { id } = req.params;
+    
+    // Get the project
+    const projectRes = await db.query('SELECT * FROM projects WHERE id = $1', [id]);
+    if (projectRes.rows.length === 0) {
+      return res.status(404).json({ error: "Allocation/Project not found" });
+    }
+    const project = projectRes.rows[0];
+    const collegeId = project.spoke_id;
+    
+    // Get mentor
+    const mentorRes = await db.query('SELECT id, name, email FROM users WHERE college_id = $1 AND role = $2 LIMIT 1', [collegeId, 'College-SPOC']);
+    const mentor = mentorRes.rows[0] ? { id: mentorRes.rows[0].id, name: mentorRes.rows[0].name, email: mentorRes.rows[0].email } : null;
+    
+    // Get all students on this college
+    const studentsRes = await db.query('SELECT id, name, email FROM users WHERE college_id = $1 AND role = $2', [collegeId, 'Student']);
+    const students = studentsRes.rows.map(s => ({ id: s.id, name: s.name, email: s.email }));
+    
+    // Get all teams for this project
+    const teamsRes = await db.query('SELECT * FROM teams WHERE project_id = $1', [id]);
+    const teams = teamsRes.rows.map(t => ({
+      id: t.id,
+      name: t.name,
+      studentAssignments: (t.members || []).map(mId => ({ studentId: parseInt(mId) }))
+    }));
+    
+    res.json({
+      id: id,
+      project: { title: project.name },
+      mentor: mentor,
+      students: students,
+      teams: teams
+    });
+  } catch (error) {
+    console.error("Error getting allocation:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── GET /allocations/:id/chat ───────────────────────────────────────────────────
+app.get("/allocations/:id/chat", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { id } = req.params;
+    
+    // Check if team exists, otherwise create it to satisfy foreign key
+    const checkTeam = await db.query('SELECT * FROM teams WHERE id = $1', [id]);
+    if (checkTeam.rows.length === 0) {
+      const projectRes = await db.query('SELECT name FROM projects WHERE id = $1', [id]);
+      const projectName = projectRes.rows[0] ? projectRes.rows[0].name : "Atlassian Team Workspace";
+      await db.query('INSERT INTO teams (id, name, members) VALUES ($1, $2, $3)', [id, projectName, []]);
+    }
+    
+    const messagesRes = await db.query('SELECT * FROM team_messages WHERE team_id = $1 ORDER BY timestamp ASC', [id]);
+    
+    const messages = [];
+    for (const msg of messagesRes.rows) {
+      // Find the sender user details to know if they are student or faculty
+      const senderRes = await db.query('SELECT name, role FROM users WHERE name = $1 LIMIT 1', [msg.sender]);
+      const role = senderRes.rows[0] ? (senderRes.rows[0].role === 'College-SPOC' ? 'MENTOR' : 'STUDENT') : 'STUDENT';
+      
+      messages.push({
+        id: msg.id,
+        senderId: senderRes.rows[0] ? senderRes.rows[0].id : 0,
+        sender: {
+          name: msg.sender,
+          role: role
+        },
+        content: decrypt(msg.text),
+        timestamp: msg.timestamp
+      });
+    }
+    
+    res.json(messages);
+  } catch (error) {
+    console.error("Error getting allocation chat:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── POST /allocations/:id/chat ──────────────────────────────────────────────────
+app.post("/allocations/:id/chat", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { id } = req.params;
+    const { senderId, content } = req.body;
+    
+    // Check if team exists, otherwise create it
+    const checkTeam = await db.query('SELECT * FROM teams WHERE id = $1', [id]);
+    if (checkTeam.rows.length === 0) {
+      const projectRes = await db.query('SELECT name FROM projects WHERE id = $1', [id]);
+      const projectName = projectRes.rows[0] ? projectRes.rows[0].name : "Atlassian Team Workspace";
+      await db.query('INSERT INTO teams (id, name, members) VALUES ($1, $2, $3)', [id, projectName, []]);
+    }
+    
+    // Get sender details
+    const senderRes = await db.query('SELECT name, role FROM users WHERE id = $1', [senderId]);
+    if (senderRes.rows.length === 0) {
+      return res.status(404).json({ error: "Sender not found" });
+    }
+    const senderName = senderRes.rows[0].name;
+    const encryptedText = encrypt(content);
+    const newMessageId = "msg-" + Date.now() + Math.random().toString(36).substr(2, 5);
+    const now = new Date();
+    
+    await db.query(
+      'INSERT INTO team_messages (id, team_id, sender, text, timestamp) VALUES ($1, $2, $3, $4, $5)',
+      [newMessageId, id, senderName, encryptedText, now]
+    );
+    
+    res.json({ success: true, messageId: newMessageId });
+  } catch (error) {
+    console.error("Error posting allocation chat:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── GET /students/:campusId ─────────────────────────────────────────────────────
+app.get("/students/:campusId", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { campusId } = req.params;
+    
+    const studentsRes = await db.query('SELECT id, name, email FROM users WHERE college_id = $1 AND role = $2', [campusId, 'Student']);
+    res.json(studentsRes.rows);
+  } catch (error) {
+    console.error("Error getting campus students:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── POST /allocations/:id/teams ─────────────────────────────────────────────────
+app.post("/allocations/:id/teams", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { id } = req.params; // project ID
+    const { name } = req.body;
+    
+    const teamId = "team-" + Date.now() + Math.random().toString(36).substr(2, 5);
+    
+    // Find project spoke_id
+    const projectRes = await db.query('SELECT spoke_id FROM projects WHERE id = $1', [id]);
+    const spokeId = projectRes.rows[0] ? projectRes.rows[0].spoke_id : null;
+    
+    await db.query(
+      'INSERT INTO teams (id, name, members, college_id, project_id) VALUES ($1, $2, $3, $4, $5)',
+      [teamId, name, [], spokeId, id]
+    );
+    
+    res.json({
+      success: true,
+      team: {
+        id: teamId,
+        name: name,
+        studentAssignments: []
+      }
+    });
+  } catch (error) {
+    console.error("Error creating team:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ── POST /teams/:teamId/assign-students ─────────────────────────────────────────
+app.post("/teams/:teamId/assign-students", verifyToken, async (req, res) => {
+  try {
+    const db = require('./db');
+    const { teamId } = req.params;
+    const { studentIds } = req.body; // array of numeric IDs
+    
+    const stringIds = studentIds.map(id => id.toString());
+    
+    await db.query('UPDATE teams SET members = $1 WHERE id = $2', [stringIds, teamId]);
+    
+    const teamRes = await db.query('SELECT * FROM teams WHERE id = $1', [teamId]);
+    const team = teamRes.rows[0];
+    
+    res.json({
+      success: true,
+      team: {
+        id: team.id,
+        name: team.name,
+        studentAssignments: (team.members || []).map(mId => ({ studentId: parseInt(mId) }))
+      }
+    });
+  } catch (error) {
+    console.error("Error assigning students to team:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ── Graceful shutdown on Ctrl+C / SIGTERM ─────────────────────────────────────

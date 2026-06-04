@@ -180,7 +180,9 @@ const initDb = async () => {
     CREATE TABLE IF NOT EXISTS teams (
       id VARCHAR(255) PRIMARY KEY,
       name VARCHAR(255) NOT NULL,
-      members TEXT[] DEFAULT '{}'
+      members TEXT[] DEFAULT '{}',
+      college_id VARCHAR(50),
+      project_id BIGINT
     );
 
     CREATE TABLE IF NOT EXISTS team_messages (
@@ -206,6 +208,7 @@ const initDb = async () => {
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS reminders JSONB DEFAULT '[]';
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS jira_project_key VARCHAR(100);
       ALTER TABLE teams ADD COLUMN IF NOT EXISTS college_id VARCHAR(50);
+      ALTER TABLE teams ADD COLUMN IF NOT EXISTS project_id BIGINT;
     `);
     console.log('PostgreSQL tables initialized successfully!');
 

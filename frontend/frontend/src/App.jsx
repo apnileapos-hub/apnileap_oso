@@ -1,26 +1,24 @@
 import { useEffect, useState, useMemo } from "react";
+import RovoChatbot from "./components/RovoChatbot";
 import {
   DragDropContext,
   Droppable,
   Draggable,
 } from "@hello-pangea/dnd";
 import axios from "axios";
-
-// Global Axios Interceptor to inject JWT authentication token automatically on outgoing requests
-axios.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("apnileap-token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Modern Lucide Icon setup
+import {
+  PieChart,
+  Pie,
+  Cell,
+  Tooltip,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
 import {
   ListTodo,
   PieChart as LucidePieChart,
@@ -73,8 +71,23 @@ import {
   Monitor,
   School,
   Paperclip,
-  Flag
+  Flag,
+  CheckSquare
 } from "lucide-react";
+
+// Global Axios Interceptor to inject JWT authentication token automatically on outgoing requests
+axios.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("apnileap-token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Alias mapping for FontAwesome to Lucide components
 const FaTasks = ListTodo;
@@ -132,22 +145,9 @@ const FaSchool = School;
 const FaUniversity = School;
 const FaPaperclip = Paperclip;
 const FaFlag = Flag;
+const FaCheckSquare = CheckSquare;
 
 let toastIdCounter = 0;
-
-import {
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
 
 // Utility date calculator to evaluate task deadline details
 const getDeadlineInfo = (dueDate, statusName) => {
@@ -9975,6 +9975,7 @@ function App() {
         </div>
       )}
 
+      {isAuthenticated && <RovoChatbot />}
       </div>
     </div>
   );

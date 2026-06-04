@@ -865,7 +865,7 @@ function App() {
   const fetchSpokeMembers = async (boardId) => {
     try {
       const res = await axios.get(`http://localhost:5000/spokes/${boardId}/members`);
-      setSpokeMembers(res.data);
+      setSpokeMembers(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Failed to retrieve campus team members:", err);
     }
@@ -875,7 +875,7 @@ function App() {
     setIsTeamsLoading(true);
     try {
       const res = await axios.get(`http://localhost:5000/api/teams?boardId=${boardId}`);
-      setSpokeTeams(res.data || []);
+      setSpokeTeams(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Failed to retrieve campus teams:", err);
     } finally {
@@ -1079,7 +1079,7 @@ function App() {
     setHasError(false);
     try {
       const response = await axios.get("http://localhost:5000/moderator/projects");
-      setModeratorProjects(response.data);
+      setModeratorProjects(Array.isArray(response.data) ? response.data : []);
       setConnectionStatus("Connected");
     } catch (error) {
       console.error("Moderator Projects Fetch Error:", error);
@@ -1098,7 +1098,7 @@ function App() {
     if (!silent) setIsMeetingsLoading(true);
     try {
       const response = await axios.get("http://localhost:5000/meetings");
-      setMeetings(response.data);
+      setMeetings(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Meetings Fetch Error:", error);
       if (!silent) {
@@ -1113,7 +1113,7 @@ function App() {
   const fetchAllSubmissions = async () => {
     try {
       const res = await axios.get("http://localhost:5000/submissions");
-      setAllSubmissions(res.data || []);
+      setAllSubmissions(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error("Failed to fetch all submissions:", err);
     }
@@ -1291,6 +1291,7 @@ function App() {
 
   // Handle Search and Filter logic
   const filteredTasks = useMemo(() => {
+    if (!Array.isArray(tasks)) return [];
     return tasks.filter((task) => {
       const summaryMatch = task.fields.summary
         ?.toLowerCase()
@@ -1400,11 +1401,13 @@ function App() {
     if (activeWorkspace === "hub" || activeWorkspace === "moderator" || activeWorkspace === "meetings" || activeWorkspace === "playground") return [];
     const campusId = currentBoardId;
     const todayStr = "2026-05-27";
+    if (!Array.isArray(meetings)) return [];
     return meetings.filter(m => m.campusId === campusId && m.date === todayStr);
   }, [meetings, activeWorkspace, currentBoardId]);
 
   const todayConflictsForSpoke = useMemo(() => {
     const timeCounts = {};
+    if (!Array.isArray(todayMeetingsForSpoke)) return [];
     todayMeetingsForSpoke.forEach(m => {
       timeCounts[m.time] = (timeCounts[m.time] || 0) + 1;
     });
@@ -1416,6 +1419,7 @@ function App() {
     const campusId = currentBoardId;
     const spoke = SPOKES[campusId];
     if (!spoke) return [];
+    if (!Array.isArray(moderatorProjects)) return [];
     return moderatorProjects.filter(p => {
       if (p.allocations && p.allocations.length > 0) {
         return p.allocations.some(a => a.targetCampusId === campusId && a.status === "Proposed");
@@ -1427,6 +1431,7 @@ function App() {
   const acceptedProjectsForSpoke = useMemo(() => {
     if (activeWorkspace === "hub" || activeWorkspace === "moderator" || activeWorkspace === "meetings" || activeWorkspace === "playground") return [];
     const campusId = currentBoardId;
+    if (!Array.isArray(moderatorProjects)) return [];
     return moderatorProjects.filter(p => {
       if (p.allocations && p.allocations.length > 0) {
         return p.allocations.some(a => a.targetCampusId === campusId && a.status === "Active");
@@ -1438,6 +1443,7 @@ function App() {
   // Dynamically resolve child checklist issues for both Epic and Standard parent tasks
   const currentTaskChildren = useMemo(() => {
     if (!selectedTask) return [];
+    if (!Array.isArray(tasks)) return [];
     
     // For Epic, find all tasks that list this Epic as their parent in our state
     if (selectedTask.fields.issueType === "Epic") {

@@ -457,8 +457,102 @@ async function inviteAndSyncUserToJira(email, name, collegeId, products) {
   }
 }
 
+// ── Dynamic Jira Cloud User Synchronization ──────────────────────────────────
+async function syncAllJiraUsers() {
+  const jiraBase = getJiraBase();
+  const jiraAuth = getJiraAuth();
+  
+  if (!jiraAuth.username || !jiraAuth.password) {
+    console.warn("[Jira Auto Sync] Credentials not configured. Skipping sync.");
+    return;
+  }
+
+  try {
+    const authBase64 = Buffer.from(`${jiraAuth.username}:${jiraAuth.password}`).toString('base64');
+    const mainProject = getJiraProject();
+    
+    let jiraUsers = [];
+
+    // 1. Fetch general Jira users
+    try {
+      const searchRes = await axios.get(
+        `${jiraBase}/rest/api/3/users/search?maxResults=100`,
+        {
+          headers: {
+            Authorization: `Basic ${authBase64}`,
+            Accept: "application/json"
+          },
+          timeout: 4000
+        }
+      );
+      if (Array.isArray(searchRes.data) && searchRes.data.length > 0) {
+        jiraUsers = [...jiraUsers, ...searchRes.data];
+      }
+    } catch (err) {
+      console.warn("[Jira Auto Sync] General search failed:", err.message);
+    }
+
+    // 2. Fetch assignable users for the main project (e.g. KAN)
+    try {
+      const assignRes = await axios.get(
+        `${jiraBase}/rest/api/3/user/assignable/search?project=${mainProject}&maxResults=100`,
+        {
+          headers: {
+            Authorization: `Basic ${authBase64}`,
+            Accept: "application/json"
+          },
+          timeout: 4000
+        }
+      );
+      if (Array.isArray(assignRes.data) && assignRes.data.length > 0) {
+        jiraUsers = [...jiraUsers, ...assignRes.data];
+      }
+    } catch (err) {
+      console.warn(`[Jira Auto Sync] Assignable search failed for ${mainProject}:`, err.message);
+    }
+
+    // Deduplicate users by email address and filter out bots
+    const uniqueJiraUsers = [];
+    const seenEmails = new Set();
+
+    jiraUsers.forEach(u => {
+      const email = u.emailAddress || u.email;
+      if (email && !seenEmails.has(email.toLowerCase()) && u.active && u.accountType === 'atlassian') {
+        seenEmails.add(email.toLowerCase());
+        uniqueJiraUsers.push(u);
+      }
+    });
+
+    if (uniqueJiraUsers.length > 0) {
+      console.log(`🤖 [Jira Auto Sync] Discovered ${uniqueJiraUsers.length} real active users in Atlassian. Upserting to PostgreSQL...`);
+      const db = require('./db');
+      for (const u of uniqueJiraUsers) {
+        const email = (u.emailAddress || u.email).toLowerCase();
+        const name = u.displayName || u.name;
+        let role = 'Student';
+        if (email.includes('spoc') || email.includes('admin')) {
+          role = 'College-SPOC';
+        }
+        
+        await db.query(
+          `INSERT INTO users (email, name, role, password, college_id)
+           VALUES ($1, $2, $3, $4, $5)
+           ON CONFLICT (email) DO UPDATE SET name = EXCLUDED.name`,
+          [email, name, role, 'Admin@123', 'kle-spoke']
+        );
+      }
+      console.log("✅ [Jira Auto Sync] Dynamic user sync completed.");
+    }
+  } catch (err) {
+    console.error("[Jira Auto Sync] Sync failed:", err.message);
+  }
+}
+
 // ── GET /users ────────────────────────────────────────────────────────────────
 app.get("/users", verifyToken, async (req, res) => {
+  // Trigger dynamic Jira synchronization in the background
+  syncAllJiraUsers().catch(err => console.error("Background Jira users sync failed:", err.message));
+
   try {
     const db = require('./db');
     const { role, collegeId } = req.user;
@@ -2562,6 +2656,9 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`\n✅  Jira Dashboard API  →  http://localhost:${PORT}`);
   console.log(`   API routes: /health  /issues  /status-summary  /assignee-summary  /dashboard-metrics\n`);
+
+  // Trigger initial Jira Cloud active users synchronization
+  syncAllJiraUsers().catch(err => console.error("Initial Jira users synchronization failed:", err.message));
 
   // Start the background automated college progress tracking and email sweep scheduler
   console.log("⏰ [AUTOMATION] Initializing daily background reminder sweep...");

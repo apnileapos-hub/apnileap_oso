@@ -28,7 +28,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
       await axios.post(`${API}/projects/${projectId}/accept`, {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert('Project accepted by Faculty Handler successfully!');
+      alert('Project accepted by Faculty successfully!');
       fetchData();
       if (onRefresh) onRefresh();
     } catch (err) {
@@ -222,7 +222,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                   <div style={{ background: 'var(--bg-primary)', border: '1px dashed #ff9800', padding: '20px', borderRadius: '6px', textAlign: 'center' }}>
                     <h4 style={{ fontSize: '14px', color: '#ff9800', margin: '0 0 6px 0' }}>⏳ Spoke Project Acceptance Pending</h4>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 16px 0' }}>
-                      This B2B proposal is allocated to your Spoke. Spoke Coordinator or Faculty Handler review and acceptance are required before team delegation and Epic creation.
+                      This B2B proposal is allocated to your Spoke. Spoke Coordinator or Faculty review and acceptance are required before team delegation and Epic creation.
                     </p>
                     {['College-SPOC', 'Faculty', 'Principal-Investigator', 'Super-admin', 'Admin'].includes(user?.role) ? (
                       <div style={{ display: 'flex', justifyContent: 'center', gap: '12px' }}>
@@ -243,7 +243,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                       </div>
                     ) : (
                       <div style={{ fontSize: '13px', color: '#ff9800', fontWeight: '500', marginTop: '10px' }}>
-                        📢 Awaiting review and acceptance from Spoke Coordinator or Faculty Handler.
+                        📢 Awaiting review and acceptance from Spoke Coordinator or Faculty.
                       </div>
                     )}
                   </div>
@@ -323,7 +323,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                   {!proj.epics || proj.epics.length === 0 ? (
                     <div style={{ background: 'var(--bg-primary)', border: '1px dashed var(--border)', padding: '16px', borderRadius: '6px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>
                       {user?.role === 'College-SPOC'
-                        ? '⏳ Awaiting work assignment (Epics) from Faculty Handler.'
+                        ? '⏳ Awaiting work assignment (Epics) from Faculty.'
                         : 'No Epics defined. Click "Create Epic on Jira" above to add deliverables for this project.'}
                     </div>
                   ) : (
@@ -370,7 +370,9 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                     <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>
                       {assignedTeam 
                         ? `Currently assigned to: ${assignedTeam.name} (${assignedTeam.members?.length || 0} members)`
-                        : 'No team allocated yet. Choose an internal team below to assign this project.'}
+                        : user?.role === 'College-SPOC'
+                          ? 'No team allocated yet.'
+                          : 'No team allocated yet. Choose an internal team below to assign this project.'}
                     </p>
                   </div>
 
@@ -397,7 +399,7 @@ export default function SpokeBoardView({ user, spokeId, onRefresh }) {
                   ) : (
                     !assignedTeam && (
                       <div style={{ fontSize: '12px', color: '#ff9800', fontWeight: '500' }}>
-                        ⏳ Awaiting team allocation from Faculty Handler.
+                        ⏳ Awaiting team allocation from Faculty.
                       </div>
                     )
                   )}

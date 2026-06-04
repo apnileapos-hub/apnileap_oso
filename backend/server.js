@@ -1295,6 +1295,34 @@ app.post("/projects", verifyToken, async (req, res) => {
   }
 });
 
+app.delete("/projects/:id", verifyToken, async (req, res) => {
+  try {
+    if (req.user.role !== "Super-admin") {
+      return res.status(403).json({ error: "Forbidden. Only Super-admin can delete projects." });
+    }
+    const { id } = req.params;
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (isNaN(cleanId)) {
+      return res.status(400).json({ error: "Invalid project ID format." });
+    }
+
+    const db = require('./db');
+    
+    // Delete from PostgreSQL database
+    await db.query("DELETE FROM projects WHERE id = $1", [cleanId]);
+
+    // Delete from projects.json
+    const projects = readProjects();
+    const filtered = projects.filter(p => p.id !== id && p.id !== `proj-${cleanId}`);
+    writeProjects(filtered);
+
+    res.json({ success: true, message: `Project ${id} successfully deleted.` });
+  } catch (err) {
+    console.error("Error deleting project:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 async function getProjectById(id) {
   const cleanId = parseInt(id.replace("proj-", ""));
   if (isNaN(cleanId)) return null;

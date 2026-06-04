@@ -122,6 +122,19 @@ export default function ModeratorPortalView({ user, initialTab }) {
     }
   };
 
+  const handleDeleteProject = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this project? This will permanently delete the project and all its assignments, teams, repositories, and logs.")) return;
+    try {
+      const token = user?.token;
+      await axios.delete(`${API}/projects/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to delete project.');
+    }
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -348,16 +361,26 @@ export default function ModeratorPortalView({ user, initialTab }) {
                           </td>
                           <td style={{ padding: '16px 8px', verticalAlign: 'top', textAlign: 'center' }}>
                             {proj.status === 'pending_review' ? (
-                              <button 
-                                onClick={() => handleAssignClick(proj)}
-                                style={{ background: '#f96816', border: 'none', color: '#ffffff', padding: '6px 12px', fontSize: '12px', fontWeight: '600', borderRadius: '4px', cursor: 'pointer', transition: 'opacity 0.2s' }}
-                                onMouseOver={(e) => e.target.style.opacity = '0.9'}
-                                onMouseOut={(e) => e.target.style.opacity = '1'}
-                              >
-                                Assign Project
-                              </button>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                                <button 
+                                  onClick={() => handleAssignClick(proj)}
+                                  style={{ background: '#f96816', border: 'none', color: '#ffffff', padding: '6px 12px', fontSize: '12px', fontWeight: '600', borderRadius: '4px', cursor: 'pointer', transition: 'opacity 0.2s' }}
+                                  onMouseOver={(e) => e.target.style.opacity = '0.9'}
+                                  onMouseOut={(e) => e.target.style.opacity = '1'}
+                                >
+                                  Assign Project
+                                </button>
+                                {user?.role === 'Super-admin' && (
+                                  <button
+                                    onClick={() => handleDeleteProject(proj.id)}
+                                    style={{ background: 'none', border: 'none', color: '#ff7b72', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                                  >
+                                    🗑️ Delete Project
+                                  </button>
+                                )}
+                              </div>
                             ) : (
-                              <div>
+                              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
                                 <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>{(getSpokeName(proj.spokeId) || '').toUpperCase()}</div>
                                 {proj.epics && proj.epics.some(e => e.jiraKey) ? (
                                   <div style={{ fontSize: '10px', color: '#58a6ff', marginTop: '2px' }}>
@@ -366,12 +389,22 @@ export default function ModeratorPortalView({ user, initialTab }) {
                                 ) : (
                                   <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontStyle: 'italic' }}>Awaiting Intake</div>
                                 )}
-                                <button
-                                  onClick={() => handleAssignClick(proj)}
-                                  style={{ background: 'none', border: 'none', color: '#58a6ff', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', marginTop: '6px', padding: 0 }}
-                                >
-                                  🔄 Re-assign
-                                </button>
+                                <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                                  <button
+                                    onClick={() => handleAssignClick(proj)}
+                                    style={{ background: 'none', border: 'none', color: '#58a6ff', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                                  >
+                                    🔄 Re-assign
+                                  </button>
+                                  {user?.role === 'Super-admin' && (
+                                    <button
+                                      onClick={() => handleDeleteProject(proj.id)}
+                                      style={{ background: 'none', border: 'none', color: '#ff7b72', cursor: 'pointer', fontSize: '11px', textDecoration: 'underline', padding: 0 }}
+                                    >
+                                      🗑️ Delete Project
+                                    </button>
+                                  )}
+                                </div>
                               </div>
                             )}
                           </td>

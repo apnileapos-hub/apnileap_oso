@@ -1046,7 +1046,11 @@ app.get("/projects", verifyToken, async (req, res) => {
     const result = await db.query(
       `SELECT p.id as "id", p.name as "title", c.name as "company", 
               p.description, p.budget as "funding", p.duration_weeks || ' Weeks' as "duration", 
-              p.status, p.confluence_space_url, p.jira_board_url, p.created_at as "createdAt"
+              p.status, p.confluence_space_url as "confluenceSpaceUrl", p.jira_board_url as "jiraBoardUrl",
+              p.created_by as "createdBy", p.accepted_by as "acceptedBy", 
+              p.work_progress_docs as "workProgressDocs", p.spoke_id as "spokeId", 
+              p.team_id as "teamId", p.epics, p.reminders, p.jira_project_key as "jiraProjectKey", 
+              p.created_at as "createdAt"
        FROM projects p
        LEFT JOIN companies c ON p.company_id = c.id
        ORDER BY p.created_at DESC`
@@ -1056,7 +1060,10 @@ app.get("/projects", verifyToken, async (req, res) => {
       ...row,
       id: `proj-${row.id}`,
       funding: parseFloat(row.funding),
-      status: row.status.toLowerCase()
+      status: row.status.toLowerCase(),
+      epics: typeof row.epics === 'string' ? JSON.parse(row.epics) : (row.epics || []),
+      reminders: typeof row.reminders === 'string' ? JSON.parse(row.reminders) : (row.reminders || []),
+      workProgressDocs: typeof row.workProgressDocs === 'string' ? JSON.parse(row.workProgressDocs) : (row.workProgressDocs || [])
     }));
 
     // Moderator/Admin sees everything
@@ -1129,10 +1136,31 @@ app.post("/projects", verifyToken, async (req, res) => {
         }
       }
       
+      const preparedEpics = Array.isArray(epics) ? epics.map((e, idx) => ({
+        id: `epic-${Date.now()}-${idx}`,
+        title: e.title || `Epic ${idx + 1}`,
+        description: e.description || "",
+        jiraKey: null,
+        status: "To Do"
+      })) : [];
+
       await db.query(
-        `INSERT INTO projects (id, name, description, budget, duration_weeks, status, company_id) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-        [numericId, title, description || "", Number(funding) || 0, durationWeeks, 'OPEN_FOR_BIDDING', companyId]
+        `INSERT INTO projects (id, name, description, budget, duration_weeks, status, company_id, spoke_id, team_id, epics, reminders, jira_project_key) 
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          numericId, 
+          title, 
+          description || "", 
+          Number(funding) || 0, 
+          durationWeeks, 
+          'OPEN_FOR_BIDDING', 
+          companyId,
+          null,
+          null,
+          JSON.stringify(preparedEpics),
+          JSON.stringify([]),
+          autoKey
+        ]
       );
       dbSuccess = true;
     } catch (dbErr) {
@@ -1150,13 +1178,7 @@ app.post("/projects", verifyToken, async (req, res) => {
       spokeId: null,
       teamId: null,
       jiraProjectKey: autoKey,
-      epics: Array.isArray(epics) ? epics.map((e, idx) => ({
-        id: `epic-${Date.now()}-${idx}`,
-        title: e.title || `Epic ${idx + 1}`,
-        description: e.description || "",
-        jiraKey: null,
-        status: "To Do"
-      })) : [],
+      epics: preparedEpics,
       reminders: [],
       createdAt: new Date().toISOString()
     };
@@ -1214,6 +1236,18 @@ app.post("/projects/:id/assign-spoke", verifyToken, async (req, res) => {
     }
     projects[projIdx].reminders.push(emailLog);
 
+    // Save to PostgreSQL Database
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (!isNaN(cleanId)) {
+      const db = require('./db');
+      await db.query(
+        `UPDATE projects 
+         SET spoke_id = $1, status = $2, reminders = $3, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $4`,
+        [spokeId, 'ALLOCATED', JSON.stringify(projects[projIdx].reminders), cleanId]
+      );
+    }
+
     writeProjects(projects);
     res.json(projects[projIdx]);
   } catch (err) {
@@ -1240,7 +1274,88 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
       }
     }
 
+    // 1. Auto-create/provision Jira project & board if not already set
+    let autoKey = project.jiraProjectKey;
+    let jiraBoardUrl = project.jiraBoardUrl;
+    if (!autoKey) {
+      autoKey = await autoCreateJiraProject(project.title);
+      jiraBoardUrl = `${getJiraBase()}/browse/${autoKey}`;
+      project.jiraProjectKey = autoKey;
+      project.jiraBoardUrl = jiraBoardUrl;
+    }
+
+    // 2. Generate Confluence Space link
+    const cleanName = project.title.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const confluenceSpaceUrl = `https://confluence.apnileap.com/display/${project.title.toUpperCase().replace(/[^A-Z0-9]/g, '')}`;
+    project.confluenceSpaceUrl = confluenceSpaceUrl;
+
+    // 3. Automate GitHub Private Repository Creation
+    const repoName = `apnileap-${cleanName}`;
+    let repoUrl = `https://github.com/apnileapos-hub/${repoName}`;
+    const githubToken = process.env.GITHUB_TOKEN;
+    const githubOrg = process.env.GITHUB_ORG || 'apnileapos-hub';
+
+    if (githubToken) {
+      try {
+        console.log(`Attempting to automate GitHub repository creation for: ${repoName}`);
+        let createUrl = 'https://api.github.com/user/repos';
+        if (githubOrg) {
+          createUrl = `https://api.github.com/orgs/${githubOrg}/repos`;
+        }
+        
+        const ghRes = await axios.post(
+          createUrl,
+          {
+            name: repoName,
+            description: `Automated repository for APNILEAP project: ${project.title}`,
+            private: true,
+            auto_init: true
+          },
+          {
+            headers: {
+              'Authorization': `token ${githubToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+              'User-Agent': 'APNILEAP-App'
+            }
+          }
+        );
+        if (ghRes.data && ghRes.data.html_url) {
+          repoUrl = ghRes.data.html_url;
+          console.log(`Successfully created GitHub repository: ${repoUrl}`);
+        }
+      } catch (ghErr) {
+        console.error("Failed to automatically create repository on GitHub:", ghErr.response?.data || ghErr.message);
+      }
+    }
+
+    const db = require('./db');
+    const cleanId = parseInt(id.replace("proj-", ""));
+
+    // Save Repository details to Database
+    if (!isNaN(cleanId)) {
+      try {
+        await db.query(
+          `INSERT INTO repositories (project_id, repo_name, repo_url) 
+           VALUES ($1, $2, $3)
+           ON CONFLICT (repo_name) DO UPDATE SET repo_url = EXCLUDED.repo_url`,
+          [cleanId, repoName, repoUrl]
+        );
+      } catch (dbErr) {
+        console.error("Failed to insert repository in DB:", dbErr.message);
+      }
+    }
+
+    // 4. Update status and keys in PostgreSQL Database
     project.status = "accepted"; 
+
+    if (!isNaN(cleanId)) {
+      await db.query(
+        `UPDATE projects 
+         SET status = $1, confluence_space_url = $2, jira_board_url = $3, jira_project_key = $4, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $5`,
+        ['ACCEPTED', confluenceSpaceUrl, jiraBoardUrl || `${getJiraBase()}/jira/boards/75`, autoKey, cleanId]
+      );
+    }
 
     writeProjects(projects);
     res.json(project);
@@ -1273,6 +1388,17 @@ app.post("/projects/:id/decline", verifyToken, async (req, res) => {
     project.status = "pending_review";
     project.spokeId = null;
     project.teamId = null;
+
+    const db = require('./db');
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (!isNaN(cleanId)) {
+      await db.query(
+        `UPDATE projects 
+         SET status = $1, spoke_id = $2, team_id = $3, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $4`,
+        ['PENDING_REVIEW', null, null, cleanId]
+      );
+    }
 
     writeProjects(projects);
     res.json(project);
@@ -1389,6 +1515,18 @@ app.post("/projects/:id/epics", verifyToken, async (req, res) => {
       project.epics = [];
     }
     project.epics.push(newEpic);
+
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (!isNaN(cleanId)) {
+      const db = require('./db');
+      await db.query(
+        `UPDATE projects 
+         SET epics = $1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $2`,
+        [JSON.stringify(project.epics), cleanId]
+      );
+    }
+
     writeProjects(projects);
     res.json(newEpic);
   } catch (err) {
@@ -1445,6 +1583,16 @@ app.post("/projects/:id/assign-team", verifyToken, async (req, res) => {
     }
     project.reminders.push(emailLog);
 
+    const cleanId = parseInt(id.replace("proj-", ""));
+    if (!isNaN(cleanId)) {
+      await db.query(
+        `UPDATE projects 
+         SET team_id = $1, reminders = $2, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $3`,
+        [teamId, JSON.stringify(project.reminders), cleanId]
+      );
+    }
+
     writeProjects(projects);
     res.json(project);
   } catch (err) {
@@ -1491,44 +1639,194 @@ app.get("/emails/logs", (req, res) => {
   }
 });
 
-// ── POST /emails/trigger-reminders ───────────────────────────────────────────
-app.post("/emails/trigger-reminders", verifyToken, async (req, res) => {
-  try {
-    const projects = readProjects();
-    const spokes = readSpokes();
-    const triggered = [];
+// Helper to perform the actual college progress and reminder sweep logic
+async function runReminderSweep() {
+  const db = require('./db');
+  const spokes = readSpokes();
+  const triggered = [];
 
-    for (let proj of projects) {
-      if (!Array.isArray(proj.reminders)) {
-        proj.reminders = [];
-      }
-      if (proj.status === "pending_review") {
+  // Query projects from PostgreSQL for Render persistence
+  const projResult = await db.query(
+    `SELECT id, name as "title", status, spoke_id as "spokeId", team_id as "teamId", 
+            reminders, jira_project_key as "jiraProjectKey"
+     FROM projects`
+  );
+
+  const dbProjects = projResult.rows;
+
+  for (let proj of dbProjects) {
+    let remindersList = typeof proj.reminders === 'string' 
+      ? JSON.parse(proj.reminders) 
+      : (proj.reminders || []);
+
+    if (proj.status.toLowerCase() === "pending_review") {
+      const email = await sendEmail({
+        to: "moderator@apnileap.com",
+        subject: `Reminder: Project ${proj.title} Awaiting Allocation`,
+        body: `The B2B proposal "${proj.title}" is pending review. Please assign it to a Spoke.`,
+        type: "reminder"
+      });
+      remindersList.push(email);
+      triggered.push(email);
+      
+      await db.query(
+        "UPDATE projects SET reminders = $1 WHERE id = $2",
+        [JSON.stringify(remindersList), proj.id]
+      );
+    } 
+    else if (proj.status.toLowerCase() === "allocated" && !proj.teamId) {
+      const spoke = spokes.find(s => s.id === proj.spokeId);
+      if (spoke) {
         const email = await sendEmail({
-          to: "moderator@apnileap.com",
-          subject: `Reminder: Project ${proj.title} Awaiting Allocation`,
-          body: `The B2B proposal "${proj.title}" from ${proj.company} is pending review. Please assign it to a Spoke.`,
+          to: spoke.spocEmail,
+          subject: `Reminder: Project ${proj.title} Awaiting Team Assignment`,
+          body: `Dear ${spoke.spocName},\n\nThe project "${proj.title}" is allocated to ${spoke.name} but has no team assigned. Please allocate a development team.\n\nBest regards,\nApni Leap Moderator`,
           type: "reminder"
         });
-        proj.reminders.push(email);
+        remindersList.push(email);
         triggered.push(email);
-      } else if (proj.status === "allocated" && !proj.teamId) {
-        const spoke = spokes.find(s => s.id === proj.spokeId);
-        if (spoke) {
+        
+        await db.query(
+          "UPDATE projects SET reminders = $1 WHERE id = $2",
+          [JSON.stringify(remindersList), proj.id]
+        );
+      }
+    } 
+    else if (proj.status.toLowerCase() === "accepted" || (proj.status.toLowerCase() === "allocated" && proj.teamId)) {
+      // Active project progress check and reminder triggers
+      const spoke = spokes.find(s => s.id === proj.spokeId);
+      if (spoke) {
+        const spokeToCampus = {
+          'kle-spoke': '3',
+          'coep-spoke': '101',
+          'mmcoep-spoke': '102',
+          'rit-spoke': '103'
+        };
+        const campusId = spokeToCampus[proj.spokeId] || '3';
+        
+        // Fetch tasks (Jira + PostgreSQL mocks)
+        let tasks = [];
+        if (process.env.JIRA_EMAIL && process.env.JIRA_API_TOKEN) {
+          try {
+            const JIRA_BASE = getJiraBase();
+            const jiraAuth = getJiraAuth();
+            const authBase64 = Buffer.from(`${jiraAuth.username}:${jiraAuth.password}`).toString('base64');
+            const projectKey = proj.jiraProjectKey || "SCRUM";
+            
+            const jiraRes = await axios.post(
+              `${JIRA_BASE}/rest/api/3/search/jql`,
+              {
+                jql: `project = ${projectKey} ORDER BY created DESC`,
+                maxResults: 100,
+                fields: ["summary", "status", "assignee", "priority", "issuetype", "duedate", "flagged"]
+              },
+              {
+                headers: {
+                  Authorization: `Basic ${authBase64}`,
+                  Accept: "application/json",
+                  "Content-Type": "application/json"
+                },
+                timeout: 5000
+              }
+            );
+            tasks = jiraRes.data.issues || [];
+          } catch (err) {
+            console.warn(`Jira fetch failed during sweep for project ${proj.title}:`, err.message);
+          }
+        }
+
+        // Fetch local fallback mock tasks
+        try {
+          const mockRes = await db.query("SELECT * FROM mock_tasks WHERE board_id = $1", [campusId]);
+          const mockTasks = mockRes.rows.map(row => ({
+            id: row.id,
+            key: row.key,
+            fields: typeof row.fields === 'string' ? JSON.parse(row.fields) : row.fields
+          }));
+          tasks = [...tasks, ...mockTasks];
+        } catch (dbErr) {
+          console.error("Failed mock task read:", dbErr.message);
+        }
+
+        // Check for blockers and overdue deadlines
+        const overdueTasks = [];
+        const blockedTasks = [];
+        
+        tasks.forEach(t => {
+          const fields = t.fields || {};
+          const summary = fields.summary || "Sprint task";
+          const statusName = (fields.status?.name || fields.status || "Backlog").toLowerCase();
+          const assigneeName = fields.assignee?.displayName || "Unassigned";
+
+          if (fields.flagged === true || (fields.Flagged && fields.Flagged.length > 0)) {
+            blockedTasks.push(`• [${t.key || t.id}] ${summary} (Blocked - Assigned to: ${assigneeName})`);
+          }
+
+          const dueDateStr = fields.duedate || fields.dueDate || null;
+          if (statusName !== "done" && dueDateStr) {
+            const today = new Date();
+            const due = new Date(dueDateStr);
+            if (due.getTime() < today.getTime()) {
+              overdueTasks.push(`• [${t.key || t.id}] ${summary} (Overdue since: ${dueDateStr} - Assigned to: ${assigneeName})`);
+            }
+          }
+        });
+
+        // Send warning if any overdue or blocked issues are found
+        if (blockedTasks.length > 0 || overdueTasks.length > 0) {
+          let recipientList = [spoke.spocEmail];
+          if (proj.teamId) {
+            const teamRes = await db.query("SELECT * FROM teams WHERE id = $1", [proj.teamId]);
+            if (teamRes.rows.length > 0 && Array.isArray(teamRes.rows[0].members)) {
+              teamRes.rows[0].members.forEach(memberEmail => {
+                if (memberEmail && memberEmail.includes("@")) {
+                  recipientList.push(memberEmail.trim());
+                }
+              });
+            }
+          }
+
+          let emailBody = `Dear ${spoke.spocName} & Development Team,\n\n` +
+            `This is an automated progress alert for your active project "${proj.title}" at ${spoke.name}.\n\n`;
+
+          if (blockedTasks.length > 0) {
+            emailBody += `🚨 ACTIVE BLOCKERS:\n${blockedTasks.join("\n")}\n\n`;
+          }
+
+          if (overdueTasks.length > 0) {
+            emailBody += `⏰ OVERDUE DEADLINES:\n${overdueTasks.join("\n")}\n\n`;
+          }
+
+          emailBody += `Please log in to your dashboard to resolve these blockages and complete pending tasks on your boards.\n\n` +
+            `Best regards,\nApni Leap Progress Sweeper`;
+
           const email = await sendEmail({
-            to: spoke.spocEmail,
-            subject: `Reminder: Project ${proj.title} Awaiting Team Assignment`,
-            body: `Dear ${spoke.spocName},\n\nThe project "${proj.title}" is allocated to ${spoke.name} but has no team assigned. Please allocate a development team.`,
+            to: recipientList.join(", "),
+            subject: `🚨 [Progress Warning] Action Required for Project: ${proj.title}`,
+            body: emailBody,
             type: "reminder"
           });
-          proj.reminders.push(email);
+          remindersList.push(email);
           triggered.push(email);
+          
+          await db.query(
+            "UPDATE projects SET reminders = $1 WHERE id = $2",
+            [JSON.stringify(remindersList), proj.id]
+          );
         }
       }
     }
+  }
+  return triggered;
+}
 
-    writeProjects(projects);
+// ── POST /emails/trigger-reminders ───────────────────────────────────────────
+app.post("/emails/trigger-reminders", verifyToken, async (req, res) => {
+  try {
+    const triggered = await runReminderSweep();
     res.json({ message: `Triggered ${triggered.length} reminders.`, logs: triggered });
   } catch (err) {
+    console.error("Reminder Sweep Error:", err);
     res.status(500).json({ error: err.message });
   }
 });
@@ -1647,6 +1945,29 @@ const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {
   console.log(`\n✅  Jira Dashboard API  →  http://localhost:${PORT}`);
   console.log(`   API routes: /health  /issues  /status-summary  /assignee-summary  /dashboard-metrics\n`);
+
+  // Start the background automated college progress tracking and email sweep scheduler
+  console.log("⏰ [AUTOMATION] Initializing daily background reminder sweep...");
+  const SWEEP_INTERVAL = 24 * 60 * 60 * 1000; // 24 Hours
+  setTimeout(async () => {
+    try {
+      console.log("⏰ [AUTOMATION] Running initial scheduled reminder sweep...");
+      const triggered = await runReminderSweep();
+      console.log(`⏰ [AUTOMATION] Initial sweep complete. Triggered ${triggered.length} email reminders.`);
+    } catch (err) {
+      console.error("⏰ [AUTOMATION] Initial background sweep failed:", err.message);
+    }
+  }, 10000); // 10 seconds post-boot
+
+  setInterval(async () => {
+    try {
+      console.log("⏰ [AUTOMATION] Running scheduled recurring daily reminder sweep...");
+      const triggered = await runReminderSweep();
+      console.log(`⏰ [AUTOMATION] Daily sweep complete. Triggered ${triggered.length} email reminders.`);
+    } catch (err) {
+      console.error("⏰ [AUTOMATION] Daily background sweep failed:", err.message);
+    }
+  }, SWEEP_INTERVAL);
 });
 
 // ── Error handler — catches port-in-use and other listen errors ───────────────

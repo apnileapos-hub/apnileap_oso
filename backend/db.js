@@ -87,6 +87,11 @@ const initDb = async () => {
       created_by VARCHAR(255),
       accepted_by VARCHAR(255),
       work_progress_docs JSONB DEFAULT '[]',
+      spoke_id VARCHAR(100),
+      team_id VARCHAR(100),
+      epics JSONB DEFAULT '[]',
+      reminders JSONB DEFAULT '[]',
+      jira_project_key VARCHAR(100),
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
@@ -194,6 +199,11 @@ const initDb = async () => {
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by VARCHAR(255);
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS accepted_by VARCHAR(255);
       ALTER TABLE projects ADD COLUMN IF NOT EXISTS work_progress_docs JSONB DEFAULT '[]';
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS spoke_id VARCHAR(100);
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS team_id VARCHAR(100);
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS epics JSONB DEFAULT '[]';
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS reminders JSONB DEFAULT '[]';
+      ALTER TABLE projects ADD COLUMN IF NOT EXISTS jira_project_key VARCHAR(100);
     `);
     console.log('PostgreSQL tables initialized successfully!');
 
@@ -236,8 +246,8 @@ const initDb = async () => {
             }
             const cleanId = parseInt(p.id.replace('proj-', '')) || Math.floor(Math.random() * 100000);
             await query(
-              `INSERT INTO projects (id, name, description, budget, duration_weeks, status, company_id, created_at) 
-               VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+              `INSERT INTO projects (id, name, description, budget, duration_weeks, status, company_id, spoke_id, team_id, epics, reminders, jira_project_key, created_at) 
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                ON CONFLICT (id) DO NOTHING`,
               [
                 cleanId,
@@ -247,6 +257,11 @@ const initDb = async () => {
                 parseInt(p.duration) || 12,
                 p.status.toUpperCase(),
                 companyId,
+                p.spokeId || null,
+                p.teamId || null,
+                JSON.stringify(p.epics || []),
+                JSON.stringify(p.reminders || []),
+                p.jiraProjectKey || null,
                 p.createdAt ? new Date(p.createdAt) : new Date()
               ]
             );

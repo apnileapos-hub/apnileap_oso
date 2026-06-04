@@ -1614,10 +1614,10 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
     }
 
     // 1. Auto-create/provision Jira project & board if not already set
-    let autoKey = project.jiraProjectKey;
-    let jiraBoardUrl = project.jiraBoardUrl;
+    let autoKey = project.jiraProjectKey || project.jira_project_key;
+    let jiraBoardUrl = project.jiraBoardUrl || project.jira_board_url;
     if (!autoKey) {
-      autoKey = await autoCreateJiraProject(project.title);
+      autoKey = getJiraProject();
       jiraBoardUrl = `${getJiraBase()}/browse/${autoKey}`;
       project.jiraProjectKey = autoKey;
       project.jiraBoardUrl = jiraBoardUrl;

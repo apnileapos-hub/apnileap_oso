@@ -102,14 +102,13 @@ Try asking me to:
 
       const project = result.rows[0];
 
-      const { autoCreateJiraProject, autoGenerateIssuesForProject } = require('./rovoIssueService');
-      let autoKey = project.jira_project_key || project.jiraProjectKey;
+      const { autoGenerateIssuesForProject } = require('./rovoIssueService');
+      const autoKey = project.jira_project_key || project.jiraProjectKey || process.env.JIRA_PROJECT_KEY || "SCRUM";
       let jiraBoardUrl = project.jira_board_url || project.jiraBoardUrl;
 
-      if (!autoKey) {
-        autoKey = await autoCreateJiraProject(project.name);
-        jiraBoardUrl = `${process.env.JIRA_BASE_URL || "https://devcobraaa.atlassian.net"}/browse/${autoKey}`;
+      if (!project.jira_project_key) {
         project.jira_project_key = autoKey;
+        jiraBoardUrl = `${process.env.JIRA_BASE_URL || "https://apnileapos.atlassian.net"}/browse/${autoKey}`;
         project.jira_board_url = jiraBoardUrl;
       }
 

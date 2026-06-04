@@ -403,6 +403,119 @@ Try asking me to:
       });
     }
 
+    // INTENT 6: Create task under epic
+    if (queryText.includes("create task") && queryText.includes("under epic")) {
+      const taskMatch = message.match(/(?:create task|create a task|create a new task)\s+(.+?)\s+under epic/i);
+      const epicMatch = message.match(/under epic\s+(.+)$/i);
+
+      const taskSummary = taskMatch ? taskMatch[1].trim() : null;
+      const epicRef = epicMatch ? epicMatch[1].trim() : null;
+
+      if (!taskSummary || !epicRef) {
+        return res.json({ reply: "Format error. Try: 'create task Implement OAuth under epic Requirements & Architecture Specification' or 'create task Setup SSL under epic APNI784-EPIC-1'" });
+      }
+
+      const projRes = await db.query('SELECT id, name, jira_project_key, epics FROM projects');
+      
+      let matchedProject = null;
+      let matchedEpic = null;
+
+      for (const row of projRes.rows) {
+        let epics = row.epics;
+        if (typeof epics === 'string') {
+          epics = JSON.parse(epics);
+        }
+        if (Array.isArray(epics)) {
+          const found = epics.find(e => 
+            (e.jiraKey && e.jiraKey.toLowerCase() === epicRef.toLowerCase()) || 
+            (e.id && e.id.toLowerCase() === epicRef.toLowerCase()) ||
+            (e.title && e.title.toLowerCase().includes(epicRef.toLowerCase()))
+          );
+          if (found) {
+            matchedProject = row;
+            matchedEpic = found;
+            break;
+          }
+        }
+      }
+
+      if (!matchedEpic) {
+        return res.json({ reply: `I couldn't find an active Epic matching "${epicRef}" in any project.` });
+      }
+
+      const projectKey = matchedProject.jira_project_key || 'APNI';
+      const boardId = '3';
+      const taskId = `mock-rovo-${Date.now()}`;
+      const taskKey = `${projectKey}-${100 + Math.floor(Math.random() * 900)}`;
+
+      const fields = {
+        summary: taskSummary,
+        description: `Task created under Epic "${matchedEpic.title}" via Rovo AI Copilot`,
+        status: { name: "To Do" },
+        priority: { name: "Medium" },
+        issuetype: { name: "Task" },
+        created: new Date().toISOString(),
+        flagged: false,
+        parent: {
+          key: matchedEpic.jiraKey || matchedEpic.id,
+          summary: matchedEpic.title,
+          issueType: "Epic"
+        }
+      };
+
+      let jiraKey = null;
+      if (process.env.JIRA_EMAIL && process.env.JIRA_API_TOKEN) {
+        try {
+          const authBase64 = Buffer.from(`${process.env.JIRA_EMAIL}:${process.env.JIRA_API_TOKEN}`).toString('base64');
+          const taskRes = await axios.post(
+            `${process.env.JIRA_BASE_URL || "https://apnileapos.atlassian.net"}/rest/api/3/issue`,
+            {
+              fields: {
+                project: { key: projectKey },
+                summary: taskSummary,
+                description: {
+                  type: "doc",
+                  version: 1,
+                  content: [{ type: "paragraph", content: [{ type: "text", text: fields.description }] }]
+                },
+                parent: { key: matchedEpic.jiraKey },
+                issuetype: { name: "Task" }
+              }
+            },
+            {
+              headers: {
+                Authorization: `Basic ${authBase64}`,
+                Accept: "application/json",
+                "Content-Type": "application/json"
+              },
+              timeout: 4000
+            }
+          );
+          jiraKey = taskRes.data.key;
+          console.log(`📡 Dynamic task created under epic in Jira: ${jiraKey}`);
+        } catch (err) {
+          console.warn("Failed to create task under epic in live Jira, using mock fallback:", err.message);
+        }
+      }
+
+      const finalKey = jiraKey || taskKey;
+
+      await db.query(
+        `INSERT INTO mock_tasks (id, key, board_id, fields)
+         VALUES ($1, $2, $3, $4)`,
+        [taskId, finalKey, boardId, JSON.stringify(fields)]
+      );
+
+      return res.json({
+        reply: `✅ **Task Created Successfully Under Epic!**\n\n` +
+               `• **Task Key:** ${finalKey}\n` +
+               `• **Summary:** ${taskSummary}\n` +
+               `• **Epic Parent:** ${matchedEpic.title} (${matchedEpic.jiraKey || 'Local'})\n` +
+               `• **Project:** ${matchedProject.name}\n` +
+               `• **Status:** To Do`
+      });
+    }
+
     // Standard Queries
     if (queryText.includes("project") || queryText.includes("active")) {
       const result = await db.query('SELECT name, status, budget, accepted_by FROM projects ORDER BY created_at DESC LIMIT 5');

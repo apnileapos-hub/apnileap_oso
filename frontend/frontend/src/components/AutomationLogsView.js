@@ -49,12 +49,12 @@ export default function AutomationLogsView({ user }) {
   };
 
   return (
-    <div className="automation-logs-view" style={{ color: '#c9d1d9' }}>
+    <div className="automation-logs-view" style={{ color: 'var(--text-primary)' }}>
       {/* Title Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#f0f6fc', margin: '0 0 6px 0' }}>📧 Automation Logs</h1>
-          <p style={{ fontSize: '13px', color: '#8b949e', margin: 0 }}>View simulated reminder emails and system assignment logs in the outbound queue.</p>
+          <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>📧 Automation Logs</h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>View simulated reminder emails and system assignment logs in the outbound queue.</p>
         </div>
         <button 
           onClick={handleTriggerSweep} 
@@ -77,10 +77,10 @@ export default function AutomationLogsView({ user }) {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '40px' }}>
           <div className="loading-spinner" style={{ margin: '0 auto 10px auto' }} />
-          <div style={{ fontSize: '13px', color: '#8b949e' }}>Loading outbox feed...</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Loading outbox feed...</div>
         </div>
       ) : logs.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '50px', color: '#8b949e', border: '1px dashed #30363d', borderRadius: '6px', background: '#161b22' }}>
+        <div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-secondary)', border: '1px dashed var(--border)', borderRadius: '6px', background: 'var(--bg-secondary)' }}>
           No outbox records logged yet. Try assigning a project to generate emails.
         </div>
       ) : (
@@ -97,26 +97,26 @@ export default function AutomationLogsView({ user }) {
             }
 
             return (
-              <div key={log.id} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', overflow: 'hidden' }}>
+              <div key={log.id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
                 {/* Header info */}
-                <div style={{ background: '#0d1117', borderBottom: '1px solid #30363d', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                <div style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border)', padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 'bold', padding: '2px 8px', borderRadius: '12px', color: badgeColor, background: badgeBg }}>
                       {log.type.toUpperCase()}
                     </span>
-                    <span style={{ fontSize: '13px', color: '#8b949e' }}>To: <strong style={{ color: '#c9d1d9' }}>{log.to}</strong></span>
+                    <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>To: <strong style={{ color: 'var(--text-primary)' }}>{log.to}</strong></span>
                   </div>
-                  <span style={{ fontSize: '11px', color: '#8b949e' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                     {new Date(log.timestamp).toLocaleString()}
                   </span>
                 </div>
 
                 {/* Email Body details */}
                 <div style={{ padding: '16px' }}>
-                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: '#f0f6fc', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '14px', fontWeight: 'bold', color: 'var(--text-primary)', marginBottom: '10px' }}>
                     Subject: {log.subject}
                   </div>
-                  <div style={{ background: '#0d1117', border: '1px solid #21262d', padding: '12px', borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace', color: '#c9d1d9', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
+                  <div style={{ background: 'var(--bg-primary)', border: '1px solid var(--bg-card)', padding: '12px', borderRadius: '6px', fontSize: '12px', fontFamily: 'monospace', color: 'var(--text-primary)', whiteSpace: 'pre-wrap', lineHeight: '1.5' }}>
                     {log.body}
                   </div>
                 </div>

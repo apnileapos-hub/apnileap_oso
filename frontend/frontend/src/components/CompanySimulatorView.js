@@ -73,11 +73,11 @@ export default function CompanySimulatorView({ user, onRefresh }) {
   };
 
   return (
-    <div className="company-simulator-view" style={{ color: '#c9d1d9', maxWidth: '750px', margin: '0 auto' }}>
+    <div className="company-simulator-view" style={{ color: 'var(--text-primary)', maxWidth: '750px', margin: '0 auto' }}>
       {/* Title Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#f0f6fc', margin: '0 0 6px 0' }}>🚀 B2B Ingestion Portal (Proposal Simulator)</h1>
-        <p style={{ fontSize: '13px', color: '#8b949e', margin: 0 }}>
+        <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>🚀 B2B Ingestion Portal (Proposal Simulator)</h1>
+        <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>
           Simulate an external company partner submitting a project proposal. Once submitted, it will appear as an **Incoming Project** on the Apni Leap Moderator Portal.
         </p>
       </div>
@@ -88,32 +88,32 @@ export default function CompanySimulatorView({ user, onRefresh }) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '24px' }}>
+      <form onSubmit={handleSubmit} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '24px' }}>
         
         {/* Form Grid Row 1 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
           <div className="modal-form-group">
-            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px' }}>Company / Partner Name</label>
+            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Company / Partner Name</label>
             <input
               type="text"
               className="modal-input"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
               placeholder="e.g. Tesla Inc, Netflix, Microsoft"
-              style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}
+              style={{ width: '100%', padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}
               disabled={submitting}
               required
             />
           </div>
           <div className="modal-form-group">
-            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px' }}>Project Title</label>
+            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Project Title</label>
             <input
               type="text"
               className="modal-input"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Autonomous Drone Telemetry API"
-              style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}
+              style={{ width: '100%', padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}
               disabled={submitting}
               required
             />
@@ -122,13 +122,13 @@ export default function CompanySimulatorView({ user, onRefresh }) {
 
         {/* Form Row 2 */}
         <div className="modal-form-group" style={{ marginBottom: '16px' }}>
-          <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px' }}>Project Scope Description</label>
+          <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Project Scope Description</label>
           <textarea
             className="modal-input"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Detailed description of the deliverables and technical challenges..."
-            style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9', height: '80px', resize: 'vertical' }}
+            style={{ width: '100%', padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)', height: '80px', resize: 'vertical' }}
             disabled={submitting}
           />
         </div>
@@ -136,25 +136,25 @@ export default function CompanySimulatorView({ user, onRefresh }) {
         {/* Form Grid Row 3 */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
           <div className="modal-form-group">
-            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px' }}>Funding Value (USD)</label>
+            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Funding Value (USD)</label>
             <input
               type="number"
               className="modal-input"
               value={funding}
               onChange={(e) => setFunding(e.target.value)}
               placeholder="e.g. 25000"
-              style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}
+              style={{ width: '100%', padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}
               disabled={submitting}
               required
             />
           </div>
           <div className="modal-form-group">
-            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px' }}>Project Duration</label>
+            <label className="modal-label" style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>Project Duration</label>
             <select
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               className="modal-input"
-              style={{ width: '100%', padding: '8px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#c9d1d9' }}
+              style={{ width: '100%', padding: '8px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}
               disabled={submitting}
             >
               <option value="3 Months">3 Months</option>
@@ -169,7 +169,7 @@ export default function CompanySimulatorView({ user, onRefresh }) {
         {/* Epics Checklist */}
         <div style={{ marginBottom: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <label className="modal-label" style={{ fontSize: '13px', fontWeight: '600', color: '#f0f6fc' }}>📋 Suggested Epics (Intake Specification)</label>
+            <label className="modal-label" style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>📋 Suggested Epics (Intake Specification)</label>
             <button 
               type="button" 
               onClick={handleAddEpic}
@@ -181,7 +181,7 @@ export default function CompanySimulatorView({ user, onRefresh }) {
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {epics.map((epic, idx) => (
-              <div key={idx} style={{ background: '#0d1117', border: '1px solid #30363d', padding: '12px', borderRadius: '6px' }}>
+              <div key={idx} style={{ background: 'var(--bg-primary)', border: '1px solid var(--border)', padding: '12px', borderRadius: '6px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <span style={{ fontSize: '11px', color: '#58a6ff', fontWeight: 'bold' }}>Epic #{idx + 1}</span>
                   {epics.length > 1 && (
@@ -199,14 +199,14 @@ export default function CompanySimulatorView({ user, onRefresh }) {
                   placeholder="Epic Title"
                   value={epic.title}
                   onChange={(e) => handleEpicChange(idx, 'title', e.target.value)}
-                  style={{ width: '100%', padding: '6px', background: '#161b22', border: '1px solid #30363d', borderRadius: '4px', color: '#c9d1d9', fontSize: '12px', marginBottom: '6px' }}
+                  style={{ width: '100%', padding: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '12px', marginBottom: '6px' }}
                   required
                 />
                 <textarea
                   placeholder="Epic Description (Deliverables)"
                   value={epic.description}
                   onChange={(e) => handleEpicChange(idx, 'description', e.target.value)}
-                  style={{ width: '100%', padding: '6px', background: '#161b22', border: '1px solid #30363d', borderRadius: '4px', color: '#c9d1d9', fontSize: '11px', height: '40px', resize: 'vertical' }}
+                  style={{ width: '100%', padding: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px', height: '40px', resize: 'vertical' }}
                 />
               </div>
             ))}

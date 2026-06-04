@@ -48,61 +48,61 @@ function ScheduleModal({ users, currentUser, editMeeting, onClose, onSave }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
       onClick={onClose}>
-      <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: '12px', padding: '28px', width: '460px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto' }}
+      <div style={{ background: '#1c2128', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px', width: '460px', maxWidth: '90vw', maxHeight: '80vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h3 style={{ color: '#fff', fontSize: '16px', fontWeight: 'bold', margin: 0 }}>{editMeeting ? '✏️ Edit Meeting' : '📅 Schedule Meeting'}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Meeting Title *</label>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Meeting Title *</label>
             <input value={title} onChange={e => setTitle(e.target.value)} placeholder="e.g. Sprint Planning Q2"
-              style={{ width: '100%', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
+              style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
           </div>
 
           <div style={{ display: 'flex', gap: '12px' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Type</label>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Type</label>
               <select value={type} onChange={e => setType(e.target.value)}
-                style={{ width: '100%', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px' }}>
+                style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px' }}>
                 <option value="video">📹 Video Call</option>
                 <option value="voice">🎙️ Voice Call</option>
               </select>
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Date</label>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Date</label>
               <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                style={{ width: '100%', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
+                style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
             </div>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Time</label>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Time</label>
               <input type="time" value={time} onChange={e => setTime(e.target.value)}
-                style={{ width: '100%', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
+                style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', padding: '8px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
             </div>
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '12px', color: '#8b949e', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Invite People</label>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px', fontWeight: '600', textTransform: 'uppercase' }}>Invite People</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', maxHeight: '120px', overflowY: 'auto' }}>
               {others.map(u => {
                 const sel = participants.includes(u.displayName);
                 return (
-                  <label key={u.accountId} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: sel ? 'rgba(98,100,167,0.3)' : '#0d1117', border: `1px solid ${sel ? '#6264a7' : '#30363d'}`, borderRadius: '16px', cursor: 'pointer', fontSize: '12px', color: '#c9d1d9' }}>
+                  <label key={u.accountId} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '5px 10px', background: sel ? 'rgba(98,100,167,0.3)' : 'var(--bg-primary)', border: `1px solid ${sel ? '#6264a7' : 'var(--border)'}`, borderRadius: '16px', cursor: 'pointer', fontSize: '12px', color: 'var(--text-primary)' }}>
                     <input type="checkbox" checked={sel} onChange={() => toggle(u.displayName)} style={{ display: 'none' }} />
                     {u.displayName}
                     {sel && <span style={{ color: '#7f85f5' }}>✓</span>}
                   </label>
                 );
               })}
-              {others.length === 0 && <span style={{ fontSize: '12px', color: '#8b949e' }}>No other users found</span>}
+              {others.length === 0 && <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>No other users found</span>}
             </div>
           </div>
 
           <div style={{ display: 'flex', gap: '10px', marginTop: '8px' }}>
             <button type="button" onClick={onClose}
-              style={{ flex: 1, padding: '10px', background: '#21262d', border: '1px solid #30363d', borderRadius: '8px', color: '#c9d1d9', fontSize: '13px', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '10px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', fontSize: '13px', cursor: 'pointer' }}>
               Cancel
             </button>
             <button type="submit" disabled={!title.trim()}
@@ -133,20 +133,20 @@ function JoinModal({ store, onClose, onJoin }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
       onClick={onClose}>
-      <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: '12px', padding: '28px', width: '380px' }}
+      <div style={{ background: '#1c2128', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px', width: '380px' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h3 style={{ color: '#fff', fontSize: '16px', margin: 0 }}>🔑 Join a Meeting</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <input value={meetId} onChange={e => setMeetId(e.target.value)} placeholder="Meeting ID (e.g. DC-XXXX-XXXX)"
-            style={{ width: '100%', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', padding: '10px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
+            style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', padding: '10px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
           <input value={code} onChange={e => setCode(e.target.value)} placeholder="6-digit Access Code" type="password"
-            style={{ width: '100%', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', padding: '10px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
+            style={{ width: '100%', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', padding: '10px 12px', fontSize: '13px', boxSizing: 'border-box' }} />
           {err && <div style={{ fontSize: '12px', color: '#f85149', background: 'rgba(248,81,73,0.1)', padding: '8px 12px', borderRadius: '6px' }}>{err}</div>}
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={onClose} style={{ flex: 1, padding: '10px', background: '#21262d', border: '1px solid #30363d', borderRadius: '8px', color: '#c9d1d9', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+            <button onClick={onClose} style={{ flex: 1, padding: '10px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
             <button onClick={handleJoin} disabled={!meetId.trim() || !code.trim()}
               style={{ flex: 1, padding: '10px', background: '#238636', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: '600', cursor: 'pointer', fontSize: '13px', opacity: (meetId.trim() && code.trim()) ? 1 : 0.5 }}>
               Join Now
@@ -167,29 +167,29 @@ function P2PCallModal({ users, myName, onClose, onStartCall }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }}
       onClick={onClose}>
-      <div style={{ background: '#1c2128', border: '1px solid #30363d', borderRadius: '12px', padding: '28px', width: '400px', maxHeight: '80vh', overflowY: 'auto' }}
+      <div style={{ background: '#1c2128', border: '1px solid var(--border)', borderRadius: '12px', padding: '28px', width: '400px', maxHeight: '80vh', overflowY: 'auto' }}
         onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
           <h3 style={{ color: '#fff', fontSize: '16px', margin: 0 }}>📞 Call Someone</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-          <button onClick={() => setCallType('video')} style={{ flex: 1, padding: '8px', background: callType === 'video' ? '#6264a7' : '#21262d', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px' }}>📹 Video</button>
-          <button onClick={() => setCallType('voice')} style={{ flex: 1, padding: '8px', background: callType === 'voice' ? '#6264a7' : '#21262d', border: '1px solid #30363d', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px' }}>🎙️ Audio</button>
+          <button onClick={() => setCallType('video')} style={{ flex: 1, padding: '8px', background: callType === 'video' ? '#6264a7' : 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px' }}>📹 Video</button>
+          <button onClick={() => setCallType('voice')} style={{ flex: 1, padding: '8px', background: callType === 'voice' ? '#6264a7' : 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff', cursor: 'pointer', fontSize: '13px' }}>🎙️ Audio</button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '300px', overflowY: 'auto' }}>
-          {others.length === 0 && <div style={{ color: '#8b949e', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No other users found</div>}
+          {others.length === 0 && <div style={{ color: 'var(--text-secondary)', fontSize: '13px', textAlign: 'center', padding: '20px' }}>No other users found</div>}
           {others.map(u => (
             <div key={u.accountId} onClick={() => setSelected(u.displayName)}
-              style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: selected === u.displayName ? 'rgba(98,100,167,0.3)' : '#0d1117', border: `1px solid ${selected === u.displayName ? '#6264a7' : '#30363d'}` }}>
+              style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 12px', borderRadius: '8px', cursor: 'pointer', background: selected === u.displayName ? 'rgba(98,100,167,0.3)' : 'var(--bg-primary)', border: `1px solid ${selected === u.displayName ? '#6264a7' : 'var(--border)'}` }}>
               <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: avatarColor(u.displayName), display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#fff', fontSize: '13px', flexShrink: 0 }}>
                 {getInitials(u.displayName)}
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: '13px', color: '#fff', fontWeight: '600' }}>{u.displayName}</div>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>{u.email || u.displayName}</div>
+                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{u.email || u.displayName}</div>
               </div>
               {selected === u.displayName && <span style={{ color: '#7f85f5', fontSize: '16px' }}>✓</span>}
             </div>
@@ -197,7 +197,7 @@ function P2PCallModal({ users, myName, onClose, onStartCall }) {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', marginTop: '16px' }}>
-          <button onClick={onClose} style={{ flex: 1, padding: '10px', background: '#21262d', border: '1px solid #30363d', borderRadius: '8px', color: '#c9d1d9', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
+          <button onClick={onClose} style={{ flex: 1, padding: '10px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-primary)', cursor: 'pointer', fontSize: '13px' }}>Cancel</button>
           <button disabled={!selected}
             onClick={() => {
               if (!selected) return;
@@ -458,7 +458,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
         <div style={{ display: 'flex', borderBottom: '1px solid #2d2d2d' }}>
           {[{ id: 'upcoming', label: 'Upcoming' }, { id: 'all', label: 'All' }, { id: 'missed', label: 'Missed' }].map(tab => (
             <button key={tab.id} onClick={() => setListTab(tab.id)}
-              style={{ flex: 1, padding: '10px 6px', background: 'none', border: 'none', borderBottom: listTab === tab.id ? '2px solid #7f85f5' : '2px solid transparent', color: listTab === tab.id ? '#fff' : '#8b949e', fontSize: '12px', fontWeight: listTab === tab.id ? '600' : 'normal', cursor: 'pointer' }}>
+              style={{ flex: 1, padding: '10px 6px', background: 'none', border: 'none', borderBottom: listTab === tab.id ? '2px solid #7f85f5' : '2px solid transparent', color: listTab === tab.id ? '#fff' : 'var(--text-secondary)', fontSize: '12px', fontWeight: listTab === tab.id ? '600' : 'normal', cursor: 'pointer' }}>
               {tab.label}
               {tab.id === 'missed' && missedMeetings.length > 0 && (
                 <span style={{ marginLeft: '4px', background: '#da3637', color: '#fff', borderRadius: '8px', padding: '1px 5px', fontSize: '10px' }}>{missedMeetings.length}</span>
@@ -470,7 +470,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
         {/* Meetings List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
           {visibleMeetings.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '32px 16px', color: '#8b949e', fontSize: '13px' }}>
+            <div style={{ textAlign: 'center', padding: '32px 16px', color: 'var(--text-secondary)', fontSize: '13px' }}>
               {listTab === 'upcoming' ? '📅 No upcoming meetings.\nSchedule one or join with an ID.' : 'No meetings found.'}
             </div>
           ) : (
@@ -486,8 +486,8 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                     {isLive && <span style={{ position: 'absolute', top: -3, right: -3, width: '10px', height: '10px', background: '#3fb950', borderRadius: '50%', border: '2px solid #18191b' }} />}
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
-                    <div style={{ fontSize: '13px', fontWeight: '600', color: isSelected ? '#fff' : '#c9d1d9', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
-                    <div style={{ fontSize: '11px', color: isLive ? '#3fb950' : isMissed ? '#f85149' : '#8b949e', marginTop: '2px' }}>
+                    <div style={{ fontSize: '13px', fontWeight: '600', color: isSelected ? '#fff' : 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
+                    <div style={{ fontSize: '11px', color: isLive ? '#3fb950' : isMissed ? '#f85149' : 'var(--text-secondary)', marginTop: '2px' }}>
                       {isLive ? '🟢 Live Now' : isMissed ? '⚠️ Missed · ' + fmtTime(m.scheduledAt) : fmtDT(m.scheduledAt)}
                     </div>
                   </div>
@@ -504,7 +504,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
 
           {/* People / Contacts section */}
           <div style={{ marginTop: '12px', padding: '0 4px 4px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#8b949e', textTransform: 'uppercase', padding: '6px 8px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', textTransform: 'uppercase', padding: '6px 8px' }}>
               People ({allContacts.length})
             </div>
             {allContacts.map(u => (
@@ -515,13 +515,13 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                   {getInitials(u.displayName)}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '13px', color: '#c9d1d9', fontWeight: '500' }}>{u.displayName}</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-primary)', fontWeight: '500' }}>{u.displayName}</div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px' }}>
                   <button onClick={() => handleStartP2PCall({ name: u.displayName, type: 'voice' })}
-                    style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '15px', padding: '2px' }} title="Audio Call">📞</button>
+                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '15px', padding: '2px' }} title="Audio Call">📞</button>
                   <button onClick={() => handleStartP2PCall({ name: u.displayName, type: 'video' })}
-                    style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '15px', padding: '2px' }} title="Video Call">📹</button>
+                    style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '15px', padding: '2px' }} title="Video Call">📹</button>
                 </div>
               </div>
             ))}
@@ -533,7 +533,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', background: '#202020', overflow: 'hidden' }}>
         {!selectedMeeting ? (
           /* Empty state */
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#8b949e', textAlign: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--text-secondary)', textAlign: 'center' }}>
             <div style={{ fontSize: '72px', marginBottom: '20px' }}>📹</div>
             <h2 style={{ fontSize: '22px', color: '#fff', margin: '0 0 10px 0', fontWeight: 'bold' }}>Ready to meet?</h2>
             <p style={{ fontSize: '14px', maxWidth: '400px', margin: '0 0 28px 0', lineHeight: '1.6' }}>
@@ -565,7 +565,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                 </div>
                 <div>
                   <h3 style={{ fontSize: '15px', fontWeight: 'bold', color: '#fff', margin: 0 }}>{selectedMeeting.title}</h3>
-                  <div style={{ fontSize: '12px', color: selectedMeeting.status === 'live' ? '#3fb950' : '#8b949e', marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: selectedMeeting.status === 'live' ? '#3fb950' : 'var(--text-secondary)', marginTop: '2px' }}>
                     {selectedMeeting.status === 'live' ? '🟢 Live · In Progress' : fmtDT(selectedMeeting.scheduledAt)}
                   </div>
                 </div>
@@ -574,7 +574,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                 <div style={{ display: 'flex', marginLeft: '16px', height: '40px', alignItems: 'flex-end' }}>
                   {[{ id: 'details', label: 'Details' }, { id: 'chat', label: 'Chat' }].map(tab => (
                     <button key={tab.id} onClick={() => setDetailTab(tab.id)}
-                      style={{ background: 'none', border: 'none', borderBottom: detailTab === tab.id ? '3px solid #7f85f5' : '3px solid transparent', color: detailTab === tab.id ? '#fff' : '#8b949e', padding: '8px 14px', fontSize: '13px', fontWeight: detailTab === tab.id ? '600' : 'normal', cursor: 'pointer' }}>
+                      style={{ background: 'none', border: 'none', borderBottom: detailTab === tab.id ? '3px solid #7f85f5' : '3px solid transparent', color: detailTab === tab.id ? '#fff' : 'var(--text-secondary)', padding: '8px 14px', fontSize: '13px', fontWeight: detailTab === tab.id ? '600' : 'normal', cursor: 'pointer' }}>
                       {tab.label}
                       {tab.id === 'chat' && messages.length > 0 && (
                         <span style={{ marginLeft: '5px', background: '#6264a7', borderRadius: '8px', padding: '1px 6px', fontSize: '10px' }}>{messages.length}</span>
@@ -599,7 +599,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                   </button>
                 )}
                 <button onClick={() => { setEditMeeting(selectedMeeting); setShowSchedule(true); }}
-                  style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '16px' }} title="Edit">⚙️</button>
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '16px' }} title="Edit">⚙️</button>
                 <button onClick={() => deleteMeeting(selectedMeeting.id)}
                   style={{ background: 'none', border: 'none', color: '#da3637', cursor: 'pointer', fontSize: '16px' }} title="Delete">🗑️</button>
               </div>
@@ -617,8 +617,8 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                     <div style={{ width: '100%', background: 'rgba(98,100,167,0.12)', border: '1px solid rgba(98,100,167,0.3)', borderRadius: '10px', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <div style={{ fontSize: '14px', color: '#fff', fontWeight: '600' }}>📅 {selectedMeeting.title}</div>
-                        <div style={{ fontSize: '12px', color: '#8b949e', marginTop: '4px' }}>Scheduled for {fmtDT(selectedMeeting.scheduledAt)}</div>
-                        <div style={{ fontSize: '12px', color: '#8b949e', marginTop: '2px' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>Scheduled for {fmtDT(selectedMeeting.scheduledAt)}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                           {(selectedMeeting.participants || []).length} participant{(selectedMeeting.participants || []).length !== 1 ? 's' : ''} invited
                         </div>
                       </div>
@@ -634,7 +634,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                     <div style={{ width: '100%', background: 'rgba(35,134,54,0.15)', border: '1px solid rgba(35,134,54,0.4)', borderRadius: '10px', padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <div style={{ fontSize: '14px', color: '#3fb950', fontWeight: '700' }}>🟢 Meeting is Live!</div>
-                        <div style={{ fontSize: '12px', color: '#8b949e', marginTop: '4px' }}>This meeting is currently in progress</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>This meeting is currently in progress</div>
                       </div>
                       <button onClick={handleJoinSelected}
                         style={{ padding: '10px 24px', background: '#238636', border: 'none', borderRadius: '8px', color: '#fff', fontWeight: '700', fontSize: '14px', cursor: 'pointer' }}>
@@ -647,7 +647,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', width: '100%' }}>
 
                     {/* Meeting Info */}
-                    <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '10px', padding: '18px' }}>
+                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px' }}>
                       <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 'bold', margin: '0 0 14px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>⚙️ Meeting Info</h4>
                       {[
                         { label: 'Title', value: selectedMeeting.title },
@@ -656,19 +656,19 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                         { label: 'Scheduled', value: fmtDT(selectedMeeting.scheduledAt) },
                       ].map(({ label, value }) => (
                         <div key={label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
-                          <span style={{ color: '#8b949e' }}>{label}</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{label}</span>
                           <span style={{ color: '#fff', fontWeight: '500', textAlign: 'right', maxWidth: '60%' }}>{value}</span>
                         </div>
                       ))}
                       {/* Status as badge */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px', fontSize: '13px' }}>
-                        <span style={{ color: '#8b949e' }}>Status</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Status</span>
                         <span style={{
                           display: 'inline-flex', alignItems: 'center', gap: '5px',
                           padding: '2px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '700',
                           background: selectedMeeting.status === 'live' ? 'rgba(35,134,54,0.2)' : selectedMeeting.status === 'scheduled' ? 'rgba(98,100,167,0.2)' : 'rgba(139,148,158,0.15)',
-                          color: selectedMeeting.status === 'live' ? '#3fb950' : selectedMeeting.status === 'scheduled' ? '#7f85f5' : '#8b949e',
-                          border: `1px solid ${selectedMeeting.status === 'live' ? 'rgba(35,134,54,0.4)' : selectedMeeting.status === 'scheduled' ? 'rgba(98,100,167,0.4)' : '#30363d'}`,
+                          color: selectedMeeting.status === 'live' ? '#3fb950' : selectedMeeting.status === 'scheduled' ? '#7f85f5' : 'var(--text-secondary)',
+                          border: `1px solid ${selectedMeeting.status === 'live' ? 'rgba(35,134,54,0.4)' : selectedMeeting.status === 'scheduled' ? 'rgba(98,100,167,0.4)' : 'var(--border)'}`,
                           textTransform: 'capitalize'
                         }}>
                           {selectedMeeting.status === 'live' ? '● Live' : selectedMeeting.status === 'scheduled' ? '◷ Scheduled' : selectedMeeting.status}
@@ -677,36 +677,36 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                     </div>
 
                     {/* Access Info */}
-                    <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '10px', padding: '18px' }}>
+                    <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px' }}>
                       <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 'bold', margin: '0 0 14px 0' }}>🔐 Access Details</h4>
                       <div style={{ marginBottom: '14px' }}>
-                        <div style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px', textTransform: 'uppercase', fontWeight: '600' }}>Meeting ID</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', fontWeight: '600' }}>Meeting ID</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <code style={{ fontSize: '13px', color: '#58a6ff', background: 'rgba(88,166,255,0.1)', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>{selectedMeeting.meetingId}</code>
                           <button onClick={() => navigator.clipboard?.writeText(selectedMeeting.meetingId)}
-                            style={{ padding: '4px 8px', background: '#21262d', border: '1px solid #30363d', color: '#8b949e', fontSize: '11px', borderRadius: '4px', cursor: 'pointer' }}>Copy</button>
+                            style={{ padding: '4px 8px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', borderRadius: '4px', cursor: 'pointer' }}>Copy</button>
                         </div>
                       </div>
                       <div>
-                        <div style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px', textTransform: 'uppercase', fontWeight: '600' }}>Access Code</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px', textTransform: 'uppercase', fontWeight: '600' }}>Access Code</div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <code style={{ fontSize: '13px', color: '#3fb950', background: 'rgba(63,185,80,0.1)', padding: '4px 8px', borderRadius: '4px', fontFamily: 'monospace' }}>{selectedMeeting.accessCode}</code>
                           <button onClick={() => navigator.clipboard?.writeText(selectedMeeting.accessCode)}
-                            style={{ padding: '4px 8px', background: '#21262d', border: '1px solid #30363d', color: '#8b949e', fontSize: '11px', borderRadius: '4px', cursor: 'pointer' }}>Copy</button>
+                            style={{ padding: '4px 8px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '11px', borderRadius: '4px', cursor: 'pointer' }}>Copy</button>
                         </div>
                       </div>
-                      <div style={{ marginTop: '14px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '11px', color: '#8b949e', lineHeight: '1.5' }}>
+                      <div style={{ marginTop: '14px', padding: '10px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px', fontSize: '11px', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
                         Share the Meeting ID and Access Code with participants to let them join.
                       </div>
                     </div>
                   </div>
 
                   {/* Reminders & Alerts */}
-                  <div style={{ width: '100%', background: '#161b22', border: '1px solid #30363d', borderRadius: '10px', padding: '18px' }}>
+                  <div style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px' }}>
                     <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 'bold', margin: '0 0 10px 0', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       🚨 Reminders & Alerts
                     </h4>
-                    <p style={{ fontSize: '12px', color: '#8b949e', margin: '0 0 14px 0', lineHeight: '1.5' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: '0 0 14px 0', lineHeight: '1.5' }}>
                       Send warning notifications and meeting digests to all registered campus coordinators and team members to ensure attendance.
                     </p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '12px' }}>
@@ -747,17 +747,17 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                   </div>
 
                   {/* Participants */}
-                  <div style={{ width: '100%', background: '#161b22', border: '1px solid #30363d', borderRadius: '10px', padding: '18px' }}>
+                  <div style={{ width: '100%', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '10px', padding: '18px' }}>
                     <h4 style={{ fontSize: '13px', color: '#fff', fontWeight: 'bold', margin: '0 0 14px 0' }}>👥 Participants ({1 + (selectedMeeting.participants || []).length})</h4>
                     {(selectedMeeting.participants || []).length === 0 ? (
-                      <div style={{ fontSize: '12px', color: '#8b949e' }}>No participants invited. Edit the meeting to add people.</div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>No participants invited. Edit the meeting to add people.</div>
                     ) : (
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                         {[selectedMeeting.createdBy, ...(selectedMeeting.participants || [])].map((p, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#0d1117', borderRadius: '20px', border: '1px solid #30363d' }}>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: 'var(--bg-primary)', borderRadius: '20px', border: '1px solid var(--border)' }}>
                             <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: avatarColor(p), display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '10px', color: '#fff' }}>{getInitials(p)}</div>
-                            <span style={{ fontSize: '12px', color: '#c9d1d9' }}>{p}</span>
-                            {i === 0 && <span style={{ fontSize: '10px', color: '#8b949e' }}>(host)</span>}
+                            <span style={{ fontSize: '12px', color: 'var(--text-primary)' }}>{p}</span>
+                            {i === 0 && <span style={{ fontSize: '10px', color: 'var(--text-secondary)' }}>(host)</span>}
                           </div>
                         ))}
                       </div>
@@ -772,9 +772,9 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
 
                   {/* Filter bar */}
                   <div style={{ padding: '8px 20px', borderBottom: '1px solid #2d2d2d', background: '#151618', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '11px', color: '#8b949e', fontWeight: '600' }}>Filter by Issue:</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>Filter by Issue:</span>
                     <select value={chatIssue} onChange={e => setChatIssue(e.target.value)}
-                      style={{ background: '#22252a', border: '1px solid #30363d', borderRadius: '4px', color: '#c9d1d9', padding: '4px 8px', fontSize: '12px' }}>
+                      style={{ background: '#22252a', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', padding: '4px 8px', fontSize: '12px' }}>
                       <option value="">All Messages</option>
                       {issues.map(iss => <option key={iss.key} value={iss.key}>{iss.key}: {iss.fields?.summary?.substring(0, 30)}</option>)}
                     </select>
@@ -783,7 +783,7 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                   {/* Messages */}
                   <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {messages.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '40px', color: '#8b949e', fontSize: '13px' }}>
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                         No messages yet. Use chat to discuss this meeting!
                       </div>
                     ) : (
@@ -791,16 +791,16 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                         const isSelf = msg.sender === myName;
                         return (
                           <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isSelf ? 'flex-end' : 'flex-start', maxWidth: '75%', alignSelf: isSelf ? 'flex-end' : 'flex-start' }}>
-                            {!isSelf && <span style={{ fontSize: '11px', color: '#8b949e', marginBottom: '3px', marginLeft: '6px', fontWeight: '600' }}>{msg.sender}</span>}
+                            {!isSelf && <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '3px', marginLeft: '6px', fontWeight: '600' }}>{msg.sender}</span>}
                             <div style={{ background: isSelf ? '#6264a7' : '#2b2d31', border: isSelf ? 'none' : '1px solid #3d3e42', color: '#fff', borderRadius: isSelf ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '10px 14px', fontSize: '13px', lineHeight: '1.45', wordWrap: 'break-word' }}>
                               {msg.issueKey && (
-                                <div style={{ fontSize: '11px', color: isSelf ? '#e0e0ff' : '#8b949e', fontWeight: 'bold', marginBottom: '4px' }}>
+                                <div style={{ fontSize: '11px', color: isSelf ? '#e0e0ff' : 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '4px' }}>
                                   Issue: <span className="chat-issue-badge" onClick={() => onOpenIssueDetails && onOpenIssueDetails(msg.issueKey)}>{msg.issueKey}</span>
                                 </div>
                               )}
                               <div>{renderMessageText(msg.text)}</div>
                             </div>
-                            <span style={{ fontSize: '9px', color: '#8b949e', marginTop: '2px', alignSelf: isSelf ? 'flex-end' : 'flex-start' }}>
+                            <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: '2px', alignSelf: isSelf ? 'flex-end' : 'flex-start' }}>
                               {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
@@ -811,10 +811,10 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
 
                   {/* Message Input */}
                   <div style={{ padding: '16px 20px', borderTop: '1px solid #2d2d2d', background: '#18191b' }}>
-                    <form onSubmit={handleSendChat} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#202225', border: '1px solid #30363d', borderRadius: '8px', padding: '8px 12px 6px 12px' }}>
+                    <form onSubmit={handleSendChat} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#202225', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px 6px 12px' }}>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <select value={chatIssue} onChange={e => setChatIssue(e.target.value)}
-                          style={{ background: '#18191b', border: '1px solid #30363d', borderRadius: '4px', color: '#c9d1d9', fontSize: '11px', padding: '4px 6px', maxWidth: '160px' }}>
+                          style={{ background: '#18191b', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px', padding: '4px 6px', maxWidth: '160px' }}>
                           <option value="">Tag Issue Key...</option>
                           {issues.map(iss => <option key={iss.key} value={iss.key}>{iss.key}</option>)}
                         </select>
@@ -822,11 +822,11 @@ export default function MeetView({ user, issues = [], onOpenIssueDetails }) {
                       <input type="text" value={chatText} onChange={e => setChatText(e.target.value)} placeholder="Type a message..."
                         style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: '13px', outline: 'none', padding: '6px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #2d2d2d', paddingTop: '6px', marginTop: '4px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#8b949e', fontSize: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--text-secondary)', fontSize: '15px' }}>
                           <span style={{ cursor: 'pointer' }} title="Emoji">😊</span>
                           <span style={{ cursor: 'pointer' }} title="Attach">📎</span>
                         </div>
-                        <button type="submit" disabled={!chatText.trim()} style={{ background: 'none', border: 'none', color: chatText.trim() ? '#7f85f5' : '#8b949e', cursor: chatText.trim() ? 'pointer' : 'default' }}>
+                        <button type="submit" disabled={!chatText.trim()} style={{ background: 'none', border: 'none', color: chatText.trim() ? '#7f85f5' : 'var(--text-secondary)', cursor: chatText.trim() ? 'pointer' : 'default' }}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                         </button>
                       </div>

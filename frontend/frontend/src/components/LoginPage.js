@@ -177,8 +177,8 @@ export default function LoginPage({ onLogin }) {
               <label className="form-label" htmlFor="login-email">Email address</label>
               <div className="form-input-wrap">
                 <svg className="form-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="1" y="3" width="14" height="10" rx="2" stroke="#484f58" strokeWidth="1.2"/>
-                  <path d="M1 5.5L8 9.5L15 5.5" stroke="#484f58" strokeWidth="1.2" strokeLinecap="round"/>
+                  <rect x="1" y="3" width="14" height="10" rx="2" stroke="var(--text-muted)" strokeWidth="1.2"/>
+                  <path d="M1 5.5L8 9.5L15 5.5" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
                 </svg>
                 <input
                   id="login-email"
@@ -201,9 +201,9 @@ export default function LoginPage({ onLogin }) {
               </div>
               <div className="form-input-wrap">
                 <svg className="form-input-icon" width="16" height="16" viewBox="0 0 16 16" fill="none">
-                  <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="#484f58" strokeWidth="1.2"/>
-                  <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="#484f58" strokeWidth="1.2" strokeLinecap="round"/>
-                  <circle cx="8" cy="10.5" r="1" fill="#484f58"/>
+                  <rect x="3" y="7" width="10" height="7" rx="1.5" stroke="var(--text-muted)" strokeWidth="1.2"/>
+                  <path d="M5 7V5a3 3 0 0 1 6 0v2" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
+                  <circle cx="8" cy="10.5" r="1" fill="var(--text-muted)"/>
                 </svg>
                 <input
                   id="login-password"
@@ -224,12 +224,12 @@ export default function LoginPage({ onLogin }) {
                 >
                   {showPass ? (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M2 2L14 14M6.5 6.6A2 2 0 0 0 9.4 9.5M4.2 4.3C2.8 5.3 1.8 6.6 1.5 8c.8 3 3.6 5 6.5 5 1.3 0 2.5-.4 3.5-1M7 3.1C7.3 3 7.7 3 8 3c2.9 0 5.7 2 6.5 5-.3 1-.9 2-1.7 2.7" stroke="#484f58" strokeWidth="1.2" strokeLinecap="round"/>
+                      <path d="M2 2L14 14M6.5 6.6A2 2 0 0 0 9.4 9.5M4.2 4.3C2.8 5.3 1.8 6.6 1.5 8c.8 3 3.6 5 6.5 5 1.3 0 2.5-.4 3.5-1M7 3.1C7.3 3 7.7 3 8 3c2.9 0 5.7 2 6.5 5-.3 1-.9 2-1.7 2.7" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
                     </svg>
                   ) : (
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                      <path d="M1.5 8C2.3 5 5.1 3 8 3s5.7 2 6.5 5c-.8 3-3.6 5-6.5 5S2.3 11 1.5 8Z" stroke="#484f58" strokeWidth="1.2"/>
-                      <circle cx="8" cy="8" r="2" stroke="#484f58" strokeWidth="1.2"/>
+                      <path d="M1.5 8C2.3 5 5.1 3 8 3s5.7 2 6.5 5c-.8 3-3.6 5-6.5 5S2.3 11 1.5 8Z" stroke="var(--text-muted)" strokeWidth="1.2"/>
+                      <circle cx="8" cy="8" r="2" stroke="var(--text-muted)" strokeWidth="1.2"/>
                     </svg>
                   )}
                 </button>
@@ -354,21 +354,21 @@ export default function LoginPage({ onLogin }) {
         }} onClick={() => setModalType(null)}>
           <div style={{
             background: '#1c2128',
-            border: '1px solid #30363d',
+            border: '1px solid var(--border)',
             borderRadius: '12px',
             padding: '30px',
             maxWidth: '500px',
             width: '100%',
             maxHeight: '80vh',
             overflowY: 'auto',
-            color: '#c9d1d9',
+            color: 'var(--text-primary)',
             boxShadow: '0 20px 40px rgba(0,0,0,0.6)'
           }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #30363d', paddingBottom: '10px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '10px' }}>
               <h3 style={{ margin: 0, color: '#fff', fontSize: '18px', fontWeight: 'bold' }}>
                 {modalType === 'terms' ? '📄 Terms of Service' : '🔒 Privacy Policy'}
               </h3>
-              <button onClick={() => setModalType(null)} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '20px', cursor: 'pointer' }}>✕</button>
+              <button onClick={() => setModalType(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer' }}>✕</button>
             </div>
             <div style={{ fontSize: '13.5px', lineHeight: '1.6', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               {modalType === 'terms' ? (

@@ -341,7 +341,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                 width: '100%',
                 padding: '8px 12px',
                 background: '#22252a',
-                border: '1px solid #30363d',
+                border: '1px solid var(--border)',
                 borderRadius: '6px',
                 color: '#fff',
                 fontSize: '13px'
@@ -353,9 +353,9 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
         {/* Teams Scrollable List */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#8b949e', fontSize: '13px' }}>Loading...</div>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>Loading...</div>
           ) : filteredTeams.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '20px', color: '#8b949e', fontSize: '13px' }}>No teams found.</div>
+            <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>No teams found.</div>
           ) : (
             filteredTeams.map(t => {
               const isSelected = selectedTeam && selectedTeam.id === t.id;
@@ -372,7 +372,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                     cursor: 'pointer',
                     background: isSelected ? 'rgba(98, 100, 167, 0.25)' : 'transparent',
                     border: isSelected ? '1px solid rgba(98, 100, 167, 0.4)' : '1px solid transparent',
-                    color: isSelected ? '#fff' : '#c9d1d9',
+                    color: isSelected ? '#fff' : 'var(--text-primary)',
                     marginBottom: '4px',
                     transition: 'background 0.2s',
                   }}
@@ -396,7 +396,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                   </div>
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <div style={{ fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</div>
-                    <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px' }}>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                       {t.members ? t.members.length : 0} members · {metrics.total} Jira tasks
                     </div>
                   </div>
@@ -434,7 +434,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
         
         {/* Placeholder / Empty State */}
         {!selectedTeam && !showCreateForm && (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#8b949e', textAlign: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--text-secondary)', textAlign: 'center' }}>
             <div style={{ fontSize: '64px', marginBottom: '16px' }}>👥</div>
             <h3 style={{ fontSize: '18px', color: '#fff', margin: '0 0 8px 0' }}>Welcome to Teams Workspace</h3>
             <p style={{ fontSize: '13px', maxWidth: '380px', margin: 0 }}>
@@ -446,10 +446,10 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
         {/* Create/Edit Team Form Pane */}
         {showCreateForm && (
           <div style={{ flex: 1, overflowY: 'auto', padding: '32px' }}>
-            <div style={{ maxWidth: '600px', margin: '0 auto', background: '#18191b', border: '1px solid #30363d', padding: '24px', borderRadius: '8px' }}>
+            <div style={{ maxWidth: '600px', margin: '0 auto', background: '#18191b', border: '1px solid var(--border)', padding: '24px', borderRadius: '8px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '18px', color: '#fff', margin: 0 }}>{editingTeamId ? '📝 Edit Team Configuration' : '👥 Create New Team'}</h3>
-                <button onClick={() => setShowCreateForm(false)} style={{ background: 'none', border: 'none', color: '#8b949e', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+                <button onClick={() => setShowCreateForm(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
               </div>
 
               <form onSubmit={handleCreateOrEditTeam}>
@@ -457,7 +457,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                 {successMsg && <div style={{ background: 'rgba(56,139,253,0.1)', border: '1px solid rgba(56,139,253,0.2)', padding: '10px', color: '#58a6ff', borderRadius: '6px', fontSize: '13px', marginBottom: '16px' }}>{successMsg}</div>}
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', color: '#c9d1d9', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>Team Name</label>
+                  <label style={{ display: 'block', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>Team Name</label>
                   <input
                     type="text"
                     className="modal-input"
@@ -465,18 +465,18 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                     value={teamName}
                     onChange={(e) => setTeamName(e.target.value)}
                     disabled={submitting}
-                    style={{ width: '100%', padding: '8px 12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff' }}
+                    style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff' }}
                     required
                   />
                 </div>
 
                 {user?.role === 'Super-admin' && (
                   <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', color: '#c9d1d9', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>College Spoke Association</label>
+                    <label style={{ display: 'block', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>College Spoke Association</label>
                     <select
                       value={teamCollegeId}
                       onChange={(e) => setTeamCollegeId(e.target.value)}
-                      style={{ width: '100%', padding: '8px 12px', background: '#0d1117', border: '1px solid #30363d', borderRadius: '6px', color: '#fff' }}
+                      style={{ width: '100%', padding: '8px 12px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: '6px', color: '#fff' }}
                     >
                       <option value="">GLOBAL (No college restriction)</option>
                       {spokes.map(s => (
@@ -487,12 +487,12 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                 )}
 
                 <div style={{ marginBottom: '20px' }}>
-                  <label style={{ display: 'block', color: '#c9d1d9', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>Assign Members</label>
+                  <label style={{ display: 'block', color: 'var(--text-primary)', fontSize: '12px', fontWeight: 'bold', marginBottom: '6px' }}>Assign Members</label>
                   <div style={{
                     maxHeight: '220px',
                     overflowY: 'auto',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
                     borderRadius: '6px',
                     padding: '8px'
                   }}>
@@ -509,7 +509,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                             borderRadius: '4px',
                             cursor: 'pointer',
                             background: isChecked ? 'rgba(56,139,253,0.08)' : 'transparent',
-                            color: isChecked ? '#58a6ff' : '#c9d1d9',
+                            color: isChecked ? '#58a6ff' : 'var(--text-primary)',
                             fontSize: '13px',
                             marginBottom: '2px'
                           }}
@@ -574,7 +574,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                 </div>
                 <div>
                   <h3 style={{ fontSize: '16px', fontWeight: 'bold', color: '#fff', margin: 0 }}>{selectedTeam.name}</h3>
-                  <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px' }}>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                     Members: {selectedTeam.members?.map(mId => getUserDisplayName(mId)).join(', ')}
                   </div>
                 </div>
@@ -586,9 +586,9 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                     <button
                       onClick={() => handleEditClick(selectedTeam)}
                       style={{
-                        background: '#21262d',
-                        border: '1px solid #30363d',
-                        color: '#c9d1d9',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border)',
+                        color: 'var(--text-primary)',
                         padding: '6px 12px',
                         borderRadius: '6px',
                         fontSize: '12px',
@@ -634,7 +634,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                       background: 'none',
                       border: 'none',
                       borderBottom: isActive ? '3px solid #6264a7' : '3px solid transparent',
-                      color: isActive ? '#fff' : '#8b949e',
+                      color: isActive ? '#fff' : 'var(--text-secondary)',
                       padding: '12px 16px',
                       fontSize: '13px',
                       fontWeight: isActive ? 'bold' : 'normal',
@@ -658,21 +658,21 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                   
                   {/* B2B Projects Section */}
                   <div>
-                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid #30363d', paddingBottom: '8px', marginBottom: '14px' }}>
+                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '14px' }}>
                       💼 Assigned B2B Projects ({selectedTeamProjects.length})
                     </h4>
                     {selectedTeamProjects.length === 0 ? (
-                      <div style={{ background: '#161b22', border: '1px dashed #30363d', borderRadius: '6px', padding: '16px', textAlign: 'center', color: '#8b949e', fontSize: '12px' }}>
+                      <div style={{ background: 'var(--bg-secondary)', border: '1px dashed var(--border)', borderRadius: '6px', padding: '16px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>
                         No B2B projects assigned to this team yet.
                       </div>
                     ) : (
                       selectedTeamProjects.map(proj => (
-                        <div key={proj.id} style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
+                        <div key={proj.id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px', marginBottom: '12px' }}>
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
                             <div>
                               <span style={{ fontSize: '10px', color: '#58a6ff', fontWeight: 'bold', textTransform: 'uppercase' }}>{proj.company}</span>
                               <h5 style={{ fontSize: '14px', color: '#fff', margin: '2px 0 4px 0' }}>{proj.title}</h5>
-                              <p style={{ fontSize: '12px', color: '#8b949e', margin: 0 }}>{proj.description}</p>
+                              <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>{proj.description}</p>
                             </div>
                             <span style={{ fontSize: '11px', background: 'rgba(56,139,253,0.15)', color: '#58a6ff', border: '1px solid rgba(56,139,253,0.3)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
                               {proj.status}
@@ -680,10 +680,10 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                           </div>
 
                           {/* Epics checklist */}
-                          <div style={{ marginTop: '12px', background: '#0d1117', borderRadius: '6px', padding: '10px 14px' }}>
-                            <div style={{ fontSize: '11px', color: '#8b949e', fontWeight: 'bold', marginBottom: '6px' }}>Project Epics (Board Scope):</div>
+                          <div style={{ marginTop: '12px', background: 'var(--bg-primary)', borderRadius: '6px', padding: '10px 14px' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '6px' }}>Project Epics (Board Scope):</div>
                             {(!proj.epics || proj.epics.length === 0) ? (
-                              <div style={{ fontSize: '11px', color: '#8b949e' }}>No epics synced.</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>No epics synced.</div>
                             ) : (
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                                 {proj.epics.map(ep => (
@@ -708,18 +708,18 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
 
                   {/* Jira Issues Table Section */}
                   <div>
-                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid #30363d', paddingBottom: '8px', marginBottom: '14px' }}>
+                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '14px' }}>
                       📋 Jira Issues Assigned to Team Members ({selectedTeamIssues.length})
                     </h4>
                     {selectedTeamIssues.length === 0 ? (
-                      <div style={{ background: '#161b22', border: '1px dashed #30363d', borderRadius: '6px', padding: '24px', textAlign: 'center', color: '#8b949e', fontSize: '12px' }}>
+                      <div style={{ background: 'var(--bg-secondary)', border: '1px dashed var(--border)', borderRadius: '6px', padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>
                         No active Jira issues found for members of this team.
                       </div>
                     ) : (
-                      <div style={{ border: '1px solid #30363d', borderRadius: '8px', overflow: 'hidden' }}>
-                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', background: '#161b22', textAlign: 'left' }}>
+                      <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px', background: 'var(--bg-secondary)', textAlign: 'left' }}>
                           <thead>
-                            <tr style={{ background: '#21262d', borderBottom: '1px solid #30363d', color: '#8b949e' }}>
+                            <tr style={{ background: 'var(--bg-card)', borderBottom: '1px solid var(--border)', color: 'var(--text-secondary)' }}>
                               <th style={{ padding: '10px 14px' }}>Issue Key</th>
                               <th style={{ padding: '10px 14px' }}>Summary / Issue Title</th>
                               <th style={{ padding: '10px 14px' }}>Status</th>
@@ -730,7 +730,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                             {selectedTeamIssues.map(issue => {
                               const s = issue.fields?.status?.name || 'To Do';
                               let statusBg = 'rgba(110,118,129,0.15)';
-                              let statusFg = '#8b949e';
+                              let statusFg = 'var(--text-secondary)';
                               if (s.toLowerCase().includes('done')) {
                                 statusBg = 'rgba(56,139,253,0.15)';
                                 statusFg = '#58a6ff';
@@ -740,7 +740,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                               }
                               
                               return (
-                                <tr key={issue.key} style={{ borderBottom: '1px solid #21262d' }}>
+                                <tr key={issue.key} style={{ borderBottom: '1px solid var(--bg-card)' }}>
                                   <td style={{ padding: '10px 14px' }}>
                                     <span
                                       className="chat-issue-badge"
@@ -756,7 +756,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                                       {s}
                                     </span>
                                   </td>
-                                  <td style={{ padding: '10px 14px', color: '#c9d1d9' }}>{issue.fields?.assignee?.displayName || 'Unassigned'}</td>
+                                  <td style={{ padding: '10px 14px', color: 'var(--text-primary)' }}>{issue.fields?.assignee?.displayName || 'Unassigned'}</td>
                                 </tr>
                               );
                             })}
@@ -771,39 +771,39 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
               {/* 📊 TAB: PERFORMANCE METRICS */}
               {activeTab === 'metrics' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
-                  <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid #30363d', paddingBottom: '8px', marginBottom: '20px' }}>
+                  <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '20px' }}>
                     📊 Workgroup Velocity & Task Statistics
                   </h4>
 
                   {(() => {
                     const metrics = getTeamMetrics(selectedTeam.members || []);
                     return (
-                      <div style={{ maxWidth: '600px', background: '#161b22', border: '1px solid #30363d', padding: '24px', borderRadius: '8px' }}>
+                      <div style={{ maxWidth: '600px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '24px', borderRadius: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                          <span style={{ color: '#c9d1d9', fontSize: '14px', fontWeight: '600' }}>Overall Workload</span>
+                          <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>Overall Workload</span>
                           <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{metrics.total} Active Jira Issues</span>
                         </div>
 
                         {metrics.total > 0 ? (
-                          <div style={{ height: '12px', borderRadius: '6px', background: '#30363d', display: 'flex', overflow: 'hidden', marginBottom: '24px' }}>
+                          <div style={{ height: '12px', borderRadius: '6px', background: 'var(--border)', display: 'flex', overflow: 'hidden', marginBottom: '24px' }}>
                             <div style={{ width: `${metrics.donePct}%`, background: '#2ea44f' }} title={`Done: ${metrics.donePct}%`} />
                             <div style={{ width: `${metrics.progressPct}%`, background: '#0969da' }} title={`In Progress: ${metrics.progressPct}%`} />
-                            <div style={{ width: `${metrics.openPct}%`, background: '#8b949e' }} title={`To Do: ${metrics.openPct}%`} />
+                            <div style={{ width: `${metrics.openPct}%`, background: 'var(--text-secondary)' }} title={`To Do: ${metrics.openPct}%`} />
                           </div>
                         ) : (
-                          <div style={{ height: '12px', borderRadius: '6px', background: '#21262d', display: 'flex', overflow: 'hidden', marginBottom: '24px', opacity: 0.3 }} />
+                          <div style={{ height: '12px', borderRadius: '6px', background: 'var(--bg-card)', display: 'flex', overflow: 'hidden', marginBottom: '24px', opacity: 0.3 }} />
                         )}
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#0d1117', borderRadius: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-primary)', borderRadius: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#8b949e' }} />
-                              <span style={{ color: '#8b949e', fontSize: '13px' }}>To Do (Pending)</span>
+                              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--text-secondary)' }} />
+                              <span style={{ color: 'var(--text-secondary)', fontSize: '13px' }}>To Do (Pending)</span>
                             </div>
                             <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>{metrics.open} ({metrics.openPct}%)</span>
                           </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#0d1117', borderRadius: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-primary)', borderRadius: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0969da' }} />
                               <span style={{ color: '#0969da', fontSize: '13px' }}>In Progress (Active)</span>
@@ -811,7 +811,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                             <span style={{ color: '#fff', fontWeight: 'bold', fontSize: '14px' }}>{metrics.inProgress} ({metrics.progressPct}%)</span>
                           </div>
 
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: '#0d1117', borderRadius: '6px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-primary)', borderRadius: '6px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#2ea44f' }} />
                               <span style={{ color: '#2ea44f', fontSize: '13px' }}>Done (Resolved)</span>

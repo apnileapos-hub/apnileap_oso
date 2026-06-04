@@ -23,7 +23,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 const TickLabel = ({ x, y, payload }) => {
   const name = payload.value.length > 10 ? payload.value.slice(0, 10) + '…' : payload.value;
   return (
-    <text x={x} y={y} dy={12} textAnchor="middle" fill="#8b949e" fontSize={11}>
+    <text x={x} y={y} dy={12} textAnchor="middle" fill="var(--text-secondary)" fontSize={11}>
       {name}
     </text>
   );
@@ -42,9 +42,9 @@ export default function AssigneeBarChart({ data = [], loading }) {
     return (
       <div className="chart-placeholder">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <rect x="4" y="12" width="6" height="16" rx="1.5" stroke="#30363d" strokeWidth="2"/>
-          <rect x="13" y="6" width="6" height="22" rx="1.5" stroke="#30363d" strokeWidth="2"/>
-          <rect x="22" y="16" width="6" height="12" rx="1.5" stroke="#30363d" strokeWidth="2"/>
+          <rect x="4" y="12" width="6" height="16" rx="1.5" stroke="var(--border)" strokeWidth="2"/>
+          <rect x="13" y="6" width="6" height="22" rx="1.5" stroke="var(--border)" strokeWidth="2"/>
+          <rect x="22" y="16" width="6" height="12" rx="1.5" stroke="var(--border)" strokeWidth="2"/>
         </svg>
         <span>No assignee data available</span>
       </div>
@@ -59,7 +59,7 @@ export default function AssigneeBarChart({ data = [], loading }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <BarChart data={chartData} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#21262d" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--bg-card)" vertical={false} />
         <XAxis
           dataKey="name"
           tick={<TickLabel />}
@@ -67,7 +67,7 @@ export default function AssigneeBarChart({ data = [], loading }) {
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: '#8b949e', fontSize: 11 }}
+          tick={{ fill: 'var(--text-secondary)', fontSize: 11 }}
           axisLine={false}
           tickLine={false}
           allowDecimals={false}

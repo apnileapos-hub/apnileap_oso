@@ -145,8 +145,8 @@ export default function IssueTable({ issues = [], loading, limit, onIssueClick }
           {/* Search */}
           <div className="table-search">
             <svg className="search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <circle cx="6" cy="6" r="4.5" stroke="#484f58" strokeWidth="1.2"/>
-              <path d="M9.5 9.5L12.5 12.5" stroke="#484f58" strokeWidth="1.2" strokeLinecap="round"/>
+              <circle cx="6" cy="6" r="4.5" stroke="var(--text-muted)" strokeWidth="1.2"/>
+              <path d="M9.5 9.5L12.5 12.5" stroke="var(--text-muted)" strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
             <input
               id="issue-search-input"
@@ -189,8 +189,8 @@ export default function IssueTable({ issues = [], loading, limit, onIssueClick }
                 <td colSpan={7}>
                   <div className="state-container">
                     <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-                      <circle cx="20" cy="20" r="18" stroke="#30363d" strokeWidth="2"/>
-                      <path d="M14 14l12 12M26 14L14 26" stroke="#484f58" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="20" cy="20" r="18" stroke="var(--border)" strokeWidth="2"/>
+                      <path d="M14 14l12 12M26 14L14 26" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"/>
                     </svg>
                     <div className="state-title">No issues found</div>
                     <div className="state-desc">

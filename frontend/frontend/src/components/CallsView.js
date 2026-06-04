@@ -428,14 +428,14 @@ function MeetingWhiteboard({ onClose }) {
   const [tool, setTool] = useState('pen'); // 'pen' | 'eraser'
   
   const darkColors = ['#ffffff', '#ff7b72', '#58a6ff', '#3fb950', '#d29922', '#bc8cff'];
-  const lightColors = ['#21262d', '#cf222e', '#0969da', '#1a7f37', '#c6500a', '#8250df'];
+  const lightColors = ['var(--bg-card)', '#cf222e', '#0969da', '#1a7f37', '#c6500a', '#8250df'];
   
   const colors = boardTheme === 'dark' ? darkColors : lightColors;
   const [brushColor, setBrushColor] = useState(colors[0]);
   const [brushSize, setBrushSize] = useState(5);
 
   useEffect(() => {
-    setBrushColor(boardTheme === 'dark' ? '#ffffff' : '#21262d');
+    setBrushColor(boardTheme === 'dark' ? '#ffffff' : 'var(--bg-card)');
   }, [boardTheme]);
 
   useEffect(() => {
@@ -806,7 +806,7 @@ function InMeetingOverlay({ meeting, currentUser, joinOptions, allUsers, onEnd, 
               .map(([name, data]) => (
                 <div className="teams-simulation-item" key={name}>
                   <div className="teams-simulation-name">Calling {name}...</div>
-                  <div style={{ fontSize: '10px', color: '#8b949e', marginBottom: '4px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                     Auto-timeout in {data.timeLeft}s
                   </div>
                   <div className="teams-simulation-timer-wrap">
@@ -972,7 +972,7 @@ function InMeetingOverlay({ meeting, currentUser, joinOptions, allUsers, onEnd, 
                   </div>
                 </div>
                 <div className="mc-panel-body">
-                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#8b949e', margin: '8px 0 4px 12px', textTransform: 'uppercase' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', margin: '8px 0 4px 12px', textTransform: 'uppercase' }}>
                     In this meeting ({participants.length + 1})
                   </div>
                   
@@ -996,21 +996,21 @@ function InMeetingOverlay({ meeting, currentUser, joinOptions, allUsers, onEnd, 
                   {/* Teams Style Invited Section */}
                   {Object.keys(invitedParticipants).length > 0 && (
                     <>
-                      <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#8b949e', margin: '18px 0 4px 12px', textTransform: 'uppercase' }}>
+                      <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--text-secondary)', margin: '18px 0 4px 12px', textTransform: 'uppercase' }}>
                         Others Invited ({Object.keys(invitedParticipants).length})
                       </div>
                       {Object.entries(invitedParticipants).map(([name, data]) => (
                         <div className="mc-participant-row" key={name}>
                           <Avatar name={name} size={36} style={{ opacity: data.status === 'joined' ? 1 : 0.6 }} />
                           <div className="mc-participant-info" style={{ flex: 1 }}>
-                            <div className="mc-participant-name" style={{ color: data.status === 'joined' ? '#c9d1d9' : '#8b949e' }}>
+                            <div className="mc-participant-name" style={{ color: data.status === 'joined' ? 'var(--text-primary)' : 'var(--text-secondary)' }}>
                               {name}
                             </div>
                             <div className="mc-participant-status" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px' }}>
                               {data.status === 'calling' && <span className="pulse-calling-dot" />}
                               {data.status === 'calling' && <span style={{ color: '#58a6ff' }}>Calling...</span>}
                               {data.status === 'declined' && <span style={{ color: '#ff7b72' }}>Declined</span>}
-                              {data.status === 'no-answer' && <span style={{ color: '#8b949e' }}>Did not answer</span>}
+                              {data.status === 'no-answer' && <span style={{ color: 'var(--text-secondary)' }}>Did not answer</span>}
                               {data.status === 'joined' && <span style={{ color: '#3fb950' }}>Joined</span>}
                             </div>
                           </div>
@@ -1019,7 +1019,7 @@ function InMeetingOverlay({ meeting, currentUser, joinOptions, allUsers, onEnd, 
                               type="button"
                               className="mc-ctrl-sm" 
                               onClick={() => handleCallBack(name)} 
-                              style={{ padding: '2px 8px', fontSize: '10px', background: '#21262d', border: '1px solid #30363d', color: '#58a6ff' }}
+                              style={{ padding: '2px 8px', fontSize: '10px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: '#58a6ff' }}
                             >
                               Call back
                             </button>
@@ -1076,7 +1076,7 @@ function InMeetingOverlay({ meeting, currentUser, joinOptions, allUsers, onEnd, 
                 {/* NOTES */}
                 {chatTab === 'notes' && (
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: 12, gap: 8 }}>
-                    <div style={{ fontSize: 11, color: '#8b949e', marginBottom: 4 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 4 }}>
                       📝 Notes auto-saved · {meeting.meetingId}
                     </div>
                     <textarea
@@ -2116,7 +2116,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: 'bold', color: '#fff', margin: 0 }}>Chat</h2>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <span style={{ cursor: 'pointer', color: '#8b949e', fontSize: '15px' }} title="New Chat" onClick={handleInstantMeeting}>📝</span>
+              <span style={{ cursor: 'pointer', color: 'var(--text-secondary)', fontSize: '15px' }} title="New Chat" onClick={handleInstantMeeting}>📝</span>
             </div>
           </div>
           
@@ -2129,7 +2129,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
               width: '100%',
               padding: '6px 12px',
               background: '#22252a',
-              border: '1px solid #30363d',
+              border: '1px solid var(--border)',
               borderRadius: '6px',
               color: '#fff',
               fontSize: '13px',
@@ -2152,7 +2152,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   background: filterType === pill.id ? '#2f3136' : 'transparent',
                   border: '1px solid ' + (filterType === pill.id ? '#4f5054' : 'transparent'),
                   borderRadius: '20px',
-                  color: filterType === pill.id ? '#fff' : '#8b949e',
+                  color: filterType === pill.id ? '#fff' : 'var(--text-secondary)',
                   fontSize: '12px',
                   fontWeight: '600',
                   cursor: 'pointer'
@@ -2175,7 +2175,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                 display: 'flex',
                 alignItems: 'center',
                 padding: '6px 8px',
-                color: '#8b949e',
+                color: 'var(--text-secondary)',
                 fontSize: '11px',
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
@@ -2214,7 +2214,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                           cursor: 'pointer',
                           background: isSelected ? 'rgba(98, 100, 167, 0.25)' : 'transparent',
                           border: isSelected ? '1px solid rgba(98, 100, 167, 0.4)' : '1px solid transparent',
-                          color: isSelected ? '#fff' : '#c9d1d9',
+                          color: isSelected ? '#fff' : 'var(--text-primary)',
                           marginBottom: '2px'
                         }}
                       >
@@ -2236,7 +2236,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                         </div>
                         <div style={{ flex: 1, overflow: 'hidden' }}>
                           <div style={{ fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
-                          <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {lastMsg ? `${lastMsg.sender.split(' ')[0]}: ${lastMsg.text}` : 'No messages'}
                           </div>
                         </div>
@@ -2255,7 +2255,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                 display: 'flex',
                 alignItems: 'center',
                 padding: '6px 8px',
-                color: '#8b949e',
+                color: 'var(--text-secondary)',
                 fontSize: '11px',
                 fontWeight: 'bold',
                 textTransform: 'uppercase',
@@ -2294,7 +2294,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                           cursor: 'pointer',
                           background: isSelected ? 'rgba(98, 100, 167, 0.25)' : 'transparent',
                           border: isSelected ? '1px solid rgba(98, 100, 167, 0.4)' : '1px solid transparent',
-                          color: isSelected ? '#fff' : '#c9d1d9',
+                          color: isSelected ? '#fff' : 'var(--text-primary)',
                           marginBottom: '2px'
                         }}
                       >
@@ -2316,7 +2316,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                         </div>
                         <div style={{ flex: 1, overflow: 'hidden' }}>
                           <div style={{ fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.title}</div>
-                          <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {lastMsg ? `${lastMsg.sender.split(' ')[0]}: ${lastMsg.text}` : 'No messages'}
                           </div>
                         </div>
@@ -2338,7 +2338,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   display: 'flex',
                   alignItems: 'center',
                   padding: '6px 8px',
-                  color: '#8b949e',
+                  color: 'var(--text-secondary)',
                   fontSize: '11px',
                   fontWeight: 'bold',
                   textTransform: 'uppercase',
@@ -2370,7 +2370,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                             cursor: 'pointer',
                             background: isSelected ? 'rgba(98, 100, 167, 0.25)' : 'transparent',
                             border: isSelected ? '1px solid rgba(98, 100, 167, 0.4)' : '1px solid transparent',
-                            color: isSelected ? '#fff' : '#c9d1d9',
+                            color: isSelected ? '#fff' : 'var(--text-primary)',
                             marginBottom: '2px'
                           }}
                         >
@@ -2386,7 +2386,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                             <div style={{ fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {t.name}
                             </div>
-                            <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
                               {lastMsg ? `${lastMsg.sender?.split(' ')[0]}: ${lastMsg.text}` : `${(t.members || []).length} member${(t.members || []).length !== 1 ? 's' : ''}`}
                             </div>
                           </div>
@@ -2414,7 +2414,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
         )}
 
         {!selectedMeeting && !selectedTeamChannel ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: '#8b949e', textAlign: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px', color: 'var(--text-secondary)', textAlign: 'center' }}>
             <div style={{ fontSize: '64px', marginBottom: '16px' }}>💬</div>
             <h3 style={{ fontSize: '18px', color: '#fff', margin: '0 0 8px 0' }}>Welcome to Chat</h3>
             <p style={{ fontSize: '13px', maxWidth: '380px', margin: 0 }}>
@@ -2431,7 +2431,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   {selectedTeamChannel.name.slice(0, 1).toUpperCase()}
                 </div>
                 <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#fff', margin: 0, marginRight: '24px' }}>{selectedTeamChannel.name}</h3>
-                <div style={{ fontSize: '12px', color: '#8b949e' }}>{(selectedTeamChannel.members || []).length} members</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{(selectedTeamChannel.members || []).length} members</div>
 
                 {/* Tabs: Chat | Details */}
                 <div style={{ display: 'flex', gap: '4px', height: '100%', marginLeft: '20px' }}>
@@ -2439,7 +2439,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                     const isActive = teamDiscussionTab === tab.id;
                     return (
                       <button key={tab.id} onClick={() => setTeamDiscussionTab(tab.id)}
-                        style={{ background: 'none', border: 'none', borderBottom: isActive ? '3px solid #7f85f5' : '3px solid transparent', color: isActive ? '#fff' : '#8b949e', padding: '12px 14px', fontSize: '13px', fontWeight: isActive ? 'bold' : 'normal', cursor: 'pointer' }}>
+                        style={{ background: 'none', border: 'none', borderBottom: isActive ? '3px solid #7f85f5' : '3px solid transparent', color: isActive ? '#fff' : 'var(--text-secondary)', padding: '12px 14px', fontSize: '13px', fontWeight: isActive ? 'bold' : 'normal', cursor: 'pointer' }}>
                         {tab.label}
                       </button>
                     );
@@ -2448,8 +2448,8 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
               </div>
               {/* Call controls */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                <button onClick={() => handleStartGroupCall('voice')} style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }} title="Audio Call">📞</button>
-                <button onClick={() => handleStartGroupCall('video')} style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }} title="Video Call">📹</button>
+                <button onClick={() => handleStartGroupCall('voice')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '18px' }} title="Audio Call">📞</button>
+                <button onClick={() => handleStartGroupCall('video')} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '18px' }} title="Video Call">📹</button>
               </div>
             </div>
 
@@ -2459,9 +2459,9 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
                   {/* Filter bar */}
                   <div style={{ padding: '8px 20px', borderBottom: '1px solid #2d2d2d', background: '#151618', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '11px', color: '#8b949e', fontWeight: '600' }}>Filter:</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>Filter:</span>
                     <select value={chatFilterIssue} onChange={e => setChatFilterIssue(e.target.value)}
-                      style={{ background: '#22252a', border: '1px solid #30363d', borderRadius: '4px', color: '#c9d1d9', padding: '4px 8px', fontSize: '12px' }}>
+                      style={{ background: '#22252a', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', padding: '4px 8px', fontSize: '12px' }}>
                       <option value="">All Messages</option>
                       {issues.map(iss => <option key={iss.key} value={iss.key}>{iss.key}: {iss.fields?.summary?.substring(0, 30)}</option>)}
                     </select>
@@ -2471,7 +2471,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                     {teamChatMessages
                       .filter(m => !chatFilterIssue || m.issueKey === chatFilterIssue || (m.text || '').includes(chatFilterIssue))
                       .length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: '40px', color: '#8b949e', fontSize: '13px' }}>No messages yet in #{selectedTeamChannel.name}. Say hello! 👋</div>
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '13px' }}>No messages yet in #{selectedTeamChannel.name}. Say hello! 👋</div>
                     ) : (
                       (() => {
                         const filtered = teamChatMessages.filter(m => !chatFilterIssue || m.issueKey === chatFilterIssue || (m.text || '').includes(chatFilterIssue));
@@ -2484,7 +2484,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                         });
                         return groups.map(group => {
                           if (group.type === 'divider') return (
-                            <div key={group.id} style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: '#8b949e', fontSize: '11px' }}>
+                            <div key={group.id} style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: 'var(--text-secondary)', fontSize: '11px' }}>
                               <div style={{ flex: 1, height: '1px', background: '#2d2d2d' }} />
                               <span style={{ padding: '0 12px' }}>{group.date}</span>
                               <div style={{ flex: 1, height: '1px', background: '#2d2d2d' }} />
@@ -2494,16 +2494,16 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                           const isSelf = msg.sender === myName;
                           return (
                             <div key={group.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isSelf ? 'flex-end' : 'flex-start', maxWidth: '80%', alignSelf: isSelf ? 'flex-end' : 'flex-start', marginBottom: '4px' }}>
-                              {!isSelf && <span style={{ fontSize: '11px', color: '#8b949e', marginBottom: '2px', marginLeft: '6px', fontWeight: '600' }}>{msg.sender}</span>}
+                              {!isSelf && <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px', marginLeft: '6px', fontWeight: '600' }}>{msg.sender}</span>}
                               <div style={{ background: isSelf ? '#6264a7' : '#2b2d31', border: isSelf ? 'none' : '1px solid #3d3e42', color: '#fff', borderRadius: isSelf ? '16px 16px 4px 16px' : '16px 16px 16px 4px', padding: '10px 14px', fontSize: '13px', lineHeight: '1.45', wordWrap: 'break-word', maxWidth: '100%' }}>
                                 {msg.issueKey && (
-                                  <div style={{ fontSize: '11px', color: isSelf ? '#e0e0ff' : '#8b949e', fontWeight: 'bold', marginBottom: '4px' }}>
+                                  <div style={{ fontSize: '11px', color: isSelf ? '#e0e0ff' : 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '4px' }}>
                                     Issue: <span className="chat-issue-badge" onClick={() => onOpenIssueDetails && onOpenIssueDetails(msg.issueKey)}>{msg.issueKey}</span>
                                   </div>
                                 )}
                                 <div>{renderMessageText(msg.text)}</div>
                               </div>
-                              <span style={{ fontSize: '9px', color: '#8b949e', marginTop: '2px', alignSelf: isSelf ? 'flex-end' : 'flex-start' }}>{new Date(msg.timestamp || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: '2px', alignSelf: isSelf ? 'flex-end' : 'flex-start' }}>{new Date(msg.timestamp || msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                             </div>
                           );
                         });
@@ -2512,10 +2512,10 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   </div>
                   {/* Team message input */}
                   <div style={{ padding: '16px 20px', borderTop: '1px solid #2d2d2d', background: '#18191b' }}>
-                    <form onSubmit={handleSendTeamMessage} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#202225', border: '1px solid #30363d', borderRadius: '8px', padding: '8px 12px 6px 12px' }}>
+                    <form onSubmit={handleSendTeamMessage} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#202225', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px 6px 12px' }}>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <select value={teamChatIssue} onChange={e => setTeamChatIssue(e.target.value)}
-                          style={{ background: '#18191b', border: '1px solid #30363d', borderRadius: '4px', color: '#c9d1d9', fontSize: '11px', padding: '4px 6px', maxWidth: '160px' }}>
+                          style={{ background: '#18191b', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--text-primary)', fontSize: '11px', padding: '4px 6px', maxWidth: '160px' }}>
                           <option value="">Tag Issue Key...</option>
                           {issues.map(iss => <option key={iss.key} value={iss.key}>{iss.key}</option>)}
                         </select>
@@ -2524,12 +2524,12 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                         placeholder={`Message #${selectedTeamChannel.name}...`}
                         style={{ width: '100%', background: 'transparent', border: 'none', color: '#fff', fontSize: '13px', outline: 'none', padding: '6px 0' }} />
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #2d2d2d', paddingTop: '6px', marginTop: '4px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#8b949e', fontSize: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--text-secondary)', fontSize: '15px' }}>
                           <span style={{ cursor: 'pointer' }} title="Emoji">😊</span>
                           <span style={{ cursor: 'pointer' }} title="Attach">📎</span>
                           <span style={{ cursor: 'pointer' }} title="Image">🖼️</span>
                         </div>
-                        <button type="submit" style={{ background: 'none', border: 'none', color: teamChatText.trim() ? '#7f85f5' : '#8b949e', cursor: teamChatText.trim() ? 'pointer' : 'default' }} disabled={!teamChatText.trim()}>
+                        <button type="submit" style={{ background: 'none', border: 'none', color: teamChatText.trim() ? '#7f85f5' : 'var(--text-secondary)', cursor: teamChatText.trim() ? 'pointer' : 'default' }} disabled={!teamChatText.trim()}>
                           <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
                         </button>
                       </div>
@@ -2539,19 +2539,19 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
               )}
               {teamDiscussionTab === 'info' && (
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                  <div style={{ background: '#161b22', border: '1px solid #30363d', padding: '20px', borderRadius: '8px' }}>
-                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid #30363d', paddingBottom: '8px' }}>🏷️ Channel Info</h4>
-                    <div style={{ fontSize: '13px', color: '#c9d1d9', marginBottom: '8px' }}><span style={{ color: '#8b949e' }}>Name: </span>{selectedTeamChannel.name}</div>
-                    <div style={{ fontSize: '13px', color: '#c9d1d9' }}><span style={{ color: '#8b949e' }}>Members: </span>{(selectedTeamChannel.members || []).length}</div>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '20px', borderRadius: '8px' }}>
+                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>🏷️ Channel Info</h4>
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)', marginBottom: '8px' }}><span style={{ color: 'var(--text-secondary)' }}>Name: </span>{selectedTeamChannel.name}</div>
+                    <div style={{ fontSize: '13px', color: 'var(--text-primary)' }}><span style={{ color: 'var(--text-secondary)' }}>Members: </span>{(selectedTeamChannel.members || []).length}</div>
                   </div>
-                  <div style={{ background: '#161b22', border: '1px solid #30363d', padding: '20px', borderRadius: '8px' }}>
-                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid #30363d', paddingBottom: '8px' }}>👥 Members ({(selectedTeamChannel.members || []).length})</h4>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '20px', borderRadius: '8px' }}>
+                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>👥 Members ({(selectedTeamChannel.members || []).length})</h4>
                     {(selectedTeamChannel.members || []).length === 0 ? (
-                      <div style={{ color: '#8b949e', fontSize: '12px' }}>No members assigned.</div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>No members assigned.</div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {(selectedTeamChannel.members || []).map((m, i) => (
-                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#fff', padding: '6px', background: '#0d1117', borderRadius: '4px' }}>
+                          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#fff', padding: '6px', background: 'var(--bg-primary)', borderRadius: '4px' }}>
                             <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#6264a7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '11px' }}>
                               {typeof m === 'string' ? m.slice(0,1).toUpperCase() : '?'}
                             </div>
@@ -2607,7 +2607,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                           background: 'none',
                           border: 'none',
                           borderBottom: isActive ? '3px solid #7f85f5' : '3px solid transparent',
-                          color: isActive ? '#fff' : '#8b949e',
+                          color: isActive ? '#fff' : 'var(--text-secondary)',
                           padding: '12px 14px',
                           fontSize: '13px',
                           fontWeight: isActive ? 'bold' : 'normal',
@@ -2625,21 +2625,21 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <button
                   onClick={() => openJoinOptions({ ...selectedMeeting, type: 'video' })}
-                  style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '18px' }}
                   title="Video Call"
                 >
                   📹
                 </button>
                 <button
                   onClick={() => openJoinOptions({ ...selectedMeeting, type: 'voice' })}
-                  style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '18px' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '18px' }}
                   title="Audio Call"
                 >
                   📞
                 </button>
                 <button
                   onClick={() => { setEditMeeting(selectedMeeting); setShowSchedule(true); }}
-                  style={{ background: 'none', border: 'none', color: '#8b949e', cursor: 'pointer', fontSize: '16px' }}
+                  style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', fontSize: '16px' }}
                   title="Edit Settings"
                 >
                   ⚙️
@@ -2663,15 +2663,15 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   
                   {/* Chat Filter Bar */}
                   <div style={{ padding: '8px 20px', borderBottom: '1px solid #2d2d2d', background: '#151618', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span style={{ fontSize: '11px', color: '#8b949e', fontWeight: '600' }}>Filter Chat:</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600' }}>Filter Chat:</span>
                     <select
                       value={chatFilterIssue}
                       onChange={(e) => setChatFilterIssue(e.target.value)}
                       style={{
                         background: '#22252a',
-                        border: '1px solid #30363d',
+                        border: '1px solid var(--border)',
                         borderRadius: '4px',
-                        color: '#c9d1d9',
+                        color: 'var(--text-primary)',
                         padding: '4px 8px',
                         fontSize: '12px'
                       }}
@@ -2686,7 +2686,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   {/* Messages list */}
                   <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {(!chatMessagesToShow || chatMessagesToShow.length === 0) ? (
-                      <div style={{ textAlign: 'center', padding: '40px', color: '#8b949e', fontSize: '13px' }}>
+                      <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                         {chatFilterIssue ? 'No chat messages matching this issue context.' : 'No chat messages in this discussion room yet. Start the conversation below!'}
                       </div>
                     ) : (
@@ -2705,7 +2705,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                         return groups.map(group => {
                           if (group.type === 'divider') {
                             return (
-                              <div key={group.id} style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: '#8b949e', fontSize: '11px', fontWeight: '500' }}>
+                              <div key={group.id} style={{ display: 'flex', alignItems: 'center', margin: '20px 0', color: 'var(--text-secondary)', fontSize: '11px', fontWeight: '500' }}>
                                 <div style={{ flex: 1, height: '1px', background: '#2d2d2d' }}></div>
                                 <span style={{ padding: '0 12px' }}>{group.date}</span>
                                 <div style={{ flex: 1, height: '1px', background: '#2d2d2d' }}></div>
@@ -2729,7 +2729,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                               }}
                             >
                               {!isSelf && (
-                                <span style={{ fontSize: '11px', color: '#8b949e', marginBottom: '2px', marginLeft: '6px', fontWeight: '600' }}>
+                                <span style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px', marginLeft: '6px', fontWeight: '600' }}>
                                   {msg.sender}
                                 </span>
                               )}
@@ -2749,14 +2749,14 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                                 }}
                               >
                                 {msg.issueKey && (
-                                  <div style={{ fontSize: '11px', color: isSelf ? '#e0e0ff' : '#8b949e', fontWeight: 'bold', marginBottom: '4px' }}>
+                                  <div style={{ fontSize: '11px', color: isSelf ? '#e0e0ff' : 'var(--text-secondary)', fontWeight: 'bold', marginBottom: '4px' }}>
                                     Issue context: <span className="chat-issue-badge" onClick={() => onOpenIssueDetails && onOpenIssueDetails(msg.issueKey)}>{msg.issueKey}</span>
                                   </div>
                                 )}
                                 <div>{renderMessageText(msg.text)}</div>
                               </div>
 
-                              <span style={{ fontSize: '9px', color: '#8b949e', marginTop: '2px', alignSelf: isSelf ? 'flex-end' : 'flex-start', marginRight: isSelf ? '4px' : '0', marginLeft: !isSelf ? '4px' : '0' }}>
+                              <span style={{ fontSize: '9px', color: 'var(--text-secondary)', marginTop: '2px', alignSelf: isSelf ? 'flex-end' : 'flex-start', marginRight: isSelf ? '4px' : '0', marginLeft: !isSelf ? '4px' : '0' }}>
                                 {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </span>
                             </div>
@@ -2768,7 +2768,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
 
                   {/* Input Card Container (Same to Same as Teams style) */}
                   <div style={{ padding: '16px 20px', borderTop: '1px solid #2d2d2d', background: '#18191b' }}>
-                    <form onSubmit={(e) => { handleSendMessage(e); }} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#202225', border: '1px solid #30363d', borderRadius: '8px', padding: '8px 12px 6px 12px' }}>
+                    <form onSubmit={(e) => { handleSendMessage(e); }} style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: '#202225', border: '1px solid var(--border)', borderRadius: '8px', padding: '8px 12px 6px 12px' }}>
                       
                       {/* Top Row: Tag issue key dropdown */}
                       <div style={{ display: 'flex', gap: '8px' }}>
@@ -2777,9 +2777,9 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                           onChange={(e) => setNewMessageIssue(e.target.value)}
                           style={{
                             background: '#18191b',
-                            border: '1px solid #30363d',
+                            border: '1px solid var(--border)',
                             borderRadius: '4px',
-                            color: '#c9d1d9',
+                            color: 'var(--text-primary)',
                             fontSize: '11px',
                             padding: '4px 6px',
                             maxWidth: '160px'
@@ -2813,11 +2813,11 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid #2d2d2d', paddingTop: '6px', marginTop: '4px' }}>
                         
                         {/* Left icons tray */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: '#8b949e', fontSize: '15px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', color: 'var(--text-secondary)', fontSize: '15px' }}>
                           <span style={{ cursor: 'pointer' }} title="Insert Emoji">😊</span>
                           <span style={{ cursor: 'pointer' }} title="Attach Files">📎</span>
                           <span style={{ cursor: 'pointer' }} title="Insert Image">🖼️</span>
-                          <span style={{ cursor: 'pointer', fontSize: '9px', fontWeight: 'bold', border: '1.5px solid #8b949e', borderRadius: '3px', padding: '1px 3px', lineHeight: '1' }} title="GIF">GIF</span>
+                          <span style={{ cursor: 'pointer', fontSize: '9px', fontWeight: 'bold', border: '1.5px solid var(--text-secondary)', borderRadius: '3px', padding: '1px 3px', lineHeight: '1' }} title="GIF">GIF</span>
                           <span style={{ cursor: 'pointer' }} title="Loop component">📅</span>
                           <span style={{ cursor: 'pointer' }} title="More options">+</span>
                         </div>
@@ -2829,7 +2829,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                             style={{
                               background: 'none',
                               border: 'none',
-                              color: newMessageText.trim() ? '#7f85f5' : '#8b949e',
+                              color: newMessageText.trim() ? '#7f85f5' : 'var(--text-secondary)',
                               cursor: newMessageText.trim() ? 'pointer' : 'default',
                               padding: 0,
                               display: 'flex',
@@ -2854,47 +2854,47 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                 <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   
                   {/* Details Card */}
-                  <div style={{ background: '#161b22', border: '1px solid #30363d', padding: '20px', borderRadius: '8px' }}>
-                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid #30363d', paddingBottom: '8px' }}>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '20px', borderRadius: '8px' }}>
+                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
                       ⚙️ Room Properties
                     </h4>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#8b949e' }}>Title:</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Title:</span>
                         <span style={{ color: '#fff', fontWeight: 'bold' }}>{selectedMeeting.title}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#8b949e' }}>Created By:</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Created By:</span>
                         <span style={{ color: '#fff' }}>{selectedMeeting.createdBy}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#8b949e' }}>Scheduled Date:</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Scheduled Date:</span>
                         <span style={{ color: '#fff' }}>{new Date(selectedMeeting.scheduledAt).toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <span style={{ color: '#8b949e' }}>Scheduled Time:</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Scheduled Time:</span>
                         <span style={{ color: '#fff' }}>{new Date(selectedMeeting.scheduledAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#8b949e' }}>Meeting ID:</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Meeting ID:</span>
                         <span style={{ color: '#fff', fontFamily: 'monospace' }}>
                           {selectedMeeting.meetingId} &nbsp;
                           <button
                             onClick={() => navigator.clipboard?.writeText(selectedMeeting.meetingId)}
-                            style={{ padding: '2px 6px', background: '#21262d', border: '1px solid #30363d', color: '#8b949e', fontSize: '10px', borderRadius: '4px', cursor: 'pointer' }}
+                            style={{ padding: '2px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '10px', borderRadius: '4px', cursor: 'pointer' }}
                           >
                             Copy
                           </button>
                         </span>
                       </div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ color: '#8b949e' }}>Access Code:</span>
+                        <span style={{ color: 'var(--text-secondary)' }}>Access Code:</span>
                         <span style={{ color: '#fff', fontFamily: 'monospace' }}>
                           {selectedMeeting.accessCode} &nbsp;
                           <button
                             onClick={() => navigator.clipboard?.writeText(selectedMeeting.accessCode)}
-                            style={{ padding: '2px 6px', background: '#21262d', border: '1px solid #30363d', color: '#8b949e', fontSize: '10px', borderRadius: '4px', cursor: 'pointer' }}
+                            style={{ padding: '2px 6px', background: 'var(--bg-card)', border: '1px solid var(--border)', color: 'var(--text-secondary)', fontSize: '10px', borderRadius: '4px', cursor: 'pointer' }}
                           >
                             Copy
                           </button>
@@ -2904,16 +2904,16 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                   </div>
 
                   {/* Participants List */}
-                  <div style={{ background: '#161b22', border: '1px solid #30363d', padding: '20px', borderRadius: '8px' }}>
-                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid #30363d', paddingBottom: '8px' }}>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '20px', borderRadius: '8px' }}>
+                    <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', margin: '0 0 16px 0', borderBottom: '1px solid var(--border)', paddingBottom: '8px' }}>
                       👥 Invited Participants ({selectedMeeting.participants?.length || 0})
                     </h4>
                     {(!selectedMeeting.participants || selectedMeeting.participants.length === 0) ? (
-                      <div style={{ color: '#8b949e', fontSize: '12px' }}>No participants invited to this room. You can call them in when starting the meeting.</div>
+                      <div style={{ color: 'var(--text-secondary)', fontSize: '12px' }}>No participants invited to this room. You can call them in when starting the meeting.</div>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                         {selectedMeeting.participants.map((p, idx) => (
-                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#fff', padding: '6px', background: '#0d1117', borderRadius: '4px' }}>
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13px', color: '#fff', padding: '6px', background: 'var(--bg-primary)', borderRadius: '4px' }}>
                             <div style={{ width: '22px', height: '22px', borderRadius: '50%', background: '#6264a7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '10px' }}>
                               {getInitials(p)}
                             </div>
@@ -2951,7 +2951,7 @@ export default function CallsView({ user, issues = [], onOpenIssueDetails }) {
                       {others.map(u => {
                         const sel = selected.includes(u.displayName);
                         return (
-                          <label key={u.accountId} className={`mc-invitee-chip ${sel ? 'selected' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px 12px', background: sel ? 'rgba(56,139,253,0.1)' : '#1f2226', border: '1px solid #30363d', borderRadius: '20px', fontSize: '12px', color: '#c9d1d9', marginBottom: '6px' }}>
+                          <label key={u.accountId} className={`mc-invitee-chip ${sel ? 'selected' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '6px 12px', background: sel ? 'rgba(56,139,253,0.1)' : '#1f2226', border: '1px solid var(--border)', borderRadius: '20px', fontSize: '12px', color: 'var(--text-primary)', marginBottom: '6px' }}>
                             <input type="checkbox" checked={sel} onChange={() => toggle(u.displayName)} style={{ display: 'none' }} />
                             <span>{u.displayName}</span>
                             {sel && <span style={{ color: '#58a6ff' }}>✓</span>}

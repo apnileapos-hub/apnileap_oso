@@ -118,8 +118,8 @@ export default function Header({ user, activeView, onLogout, onRefresh, isRefres
         {lastUpdated && (
           <div className="header-timestamp">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ marginRight: 4 }}>
-              <circle cx="6" cy="6" r="5" stroke="#484f58" strokeWidth="1"/>
-              <path d="M6 3v3l2 1.5" stroke="#484f58" strokeWidth="1" strokeLinecap="round"/>
+              <circle cx="6" cy="6" r="5" stroke="var(--text-muted)" strokeWidth="1"/>
+              <path d="M6 3v3l2 1.5" stroke="var(--text-muted)" strokeWidth="1" strokeLinecap="round"/>
             </svg>
             Updated {lastUpdated}
           </div>
@@ -159,8 +159,8 @@ export default function Header({ user, activeView, onLogout, onRefresh, isRefres
             aria-expanded={showNotifMenu}
           >
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-              <path d="M9 2a5 5 0 0 1 5 5v3l1.5 2.5H2.5L4 10V7a5 5 0 0 1 5-5Z" stroke={showNotifMenu ? "#58a6ff" : "#8b949e"} strokeWidth="1.2"/>
-              <path d="M7 14.5a2 2 0 0 0 4 0" stroke={showNotifMenu ? "#58a6ff" : "#8b949e"} strokeWidth="1.2" strokeLinecap="round"/>
+              <path d="M9 2a5 5 0 0 1 5 5v3l1.5 2.5H2.5L4 10V7a5 5 0 0 1 5-5Z" stroke={showNotifMenu ? "#58a6ff" : "var(--text-secondary)"} strokeWidth="1.2"/>
+              <path d="M7 14.5a2 2 0 0 0 4 0" stroke={showNotifMenu ? "#58a6ff" : "var(--text-secondary)"} strokeWidth="1.2" strokeLinecap="round"/>
             </svg>
             {unreadCount > 0 && <span className="notif-dot" />}
           </button>
@@ -217,7 +217,7 @@ export default function Header({ user, activeView, onLogout, onRefresh, isRefres
             aria-expanded={showUserMenu}
           >
             <div className="avatar">{user?.avatar || '?'}</div>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: '#8b949e' }}>
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ color: 'var(--text-secondary)' }}>
               <path d="M2 4L6 8L10 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
           </button>

@@ -55,8 +55,8 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
       display: 'flex',
       flexDirection: 'row',
       height: '100vh',
-      background: '#161b22',
-      borderRight: '1px solid #30363d',
+      background: 'var(--bg-secondary)',
+      borderRight: '1px solid var(--border)',
       transition: 'width 0.15s ease',
       overflow: 'hidden',
       flexShrink: 0
@@ -117,7 +117,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   background: activeCategory === 'jira' ? '#292a2c' : 'transparent',
-                  color: activeCategory === 'jira' ? '#fff' : '#8b949e',
+                  color: activeCategory === 'jira' ? '#fff' : 'var(--text-secondary)',
                   transition: 'background 0.2s, color 0.2s'
                 }}
                 onMouseEnter={(e) => { if (activeCategory !== 'jira') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
@@ -184,11 +184,11 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   background: activeCategory === 'meet' ? '#292a2c' : 'transparent',
-                  color: activeCategory === 'meet' ? '#fff' : '#8b949e',
+                  color: activeCategory === 'meet' ? '#fff' : 'var(--text-secondary)',
                   transition: 'background 0.2s, color 0.2s'
                 }}
                 onMouseEnter={(e) => { if (activeCategory !== 'meet') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#fff'; }}
-                onMouseLeave={(e) => { if (activeCategory !== 'meet') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8b949e'; } }}
+                onMouseLeave={(e) => { if (activeCategory !== 'meet') { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; } }}
               >
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M23 7l-7 5 7 5V7z" />
@@ -291,7 +291,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   background: activeCategory === 'teams' ? '#292a2c' : 'transparent',
-                  color: activeCategory === 'teams' ? '#fff' : '#8b949e',
+                  color: activeCategory === 'teams' ? '#fff' : 'var(--text-secondary)',
                   transition: 'background 0.2s, color 0.2s'
                 }}
                 onMouseEnter={(e) => { if (activeCategory !== 'teams') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
@@ -323,11 +323,11 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                   justifyContent: 'center',
                   cursor: 'pointer',
                   background: 'transparent',
-                  color: '#8b949e',
+                  color: 'var(--text-secondary)',
                   transition: 'background 0.2s, color 0.2s'
                 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; e.currentTarget.style.color = '#fff'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8b949e'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
               >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
@@ -359,7 +359,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                     justifyContent: 'center',
                     cursor: 'pointer',
                     background: activeCategory === 'activity' ? '#292a2c' : 'transparent',
-                    color: activeCategory === 'activity' ? '#fff' : '#8b949e',
+                    color: activeCategory === 'activity' ? '#fff' : 'var(--text-secondary)',
                     transition: 'background 0.2s, color 0.2s'
                   }}
                   onMouseEnter={(e) => { if (activeCategory !== 'activity') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
@@ -396,7 +396,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                 justifyContent: 'center',
                 cursor: 'pointer',
                 background: activeCategory === 'settings' ? '#292a2c' : 'transparent',
-                color: activeCategory === 'settings' ? '#fff' : '#8b949e',
+                color: activeCategory === 'settings' ? '#fff' : 'var(--text-secondary)',
                 transition: 'background 0.2s, color 0.2s'
               }}
               onMouseEnter={(e) => { if (activeCategory !== 'settings') e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
@@ -421,11 +421,11 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
               alignItems: 'center',
               justifyContent: 'center',
               cursor: 'pointer',
-              color: '#8b949e',
+              color: 'var(--text-secondary)',
               transition: 'background 0.2s, color 0.2s'
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = 'rgba(248,81,73,0.1)'; e.currentTarget.style.color = '#ff7b72'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#8b949e'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
@@ -448,7 +448,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
               justifyContent: 'center',
               fontWeight: 'bold',
               fontSize: '13px',
-              border: '1px solid #30363d'
+              border: '1px solid var(--border)'
             }}>
               {userInitials}
             </div>
@@ -472,7 +472,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
       {showSubMenu && (
         <div style={{
           width: '180px',
-          background: '#161b22',
+          background: 'var(--bg-secondary)',
           display: 'flex',
           flexDirection: 'column',
           height: '100%',
@@ -484,10 +484,10 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
             fontSize: '10px',
             fontWeight: '600',
             letterSpacing: '0.1em',
-            color: '#484f58',
+            color: 'var(--text-muted)',
             textTransform: 'uppercase',
             padding: '0 12px 12px',
-            borderBottom: '1px solid #30363d',
+            borderBottom: '1px solid var(--border)',
             marginBottom: '12px'
           }}>
             {subMenuTitle}
@@ -509,7 +509,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                     borderRadius: '6px',
                     border: 'none',
                     background: activeView === 'dashboard' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                    color: activeView === 'dashboard' ? '#7f85f5' : '#c9d1d9',
+                    color: activeView === 'dashboard' ? '#7f85f5' : 'var(--text-primary)',
                     textAlign: 'left',
                     cursor: 'pointer',
                     width: '100%'
@@ -528,7 +528,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                     borderRadius: '6px',
                     border: 'none',
                     background: activeView === 'issues' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                    color: activeView === 'issues' ? '#7f85f5' : '#c9d1d9',
+                    color: activeView === 'issues' ? '#7f85f5' : 'var(--text-primary)',
                     textAlign: 'left',
                     cursor: 'pointer',
                     width: '100%'
@@ -547,7 +547,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                     borderRadius: '6px',
                     border: 'none',
                     background: activeView === 'analytics' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                    color: activeView === 'analytics' ? '#7f85f5' : '#c9d1d9',
+                    color: activeView === 'analytics' ? '#7f85f5' : 'var(--text-primary)',
                     textAlign: 'left',
                     cursor: 'pointer',
                     width: '100%'
@@ -572,7 +572,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'executive-hub' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'executive-hub' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'executive-hub' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -594,7 +594,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'moderator-portal' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'moderator-portal' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'moderator-portal' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -616,7 +616,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'users' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'users' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'users' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -638,7 +638,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'faculty-portal' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'faculty-portal' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'faculty-portal' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -660,7 +660,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'mentor-portal' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'mentor-portal' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'mentor-portal' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -682,7 +682,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'spoke-kle' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'spoke-kle' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'spoke-kle' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -704,7 +704,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'spoke-coep' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'spoke-coep' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'spoke-coep' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -726,7 +726,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'spoke-mmcoep' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'spoke-mmcoep' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'spoke-mmcoep' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',
@@ -748,7 +748,7 @@ export default function Sidebar({ activeView, onNavigate, onLogout, user }) {
                       borderRadius: '6px',
                       border: 'none',
                       background: activeView === 'spoke-rit' ? 'rgba(98, 100, 167, 0.2)' : 'transparent',
-                      color: activeView === 'spoke-rit' ? '#7f85f5' : '#c9d1d9',
+                      color: activeView === 'spoke-rit' ? '#7f85f5' : 'var(--text-primary)',
                       textAlign: 'left',
                       cursor: 'pointer',
                       width: '100%',

@@ -5,7 +5,7 @@ import {
 
 // Status → color mapping
 const STATUS_COLORS = {
-  default: '#8b949e',
+  default: 'var(--text-secondary)',
   progress: '#58a6ff',
   review:   '#bc8cff',
   done:     '#3fb950',
@@ -59,8 +59,8 @@ export default function StatusPieChart({ data = [], loading }) {
     return (
       <div className="chart-placeholder">
         <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-          <circle cx="16" cy="16" r="14" stroke="#30363d" strokeWidth="2"/>
-          <path d="M16 10v6M16 20v.5" stroke="#484f58" strokeWidth="2" strokeLinecap="round"/>
+          <circle cx="16" cy="16" r="14" stroke="var(--border)" strokeWidth="2"/>
+          <path d="M16 10v6M16 20v.5" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round"/>
         </svg>
         <span>No status data available</span>
       </div>

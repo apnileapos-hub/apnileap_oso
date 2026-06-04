@@ -100,26 +100,26 @@ export default function FacultyPortalView({ user }) {
   };
 
   return (
-    <div className="faculty-portal-view" style={{ color: '#c9d1d9', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div className="faculty-portal-view" style={{ color: 'var(--text-primary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* Header Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#f0f6fc', margin: '0 0 6px 0' }}>🎓 Principal Investigator & Faculty Hub</h1>
-          <p style={{ fontSize: '13px', color: '#8b949e', margin: 0 }}>Monitor academic project milestones, coordinate student development teams, and review Confluence documentation boards.</p>
+          <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>🎓 Principal Investigator & Faculty Hub</h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>Monitor academic project milestones, coordinate student development teams, and review Confluence documentation boards.</p>
         </div>
         {projects.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '13px', color: '#8b949e' }}>Select Project:</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Select Project:</span>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               style={{
                 padding: '8px 12px',
                 borderRadius: '6px',
-                border: '1px solid #30363d',
-                background: '#161b22',
-                color: '#c9d1d9',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
                 fontSize: '13px',
                 fontWeight: '600',
                 cursor: 'pointer'
@@ -138,12 +138,12 @@ export default function FacultyPortalView({ user }) {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '80px' }}>
           <div className="loading-spinner" style={{ margin: '0 auto 10px auto', width: '32px', height: '32px', border: '3px solid rgba(88,166,255,0.2)', borderTopColor: '#58a6ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <div style={{ fontSize: '13px', color: '#8b949e' }}>Loading PI Dashboard data...</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Loading PI Dashboard data...</div>
         </div>
       ) : projects.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 8px 0', color: '#f0f6fc' }}>No Active Allocated Projects</h3>
-          <p style={{ color: '#8b949e', fontSize: '13px', margin: 0 }}>There are no active portfolio projects currently assigned to your Spoke campus. Connect with the Program PMO Office to register one.</p>
+        <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>No Active Allocated Projects</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>There are no active portfolio projects currently assigned to your Spoke campus. Connect with the Program PMO Office to register one.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px' }}>
@@ -153,7 +153,7 @@ export default function FacultyPortalView({ user }) {
             
             {/* Project Overview Card */}
             {selectedProject && (
-              <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '20px' }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div>
                     <span style={{
@@ -170,22 +170,22 @@ export default function FacultyPortalView({ user }) {
                     }}>
                       {selectedProject.status.replace('_', ' ')}
                     </span>
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#f0f6fc', margin: '0 0 6px 0' }}>{selectedProject.title}</h2>
-                    <p style={{ fontSize: '13px', color: '#8b949e', margin: 0 }}>{selectedProject.description || 'No description provided.'}</p>
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>{selectedProject.title}</h2>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{selectedProject.description || 'No description provided.'}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#58a6ff' }}>${selectedProject.funding.toLocaleString()}</div>
-                    <div style={{ fontSize: '11px', color: '#8b949e' }}>Corporate Funding</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Corporate Funding</div>
                   </div>
                 </div>
 
                 {/* Progress bar metrics */}
-                <div style={{ marginTop: '16px', background: '#0d1117', padding: '12px', border: '1px solid #21262d', borderRadius: '6px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#8b949e', marginBottom: '6px' }}>
+                <div style={{ marginTop: '16px', background: 'var(--bg-primary)', padding: '12px', border: '1px solid var(--bg-card)', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                     <span>Epic Completion Progress</span>
-                    <span style={{ fontWeight: '600', color: '#c9d1d9' }}>{completionPercent}% ({completedEpics}/{epics.length} Epics)</span>
+                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{completionPercent}% ({completedEpics}/{epics.length} Epics)</span>
                   </div>
-                  <div style={{ width: '100%', height: '8px', background: '#21262d', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: '100%', height: '8px', background: 'var(--bg-card)', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: `${completionPercent}%`, height: '100%', background: '#3fb950', borderRadius: '4px', transition: 'width 0.3s ease' }} />
                   </div>
                 </div>
@@ -193,7 +193,7 @@ export default function FacultyPortalView({ user }) {
             )}
 
             {/* Navigation Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #30363d', gap: '8px' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '8px' }}>
               {[
                 { id: 'epics', label: '📋 Jira Epics & Milestones' },
                 { id: 'team', label: '👥 Student Team Roster' },
@@ -206,10 +206,10 @@ export default function FacultyPortalView({ user }) {
                     padding: '8px 16px',
                     fontSize: '13px',
                     fontWeight: '500',
-                    background: activeTab === tab.id ? '#161b22' : 'transparent',
-                    color: activeTab === tab.id ? '#58a6ff' : '#8b949e',
+                    background: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
+                    color: activeTab === tab.id ? '#58a6ff' : 'var(--text-secondary)',
                     border: '1px solid transparent',
-                    borderBottomColor: activeTab === tab.id ? '#161b22' : 'transparent',
+                    borderBottomColor: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
                     borderRadius: '6px 6px 0 0',
                     cursor: 'pointer',
                     marginBottom: '-1px',
@@ -225,7 +225,7 @@ export default function FacultyPortalView({ user }) {
             {activeTab === 'epics' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {epics.length === 0 ? (
-                  <div style={{ padding: '30px', textAlign: 'center', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', color: '#8b949e', fontSize: '13px' }}>
+                  <div style={{ padding: '30px', textAlign: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                     No Epics created or synced yet for this project.
                   </div>
                 ) : (
@@ -234,20 +234,20 @@ export default function FacultyPortalView({ user }) {
                       'Done': { bg: 'rgba(63, 185, 80, 0.15)', text: '#3fb950', border: 'rgba(63, 185, 80, 0.3)' },
                       'Complete': { bg: 'rgba(63, 185, 80, 0.15)', text: '#3fb950', border: 'rgba(63, 185, 80, 0.3)' },
                       'In Progress': { bg: 'rgba(210, 153, 34, 0.15)', text: '#d29922', border: 'rgba(210, 153, 34, 0.3)' },
-                      'To Do': { bg: 'rgba(139, 148, 158, 0.15)', text: '#8b949e', border: 'rgba(139, 148, 158, 0.3)' }
+                      'To Do': { bg: 'rgba(139, 148, 158, 0.15)', text: 'var(--text-secondary)', border: 'rgba(139, 148, 158, 0.3)' }
                     };
                     const color = statusColors[epic.status] || statusColors['To Do'];
                     
                     return (
-                      <div key={epic.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
+                      <div key={epic.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                             <span style={{ fontSize: '11px', fontWeight: 'bold', fontFamily: 'monospace', color: '#58a6ff', background: 'rgba(88, 166, 255, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
                               {epic.jiraKey || 'NOT SYNCED'}
                             </span>
-                            <span style={{ fontSize: '14px', fontWeight: '600', color: '#f0f6fc' }}>{epic.title}</span>
+                            <span style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{epic.title}</span>
                           </div>
-                          <p style={{ fontSize: '12px', color: '#8b949e', margin: 0 }}>{epic.description || 'No description provided.'}</p>
+                          <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>{epic.description || 'No description provided.'}</p>
                         </div>
                         <span style={{
                           padding: '4px 10px',
@@ -269,13 +269,13 @@ export default function FacultyPortalView({ user }) {
 
             {/* TAB CONTENT: Team Roster */}
             {activeTab === 'team' && (
-              <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '20px' }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px' }}>
                 {assignedTeam ? (
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid #21262d', paddingBottom: '12px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--bg-card)', paddingBottom: '12px' }}>
                       <div>
-                        <h3 style={{ fontSize: '16px', color: '#f0f6fc', margin: '0 0 4px 0' }}>👥 Workgroup: {assignedTeam.name}</h3>
-                        <p style={{ fontSize: '12px', color: '#8b949e', margin: 0 }}>Assigned active development team members.</p>
+                        <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>👥 Workgroup: {assignedTeam.name}</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Assigned active development team members.</p>
                       </div>
                       <span style={{ fontSize: '12px', color: '#58a6ff', background: 'rgba(88,166,255,0.1)', padding: '4px 10px', borderRadius: '6px', fontWeight: '600' }}>
                         {assignedTeam.members?.length || 0} Members
@@ -288,7 +288,7 @@ export default function FacultyPortalView({ user }) {
                         const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2);
                         
                         return (
-                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: '#0d1117', border: '1px solid #21262d', borderRadius: '6px' }}>
+                          <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--bg-card)', borderRadius: '6px' }}>
                             <div style={{
                               width: '32px',
                               height: '32px',
@@ -304,8 +304,8 @@ export default function FacultyPortalView({ user }) {
                               {initials}
                             </div>
                             <div>
-                              <div style={{ fontSize: '13px', fontWeight: '600', color: '#f0f6fc' }}>{name}</div>
-                              <div style={{ fontSize: '11px', color: '#8b949e' }}>{member}</div>
+                              <div style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{name}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>{member}</div>
                             </div>
                           </div>
                         );
@@ -313,7 +313,7 @@ export default function FacultyPortalView({ user }) {
                     </div>
                   </div>
                 ) : (
-                  <div style={{ textAlign: 'center', padding: '20px', color: '#8b949e', fontSize: '13px' }}>
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                     No student workgroup has been assigned to this project yet. Use Spoke Board to configure assignments.
                   </div>
                 )}
@@ -324,9 +324,9 @@ export default function FacultyPortalView({ user }) {
             {activeTab === 'confluence' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {!confluenceLinked ? (
-                  <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
-                    <h3 style={{ color: '#f0f6fc', margin: '0 0 8px 0' }}>Confluence Space Not Provisioned</h3>
-                    <p style={{ color: '#8b949e', fontSize: '13px', margin: '0 0 16px 0', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '24px', textAlign: 'center' }}>
+                    <h3 style={{ color: 'var(--text-primary)', margin: '0 0 8px 0' }}>Confluence Space Not Provisioned</h3>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: '0 0 16px 0', maxWidth: '500px', marginLeft: 'auto', marginRight: 'auto' }}>
                       Auto-provision a secure knowledge storage space directly linked to this university spoke project. Perfect for spec documents and sprint retrospectives.
                     </p>
                     <form onSubmit={handleCreateConfluenceSpace} style={{ display: 'flex', gap: '8px', justifyContent: 'center', maxWidth: '400px', margin: '0 auto' }}>
@@ -339,9 +339,9 @@ export default function FacultyPortalView({ user }) {
                         style={{
                           padding: '8px 12px',
                           borderRadius: '6px',
-                          border: '1px solid #30363d',
-                          background: '#0d1117',
-                          color: '#c9d1d9',
+                          border: '1px solid var(--border)',
+                          background: 'var(--bg-primary)',
+                          color: 'var(--text-primary)',
                           fontSize: '13px',
                           flex: 1
                         }}
@@ -365,11 +365,11 @@ export default function FacultyPortalView({ user }) {
                     </form>
                   </div>
                 ) : (
-                  <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '20px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #21262d', paddingBottom: '12px', marginBottom: '16px' }}>
+                  <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--bg-card)', paddingBottom: '12px', marginBottom: '16px' }}>
                       <div>
-                        <h3 style={{ fontSize: '16px', color: '#f0f6fc', margin: '0 0 4px 0' }}>📂 Confluence Space: {selectedProject?.title} Specs</h3>
-                        <p style={{ fontSize: '12px', color: '#8b949e', margin: 0 }}>Linked spec logs and academic delivery drafts.</p>
+                        <h3 style={{ fontSize: '16px', color: 'var(--text-primary)', margin: '0 0 4px 0' }}>📂 Confluence Space: {selectedProject?.title} Specs</h3>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>Linked spec logs and academic delivery drafts.</p>
                       </div>
                       <button 
                         onClick={() => setConfluenceLinked(false)}
@@ -385,12 +385,12 @@ export default function FacultyPortalView({ user }) {
                         { title: 'Milestone 2 Delivery Report', desc: 'Summary of API test results and load handling statistics.', author: 'Student Team Leader', date: 'Yesterday' },
                         { title: 'Sprint 2 Retrospective Logs', desc: 'Identified sprint blockers, technical debt, and next steps.', author: 'Prof. Ramesh Patil', date: 'May 28, 2026' }
                       ].map((doc, idx) => (
-                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: '#0d1117', border: '1px solid #21262d', borderRadius: '6px' }}>
+                        <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px', background: 'var(--bg-primary)', border: '1px solid var(--bg-card)', borderRadius: '6px' }}>
                           <div>
                             <div style={{ fontSize: '13px', fontWeight: '600', color: '#58a6ff', cursor: 'pointer' }}>📄 {doc.title}</div>
-                            <div style={{ fontSize: '11px', color: '#8b949e', marginTop: '2px' }}>{doc.desc}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>{doc.desc}</div>
                           </div>
-                          <div style={{ textAlign: 'right', fontSize: '11px', color: '#8b949e' }}>
+                          <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--text-secondary)' }}>
                             <div>{doc.author}</div>
                             <div>{doc.date}</div>
                           </div>
@@ -418,10 +418,10 @@ export default function FacultyPortalView({ user }) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#7f85f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#c9d1d9', margin: 0 }}>Rovo AI Faculty Agent</h3>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Rovo AI Faculty Agent</h3>
               </div>
               
-              <div style={{ fontSize: '12px', color: '#8b949e', lineHeight: '1.4' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                 <div style={{ background: 'rgba(13,17,23,0.6)', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #7f85f5', marginBottom: '10px' }}>
                   <strong>🤖 Risk Alert:</strong> ECOM-E3 has 4 items in "In Progress" with only 3 days remaining. Recommended to host a quick stand-up with the student team.
                 </div>
@@ -432,8 +432,8 @@ export default function FacultyPortalView({ user }) {
             </div>
 
             {/* Announcements Panel */}
-            <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '16px' }}>
-              <h3 style={{ fontSize: '14px', color: '#f0f6fc', margin: '0 0 12px 0' }}>📢 PI Announcements</h3>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+              <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', margin: '0 0 12px 0' }}>📢 PI Announcements</h3>
               
               <form onSubmit={handlePostAnnouncement} style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
                 <input
@@ -445,9 +445,9 @@ export default function FacultyPortalView({ user }) {
                   style={{
                     padding: '6px 10px',
                     borderRadius: '4px',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
-                    color: '#c9d1d9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: '12px'
                   }}
                 />
@@ -460,9 +460,9 @@ export default function FacultyPortalView({ user }) {
                   style={{
                     padding: '6px 10px',
                     borderRadius: '4px',
-                    border: '1px solid #30363d',
-                    background: '#0d1117',
-                    color: '#c9d1d9',
+                    border: '1px solid var(--border)',
+                    background: 'var(--bg-primary)',
+                    color: 'var(--text-primary)',
                     fontSize: '12px',
                     resize: 'none'
                   }}
@@ -487,12 +487,12 @@ export default function FacultyPortalView({ user }) {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '200px', overflowY: 'auto' }}>
                 {announcements.map(ann => (
-                  <div key={ann.id} style={{ background: '#0d1117', padding: '10px', border: '1px solid #21262d', borderRadius: '6px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8b949e', marginBottom: '4px' }}>
-                      <span style={{ fontWeight: '600', color: '#f0f6fc' }}>{ann.title}</span>
+                  <div key={ann.id} style={{ background: 'var(--bg-primary)', padding: '10px', border: '1px solid var(--bg-card)', borderRadius: '6px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{ann.title}</span>
                       <span>{ann.date}</span>
                     </div>
-                    <p style={{ fontSize: '11px', color: '#8b949e', margin: 0 }}>{ann.body}</p>
+                    <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: 0 }}>{ann.body}</p>
                   </div>
                 ))}
               </div>

@@ -1371,10 +1371,10 @@ app.post("/projects/:id/accept", verifyToken, async (req, res) => {
 
     const project = projects[projIdx];
     
-    // Check permission: Super-admin, Admin, or Faculty for this specific Spoke
+    // Check permission: Super-admin, Admin, College-SPOC, or Faculty for this specific Spoke
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
-      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator") || req.user.collegeId !== project.spokeId) {
-        return res.status(403).json({ error: "Forbidden. Only Faculty Handlers or Administrators can accept projects." });
+      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator" && req.user.role !== "College-SPOC") || req.user.collegeId !== project.spokeId) {
+        return res.status(403).json({ error: "Forbidden. Only Spoke Coordinators, Faculty Handlers, or Administrators can accept projects." });
       }
     }
 
@@ -1481,10 +1481,10 @@ app.post("/projects/:id/decline", verifyToken, async (req, res) => {
 
     const project = projects[projIdx];
     
-    // Check permission: Super-admin, Admin, or Faculty for this specific Spoke
+    // Check permission: Super-admin, Admin, College-SPOC, or Faculty for this specific Spoke
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
-      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator") || req.user.collegeId !== project.spokeId) {
-        return res.status(403).json({ error: "Forbidden. Only Faculty Handlers or Administrators can decline projects." });
+      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator" && req.user.role !== "College-SPOC") || req.user.collegeId !== project.spokeId) {
+        return res.status(403).json({ error: "Forbidden. Only Spoke Coordinators, Faculty Handlers, or Administrators can decline projects." });
       }
     }
 
@@ -1529,11 +1529,11 @@ app.post("/projects/:id/epics", verifyToken, async (req, res) => {
 
     const project = projects[projIdx];
 
-    // Check permission: Super-admin, College-SPOC, or member of the assigned team
+    // Check permission: Super-admin, Admin, or Faculty / Principal-Investigator for the spoke, or member of the assigned team
     let hasAccess = false;
     if (req.user.role === "Super-admin" || req.user.role === "Admin") {
       hasAccess = true;
-    } else if (req.user.role === "College-SPOC" && req.user.collegeId === project.spokeId) {
+    } else if ((req.user.role === "Faculty" || req.user.role === "Principal-Investigator") && req.user.collegeId === project.spokeId) {
       hasAccess = true;
     } else {
       const db = require('./db');
@@ -1652,10 +1652,10 @@ app.post("/projects/:id/assign-team", verifyToken, async (req, res) => {
 
     const project = projects[projIdx];
 
-    // Check permission
+    // Check permission: only Faculty or Principal-Investigator can assign teams
     if (req.user.role !== "Super-admin" && req.user.role !== "Admin") {
-      if (req.user.role !== "College-SPOC" || req.user.collegeId !== project.spokeId) {
-        return res.status(403).json({ error: "Forbidden. You do not have permission to assign teams for this Spoke." });
+      if ((req.user.role !== "Faculty" && req.user.role !== "Principal-Investigator") || req.user.collegeId !== project.spokeId) {
+        return res.status(403).json({ error: "Forbidden. Only Faculty Handlers or Administrators can assign teams to projects." });
       }
     }
 

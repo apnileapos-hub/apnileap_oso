@@ -134,26 +134,26 @@ export default function MentorPortalView({ user }) {
   };
 
   return (
-    <div className="mentor-portal-view" style={{ color: '#c9d1d9', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
+    <div className="mentor-portal-view" style={{ color: 'var(--text-primary)', fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif' }}>
       
       {/* Header Banner */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '600', color: '#f0f6fc', margin: '0 0 6px 0' }}>💼 Industry Mentor & Liaison Portal</h1>
-          <p style={{ fontSize: '13px', color: '#8b949e', margin: 0 }}>Review student code delivery, execute milestone quality gates, verify pull requests, and consult analytics compliance boards.</p>
+          <h1 style={{ fontSize: '24px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>💼 Industry Mentor & Liaison Portal</h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>Review student code delivery, execute milestone quality gates, verify pull requests, and consult analytics compliance boards.</p>
         </div>
         {projects.length > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '13px', color: '#8b949e' }}>Select Project:</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Select Project:</span>
             <select
               value={selectedProjectId}
               onChange={(e) => setSelectedProjectId(e.target.value)}
               style={{
                 padding: '8px 12px',
                 borderRadius: '6px',
-                border: '1px solid #30363d',
-                background: '#161b22',
-                color: '#c9d1d9',
+                border: '1px solid var(--border)',
+                background: 'var(--bg-secondary)',
+                color: 'var(--text-primary)',
                 fontSize: '13px',
                 fontWeight: '600',
                 cursor: 'pointer'
@@ -172,12 +172,12 @@ export default function MentorPortalView({ user }) {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '80px' }}>
           <div className="loading-spinner" style={{ margin: '0 auto 10px auto', width: '32px', height: '32px', border: '3px solid rgba(88,166,255,0.2)', borderTopColor: '#58a6ff', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-          <div style={{ fontSize: '13px', color: '#8b949e' }}>Loading Corporate Dashboard data...</div>
+          <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Loading Corporate Dashboard data...</div>
         </div>
       ) : projects.length === 0 ? (
-        <div style={{ padding: '40px', textAlign: 'center', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
-          <h3 style={{ margin: '0 0 8px 0', color: '#f0f6fc' }}>No Associated Corporate Projects</h3>
-          <p style={{ color: '#8b949e', fontSize: '13px', margin: 0 }}>There are no sponsored projects associated with your corporate organization account.</p>
+        <div style={{ padding: '40px', textAlign: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+          <h3 style={{ margin: '0 0 8px 0', color: 'var(--text-primary)' }}>No Associated Corporate Projects</h3>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0 }}>There are no sponsored projects associated with your corporate organization account.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '20px' }}>
@@ -187,7 +187,7 @@ export default function MentorPortalView({ user }) {
             
             {/* Project Overview Card */}
             {selectedProject && (
-              <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '20px' }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
                   <div>
                     <span style={{
@@ -204,31 +204,31 @@ export default function MentorPortalView({ user }) {
                     }}>
                       Sponsor Connected: {selectedProject.company}
                     </span>
-                    <h2 style={{ fontSize: '18px', fontWeight: '600', color: '#f0f6fc', margin: '0 0 6px 0' }}>{selectedProject.title}</h2>
-                    <p style={{ fontSize: '13px', color: '#8b949e', margin: 0 }}>{selectedProject.description || 'No description provided.'}</p>
+                    <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'var(--text-primary)', margin: '0 0 6px 0' }}>{selectedProject.title}</h2>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: 0 }}>{selectedProject.description || 'No description provided.'}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '11px', color: '#8b949e' }}>Milestone Progress</div>
+                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Milestone Progress</div>
                     <div style={{ fontSize: '20px', fontWeight: 'bold', color: '#3fb950', marginTop: '4px' }}>{completionPercent}%</div>
                   </div>
                 </div>
 
                 {/* Team & Delivery details */}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', background: '#0d1117', padding: '12px', border: '1px solid #21262d', borderRadius: '6px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px', background: 'var(--bg-primary)', padding: '12px', border: '1px solid var(--bg-card)', borderRadius: '6px' }}>
                   <div>
-                    <span style={{ fontSize: '11px', color: '#8b949e', display: 'block', marginBottom: '2px' }}>Assigned University Spoke</span>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#c9d1d9' }}>{selectedProject.spokeId === 'kle-spoke' ? 'KLE University' : 'COEP Spoke (Mock)'}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>Assigned University Spoke</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{selectedProject.spokeId === 'kle-spoke' ? 'KLE University' : 'COEP Spoke (Mock)'}</span>
                   </div>
                   <div>
-                    <span style={{ fontSize: '11px', color: '#8b949e', display: 'block', marginBottom: '2px' }}>Student Dev Team</span>
-                    <span style={{ fontSize: '13px', fontWeight: '600', color: '#c9d1d9' }}>{assignedTeam ? assignedTeam.name : 'Not Assigned'}</span>
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'block', marginBottom: '2px' }}>Student Dev Team</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-primary)' }}>{assignedTeam ? assignedTeam.name : 'Not Assigned'}</span>
                   </div>
                 </div>
               </div>
             )}
 
             {/* Navigation Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #30363d', gap: '8px' }}>
+            <div style={{ display: 'flex', borderBottom: '1px solid var(--border)', gap: '8px' }}>
               {[
                 { id: 'pr', label: '🐙 Code Pull Requests' },
                 { id: 'verify', label: '🛡️ Milestone Gate Sign-off' },
@@ -241,10 +241,10 @@ export default function MentorPortalView({ user }) {
                     padding: '8px 16px',
                     fontSize: '13px',
                     fontWeight: '500',
-                    background: activeTab === tab.id ? '#161b22' : 'transparent',
-                    color: activeTab === tab.id ? '#58a6ff' : '#8b949e',
+                    background: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
+                    color: activeTab === tab.id ? '#58a6ff' : 'var(--text-secondary)',
                     border: '1px solid transparent',
-                    borderBottomColor: activeTab === tab.id ? '#161b22' : 'transparent',
+                    borderBottomColor: activeTab === tab.id ? 'var(--bg-secondary)' : 'transparent',
                     borderRadius: '6px 6px 0 0',
                     cursor: 'pointer',
                     marginBottom: '-1px',
@@ -268,11 +268,11 @@ export default function MentorPortalView({ user }) {
                   const color = statusStyles[pr.status] || statusStyles['Needs Review'];
                   
                   return (
-                    <div key={pr.id} style={{ padding: '16px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
+                    <div key={pr.id} style={{ padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
                         <div>
-                          <div style={{ fontSize: '14px', fontWeight: '600', color: '#f0f6fc' }}>{pr.title}</div>
-                          <div style={{ fontSize: '11px', color: '#8b949e', fontFamily: 'monospace', marginTop: '2px' }}>branch: {pr.branch} · Author: {pr.author}</div>
+                          <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)' }}>{pr.title}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontFamily: 'monospace', marginTop: '2px' }}>branch: {pr.branch} · Author: {pr.author}</div>
                         </div>
                         <span style={{
                           padding: '4px 10px',
@@ -287,8 +287,8 @@ export default function MentorPortalView({ user }) {
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', borderTop: '1px solid #21262d', paddingTop: '10px' }}>
-                        <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: '#8b949e' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '12px', borderTop: '1px solid var(--bg-card)', paddingTop: '10px' }}>
+                        <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: 'var(--text-secondary)' }}>
                           <span>Files Changed: <strong>{pr.files}</strong></span>
                           <span style={{ color: '#3fb950' }}>+{pr.additions} lines</span>
                           <span style={{ color: '#ff7b72' }}>-{pr.deletions} lines</span>
@@ -321,17 +321,17 @@ export default function MentorPortalView({ user }) {
             {activeTab === 'verify' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {epics.length === 0 ? (
-                  <div style={{ padding: '30px', textAlign: 'center', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', color: '#8b949e', fontSize: '13px' }}>
+                  <div style={{ padding: '30px', textAlign: 'center', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-secondary)', fontSize: '13px' }}>
                     No milestones found for verification.
                   </div>
                 ) : (
                   epics.map(epic => (
-                    <div key={epic.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: '#161b22', border: '1px solid #30363d', borderRadius: '8px' }}>
+                    <div key={epic.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px' }}>
                       <div>
-                        <div style={{ fontSize: '14px', fontWeight: '600', color: '#f0f6fc', marginBottom: '4px' }}>
+                        <div style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-primary)', marginBottom: '4px' }}>
                           [{epic.jiraKey || 'MOCK'}] {epic.title}
                         </div>
-                        <p style={{ fontSize: '12px', color: '#8b949e', margin: 0 }}>{epic.description || 'No description provided.'}</p>
+                        <p style={{ fontSize: '12px', color: 'var(--text-secondary)', margin: 0 }}>{epic.description || 'No description provided.'}</p>
                       </div>
                       
                       <div>
@@ -369,8 +369,8 @@ export default function MentorPortalView({ user }) {
 
             {/* TAB CONTENT: Feed */}
             {activeTab === 'feed' && (
-              <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '20px' }}>
-                <h3 style={{ fontSize: '15px', color: '#f0f6fc', margin: '0 0 16px 0', borderBottom: '1px solid #21262d', paddingBottom: '10px' }}>
+              <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '20px' }}>
+                <h3 style={{ fontSize: '15px', color: 'var(--text-primary)', margin: '0 0 16px 0', borderBottom: '1px solid var(--bg-card)', paddingBottom: '10px' }}>
                   💬 Spec Discussions & Direct Collaboration Feed
                 </h3>
 
@@ -384,9 +384,9 @@ export default function MentorPortalView({ user }) {
                     style={{
                       padding: '8px 12px',
                       borderRadius: '6px',
-                      border: '1px solid #30363d',
-                      background: '#0d1117',
-                      color: '#c9d1d9',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg-primary)',
+                      color: 'var(--text-primary)',
                       fontSize: '13px',
                       flex: 1
                     }}
@@ -410,14 +410,14 @@ export default function MentorPortalView({ user }) {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {mentorComments.map(comment => (
-                    <div key={comment.id} style={{ background: '#0d1117', border: '1px solid #21262d', padding: '12px', borderRadius: '6px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#8b949e', marginBottom: '6px' }}>
+                    <div key={comment.id} style={{ background: 'var(--bg-primary)', border: '1px solid var(--bg-card)', padding: '12px', borderRadius: '6px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                         <div>
-                          <strong style={{ color: '#f0f6fc' }}>{comment.author}</strong> · <span>{comment.role}</span>
+                          <strong style={{ color: 'var(--text-primary)' }}>{comment.author}</strong> · <span>{comment.role}</span>
                         </div>
                         <span>{comment.date}</span>
                       </div>
-                      <p style={{ fontSize: '12px', color: '#c9d1d9', margin: 0, lineHeight: '1.4' }}>{comment.text}</p>
+                      <p style={{ fontSize: '12px', color: 'var(--text-primary)', margin: 0, lineHeight: '1.4' }}>{comment.text}</p>
                     </div>
                   ))}
                 </div>
@@ -440,10 +440,10 @@ export default function MentorPortalView({ user }) {
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                   <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#7f85f5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#c9d1d9', margin: 0 }}>Rovo AI Mentor Advisor</h3>
+                <h3 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>Rovo AI Mentor Advisor</h3>
               </div>
               
-              <div style={{ fontSize: '12px', color: '#8b949e', lineHeight: '1.4' }}>
+              <div style={{ fontSize: '12px', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
                 <div style={{ background: 'rgba(13,17,23,0.6)', padding: '10px', borderRadius: '6px', borderLeft: '3px solid #d29922', marginBottom: '10px' }}>
                   <strong>🤖 Risk Advisor:</strong> Rahul (Student) submitted a checkout script with a high cyclomatic complexity of 14. Code refactoring is highly recommended.
                 </div>
@@ -454,8 +454,8 @@ export default function MentorPortalView({ user }) {
             </div>
 
             {/* Quick Actions Checklist */}
-            <div style={{ background: '#161b22', border: '1px solid #30363d', borderRadius: '8px', padding: '16px' }}>
-              <h3 style={{ fontSize: '14px', color: '#f0f6fc', margin: '0 0 12px 0' }}>📋 Mentor Checklist</h3>
+            <div style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
+              <h3 style={{ fontSize: '14px', color: 'var(--text-primary)', margin: '0 0 12px 0' }}>📋 Mentor Checklist</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {[
                   { label: 'Review secure JWT auth code spec', done: false },
@@ -463,7 +463,7 @@ export default function MentorPortalView({ user }) {
                   { label: 'Approve Payments module checkout PR', done: false },
                   { label: 'Participate in KLE Sprint 3 review call', done: false }
                 ].map((item, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: item.done ? '#8b949e' : '#c9d1d9' }}>
+                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: item.done ? 'var(--text-secondary)' : 'var(--text-primary)' }}>
                     <input
                       type="checkbox"
                       checked={item.done}

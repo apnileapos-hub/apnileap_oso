@@ -207,7 +207,7 @@ export default function Dashboard({ activeView, refreshKey, onFetchStart, onFetc
               });
               const priorityColors = {
                 Highest: '#f85149', High: '#d29922', Medium: '#58a6ff',
-                Low: '#3fb950', Lowest: '#8b949e',
+                Low: '#3fb950', Lowest: 'var(--text-secondary)',
               };
               return Object.entries(priorityTally)
                 .sort(([, a], [, b]) => b - a)

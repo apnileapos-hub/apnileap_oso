@@ -4,7 +4,8 @@ const db = require('./db');
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const JWT_SECRET = process.env.JWT_SECRET || "fallback_jwt_secret";
 

@@ -94,6 +94,19 @@ axios.interceptors.request.use(
   }
 );
 
+// Global Axios Response Interceptor — detect 401 (expired JWT) and trigger session expiry flow
+let _sessionExpiredFired = false;
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401 && !_sessionExpiredFired) {
+      _sessionExpiredFired = true;
+      window.dispatchEvent(new CustomEvent("apnileap-session-expired"));
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Alias mapping for FontAwesome to Lucide components
 const FaTasks = ListTodo;
 const FaChartPie = LucidePieChart;
@@ -368,6 +381,10 @@ function App() {
   const [loginError, setLoginError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Session expiry auto-logout state
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionCountdown, setSessionCountdown] = useState(120); // 2 minutes
   
   // Student & Faculty registration states
   const [showSignup, setShowSignup] = useState(false);
@@ -801,7 +818,34 @@ function App() {
     localStorage.removeItem("apnileap-token");
     
     triggerToast("Logged out successfully.");
+    // Reset session expiry state
+    setSessionExpired(false);
+    setSessionCountdown(120);
+    _sessionExpiredFired = false;
   };
+
+  // Listen for session expiry event from Axios interceptor
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      if (!isAuthenticated) return;
+      setSessionExpired(true);
+      setSessionCountdown(120);
+    };
+    window.addEventListener("apnileap-session-expired", handleSessionExpired);
+    return () => window.removeEventListener("apnileap-session-expired", handleSessionExpired);
+  }, [isAuthenticated]);
+
+  // Countdown timer for session expiry — auto-logout after 2 minutes
+  useEffect(() => {
+    if (!sessionExpired) return;
+    if (sessionCountdown <= 0) {
+      handleLogout();
+      return;
+    }
+    const timer = setTimeout(() => setSessionCountdown(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionExpired, sessionCountdown]);
 
   const handleIngestProjectSubmit = async (e) => {
     e.preventDefault();
@@ -10008,6 +10052,86 @@ function App() {
                 style={{ padding: "10px 22px", borderRadius: "8px", cursor: "pointer" }}
               >
                 Close Portal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Session Expiry Auto-Logout Overlay */}
+      {sessionExpired && isAuthenticated && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(0, 0, 0, 0.6)",
+          backdropFilter: "blur(6px)",
+          zIndex: 99999,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center"
+        }}>
+          <div style={{
+            background: "var(--bg-card, #1e1e2e)",
+            border: "1.5px solid rgba(239, 68, 68, 0.4)",
+            borderRadius: "20px",
+            padding: "36px 44px",
+            maxWidth: "440px",
+            width: "90%",
+            textAlign: "center",
+            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.5)"
+          }}>
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>⏱️</div>
+            <h2 style={{ fontSize: "22px", fontWeight: "800", color: "var(--text-main, #fff)", margin: "0 0 8px 0" }}>
+              Session Expired
+            </h2>
+            <p style={{ fontSize: "14px", color: "var(--text-muted, #aaa)", margin: "0 0 20px 0", lineHeight: "1.5" }}>
+              Your authentication token has expired. You will be automatically logged out in:
+            </p>
+            <div style={{
+              fontSize: "36px",
+              fontWeight: "900",
+              color: sessionCountdown <= 30 ? "#ef4444" : "var(--accent, #f97316)",
+              fontFamily: "monospace",
+              marginBottom: "24px",
+              transition: "color 0.3s ease"
+            }}>
+              {Math.floor(sessionCountdown / 60)}:{String(sessionCountdown % 60).padStart(2, "0")}
+            </div>
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+              <button
+                onClick={handleLogout}
+                style={{
+                  padding: "10px 24px",
+                  fontSize: "13.5px",
+                  fontWeight: "700",
+                  borderRadius: "10px",
+                  border: "none",
+                  background: "#ef4444",
+                  color: "white",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Logout Now
+              </button>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setLandingTab("login");
+                }}
+                style={{
+                  padding: "10px 24px",
+                  fontSize: "13.5px",
+                  fontWeight: "700",
+                  borderRadius: "10px",
+                  border: "1.5px solid rgba(99, 102, 241, 0.4)",
+                  background: "rgba(99, 102, 241, 0.1)",
+                  color: "var(--primary, #6366f1)",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+              >
+                Re-login
               </button>
             </div>
           </div>

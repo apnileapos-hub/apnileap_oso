@@ -60,7 +60,7 @@ const CAMPUS_TEAM_MEMBERS = {
 };
 
 // GET: Fetch upcoming scheduled meetings
-router.get("/meetings", verifyToken, async (req, res) => {
+router.get("/meetings", async (req, res) => {
   try {
     const result = await db.query('SELECT * FROM meetings ORDER BY created_at DESC');
     // Map database properties back to camelCase for the frontend if needed

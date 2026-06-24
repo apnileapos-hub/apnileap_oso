@@ -10716,7 +10716,7 @@ const modalLabelStyle = {
 function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerToast }) {
   const [activeTab, setActiveTab] = useState("campus"); // "campus" or "b2b"
 
-  if (loading || !metrics) {
+  if (loading || !metrics || !metrics.spokes || !metrics.blockers) {
     return (
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "400px", gap: "16px" }}>
         <div style={{
@@ -10731,10 +10731,10 @@ function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerT
     );
   }
 
-  const totalIssues = metrics.spokes.reduce((sum, s) => sum + s.total, 0);
-  const totalDone = metrics.spokes.reduce((sum, s) => sum + s.done, 0);
+  const totalIssues = (metrics.spokes || []).reduce((sum, s) => sum + s.total, 0);
+  const totalDone = (metrics.spokes || []).reduce((sum, s) => sum + s.done, 0);
   const globalCompletionRate = totalIssues > 0 ? Math.round((totalDone / totalIssues) * 100) : 0;
-  const totalBlockers = metrics.blockers.length;
+  const totalBlockers = (metrics.blockers || []).length;
 
   // B2B Stats calculations
   const b2bList = metrics.b2bProjects || [];

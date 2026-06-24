@@ -2660,40 +2660,7 @@ app.use(gitRouter);
 app.use(auditRouter);
 app.use(rovoRouter);
 
-// ── Serve React build (production / single-server mode) ───────────────────────
-// When 'npm run build' is run from the root, the React app is built into
-// frontend/frontend/build and Express serves it alongside the API.
-const buildPath = path.join(__dirname, "..", "frontend", "frontend", "build");
-console.log(`[Diagnostic] checking buildPath: ${buildPath}`);
-console.log(`[Diagnostic] buildPath exists: ${fs.existsSync(buildPath)}`);
 
-if (!fs.existsSync(buildPath)) {
-  const parentDir = path.join(__dirname, "..", "frontend", "frontend");
-  console.log(`[Diagnostic] parentDir exists: ${fs.existsSync(parentDir)}`);
-  if (fs.existsSync(parentDir)) {
-    try {
-      console.log(`[Diagnostic] parentDir contents: ${fs.readdirSync(parentDir).join(', ')}`);
-    } catch (e) {
-      console.log(`[Diagnostic] failed to read parentDir: ${e.message}`);
-    }
-  }
-}
-
-if (fs.existsSync(buildPath)) {
-  // Serve static assets (JS, CSS, images, etc.)
-  app.use(express.static(buildPath));
-
-  // Catch-all route — must come AFTER all API routes
-  app.get("/*path", (req, res) => {
-    res.sendFile(path.join(buildPath, "index.html"));
-  });
-
-  console.log(`📦  Serving React build → ${buildPath}`);
-  console.log(`🌐  Visit http://localhost:${process.env.PORT || 5000}`);
-} else {
-  console.log(`💡  React build not found. Run 'npm run build' from the project root.`);
-  console.log(`    Dev mode: start React separately on port 3000.`);
-}
 
 // ── Start server ──────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
@@ -3764,6 +3731,20 @@ app.post("/teams/:teamId/assign-students", verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// ── Serve React build (production / single-server mode) ───────────────────────
+// When 'npm run build' is run from the root, the React app is built into
+// frontend/frontend/build and Express serves it alongside the API.
+const buildPath = path.join(__dirname, "..", "frontend", "frontend", "build");
+if (fs.existsSync(buildPath)) {
+  // Serve static assets (JS, CSS, images, etc.)
+  app.use(express.static(buildPath));
+
+  // Catch-all route — must come AFTER all API routes
+  app.get("/*path", (req, res) => {
+    res.sendFile(path.join(buildPath, "index.html"));
+  });
+}
 
 // ── Graceful shutdown on Ctrl+C / SIGTERM ─────────────────────────────────────
 const shutdown = (signal) => {

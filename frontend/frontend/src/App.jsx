@@ -1261,10 +1261,13 @@ function App() {
     Promise.resolve().then(() => {
       fetchMeetings(true); // Fetch meetings silently to check for banner alerts
       if (activeWorkspace === "hub") {
+        setIsLoading(false);
         fetchHubMetrics(false);
       } else if (activeWorkspace === "moderator") {
+        setIsLoading(false);
         fetchModeratorProjects(false);
       } else if (activeWorkspace === "meetings") {
+        setIsLoading(false);
         fetchMeetings(false);
       } else {
         fetchJiraTasks(false);

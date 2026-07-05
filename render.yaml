@@ -1,3 +1,9 @@
+databases:
+  - name: apnileap-db
+    databaseName: apnileap
+    user: apnileap
+    plan: free
+
 services:
   # ── Backend: NestJS API ────────────────────────────────────────────────────
   - type: web
@@ -14,7 +20,9 @@ services:
       - key: PORT
         value: 5000
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: apnileap-db
+          property: connectionString
       - key: JWT_SECRET
         generateValue: true
       - key: KEYCLOAK_BASE_URL
@@ -31,11 +39,11 @@ services:
         sync: false
       - key: GITLAB_GROUP_ID
         sync: false
-      - key: BOOKSTACK_BASE_URL
+      - key: WIKIJ_BASE_URL
         sync: false
-      - key: BOOKSTACK_TOKEN_ID
+      - key: WIKIJ_API_TOKEN
         sync: false
-      - key: BOOKSTACK_TOKEN_SECRET
+      - key: REDIS_URL
         sync: false
       - key: MINIO_ENDPOINT
         sync: false

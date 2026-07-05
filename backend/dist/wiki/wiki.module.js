@@ -6,19 +6,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HealthModule = void 0;
+exports.WikiModule = void 0;
 const common_1 = require("@nestjs/common");
-const health_controller_1 = require("./health.controller");
-const gitlab_module_1 = require("../gitlab/gitlab.module");
-const keycloak_module_1 = require("../keycloak/keycloak.module");
-const n8n_module_1 = require("../n8n/n8n.module");
-let HealthModule = class HealthModule {
+const wiki_service_1 = require("./wiki.service");
+let WikiModule = class WikiModule {
 };
-exports.HealthModule = HealthModule;
-exports.HealthModule = HealthModule = __decorate([
+exports.WikiModule = WikiModule;
+exports.WikiModule = WikiModule = __decorate([
     (0, common_1.Module)({
-        imports: [gitlab_module_1.GitlabModule, BookstackModule, keycloak_module_1.KeycloakModule, n8n_module_1.N8nModule],
-        controllers: [health_controller_1.HealthController],
+        providers: [wiki_service_1.WikiService],
+        exports: [wiki_service_1.WikiService],
     })
-], HealthModule);
-//# sourceMappingURL=health.module.js.map
+], WikiModule);
+//# sourceMappingURL=wiki.module.js.map

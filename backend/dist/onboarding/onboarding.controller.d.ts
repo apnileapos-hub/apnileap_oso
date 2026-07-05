@@ -9,29 +9,29 @@ export declare class OnboardingController {
         domain?: string;
         logoUrl?: string;
     }): Promise<{
-        id: number;
-        createdAt: Date;
-        updatedAt: Date;
+        companyName: string;
         email: string;
+        subdomain: string;
         domain: string | null;
         logoUrl: string | null;
         status: string;
-        subdomain: string;
-        companyName: string;
         comments: string | null;
+        createdAt: Date;
+        updatedAt: Date;
+        id: number;
     }>;
     getRequests(page?: string, limit?: string, search?: string, status?: string): Promise<{
         items: {
-            id: number;
-            createdAt: Date;
-            updatedAt: Date;
+            companyName: string;
             email: string;
+            subdomain: string;
             domain: string | null;
             logoUrl: string | null;
             status: string;
-            subdomain: string;
-            companyName: string;
             comments: string | null;
+            createdAt: Date;
+            updatedAt: Date;
+            id: number;
         }[];
         total: number;
         page: number;

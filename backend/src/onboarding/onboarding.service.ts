@@ -2,7 +2,7 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from '../auth/auth.service';
 import { GitlabService } from '../gitlab/gitlab.service';
-import { BookstackService } from '../bookstack/bookstack.service';
+import { WikiService } from '../wiki/wiki.service';
 import { N8nService } from '../n8n/n8n.service';
 import { AuditService } from '../audit/audit.service';
 import { sendEmail } from '../../legacy-express/emailService'; // Use legacy mailer helper if available or mock
@@ -14,7 +14,7 @@ export class OnboardingService {
     private readonly prisma: PrismaService,
     private readonly authService: AuthService,
     private readonly gitlabService: GitlabService,
-    private readonly bookstackService: BookstackService,
+    private readonly wikiService: WikiService,
     private readonly n8nService: N8nService,
     private readonly auditService: AuditService,
   ) {}
@@ -204,9 +204,12 @@ deploy_job:
     let bookstackBookUrl = '';
     let bookstackShelfUrl = '';
     try {
-      const bookstackResult = await this.bookstackService.provisionCompanyDocumentation(request.companyName);
-      bookstackBookUrl = bookstackResult.bookUrl;
-      bookstackShelfUrl = bookstackResult.shelfUrl;
+      const wikiResult = await this.wikiService.provisionCompanyDocumentation(request.companyName);
+      const wikiSpaceUrl = wikiResult.spaceUrl;
+      const wikiPageUrl = wikiResult.pageUrl;
+      // For backward compatibility, assign to variables used later in email
+      const bookstackBookUrl = wikiPageUrl;
+      const bookstackShelfUrl = wikiSpaceUrl;
     } catch (bookstackErr) {
       console.warn('[BookStack Provisioning Failed] Skipping integration setup:', bookstackErr.message);
     }
@@ -216,7 +219,7 @@ deploy_job:
       await sendEmail({
         to: request.email,
         subject: `🎉 [APNILEAP] Onboarding Approved: ${request.companyName}`,
-        body: `Dear ${request.companyName} Admin,\n\nYour organization onboarding request has been successfully approved!\n\nYour workspace details:\n- Organization Name: ${request.companyName}\n- Subdomain: http://${request.subdomain}.apnileap.com\n- Admin Username: ${request.email}\n- Admin Temporary Password: ${spocPassword}\n\nGitLab Resources:\n- Repository URL: ${gitlabRepoUrl || 'Mocked GitLab'}\n- Agile Boards URL: ${gitlabBoardUrl || 'Mocked GitLab'}\n\nBookStack Documentation Workspace:\n- Company Shelf URL: ${bookstackShelfUrl || 'Mocked BookStack'}\n- Collaboration Book URL: ${bookstackBookUrl || 'Mocked BookStack'}\n\nPlease login to secure your dashboard.\n\nBest regards,\nAPNILEAP Administrator`,
+        body: `Dear ${request.companyName} Admin,\n\nYour organization onboarding request has been successfully approved!\n\nYour workspace details:\n- Organization Name: ${request.companyName}\n- Subdomain: http://${request.subdomain}.apnileap.com\n- Admin Username: ${request.email}\n- Admin Temporary Password: ${spocPassword}\n\nGitLab Resources:\n- Repository URL: ${gitlabRepoUrl || 'Mocked GitLab'}\n- Agile Boards URL: ${gitlabBoardUrl || 'Mocked GitLab'}\n\nWiki.js Documentation Workspace:\n- Space URL: ${wikiSpaceUrl || 'Mocked Wiki'}\n- Welcome Page URL: ${wikiPageUrl || 'Mocked Wiki'}\n\nPlease login to secure your dashboard.\n\nBest regards,\nAPNILEAP Administrator`,
         type: 'onboarding_approval',
       });
     } catch (mailErr) {

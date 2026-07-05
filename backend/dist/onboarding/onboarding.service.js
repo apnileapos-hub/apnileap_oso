@@ -14,16 +14,16 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
 const auth_service_1 = require("../auth/auth.service");
 const gitlab_service_1 = require("../gitlab/gitlab.service");
-const bookstack_service_1 = require("../bookstack/bookstack.service");
+const wiki_service_1 = require("../wiki/wiki.service");
 const n8n_service_1 = require("../n8n/n8n.service");
 const audit_service_1 = require("../audit/audit.service");
 const emailService_1 = require("../../legacy-express/emailService");
 let OnboardingService = class OnboardingService {
-    constructor(prisma, authService, gitlabService, bookstackService, n8nService, auditService) {
+    constructor(prisma, authService, gitlabService, wikiService, n8nService, auditService) {
         this.prisma = prisma;
         this.authService = authService;
         this.gitlabService = gitlabService;
-        this.bookstackService = bookstackService;
+        this.wikiService = wikiService;
         this.n8nService = n8nService;
         this.auditService = auditService;
     }
@@ -160,9 +160,11 @@ deploy_job:
         let bookstackBookUrl = '';
         let bookstackShelfUrl = '';
         try {
-            const bookstackResult = await this.bookstackService.provisionCompanyDocumentation(request.companyName);
-            bookstackBookUrl = bookstackResult.bookUrl;
-            bookstackShelfUrl = bookstackResult.shelfUrl;
+            const wikiResult = await this.wikiService.provisionCompanyDocumentation(request.companyName);
+            const wikiSpaceUrl = wikiResult.spaceUrl;
+            const wikiPageUrl = wikiResult.pageUrl;
+            const bookstackBookUrl = wikiPageUrl;
+            const bookstackShelfUrl = wikiSpaceUrl;
         }
         catch (bookstackErr) {
             console.warn('[BookStack Provisioning Failed] Skipping integration setup:', bookstackErr.message);
@@ -171,7 +173,7 @@ deploy_job:
             await (0, emailService_1.sendEmail)({
                 to: request.email,
                 subject: `🎉 [APNILEAP] Onboarding Approved: ${request.companyName}`,
-                body: `Dear ${request.companyName} Admin,\n\nYour organization onboarding request has been successfully approved!\n\nYour workspace details:\n- Organization Name: ${request.companyName}\n- Subdomain: http://${request.subdomain}.apnileap.com\n- Admin Username: ${request.email}\n- Admin Temporary Password: ${spocPassword}\n\nGitLab Resources:\n- Repository URL: ${gitlabRepoUrl || 'Mocked GitLab'}\n- Agile Boards URL: ${gitlabBoardUrl || 'Mocked GitLab'}\n\nBookStack Documentation Workspace:\n- Company Shelf URL: ${bookstackShelfUrl || 'Mocked BookStack'}\n- Collaboration Book URL: ${bookstackBookUrl || 'Mocked BookStack'}\n\nPlease login to secure your dashboard.\n\nBest regards,\nAPNILEAP Administrator`,
+                body: `Dear ${request.companyName} Admin,\n\nYour organization onboarding request has been successfully approved!\n\nYour workspace details:\n- Organization Name: ${request.companyName}\n- Subdomain: http://${request.subdomain}.apnileap.com\n- Admin Username: ${request.email}\n- Admin Temporary Password: ${spocPassword}\n\nGitLab Resources:\n- Repository URL: ${gitlabRepoUrl || 'Mocked GitLab'}\n- Agile Boards URL: ${gitlabBoardUrl || 'Mocked GitLab'}\n\nWiki.js Documentation Workspace:\n- Space URL: ${wikiSpaceUrl || 'Mocked Wiki'}\n- Welcome Page URL: ${wikiPageUrl || 'Mocked Wiki'}\n\nPlease login to secure your dashboard.\n\nBest regards,\nAPNILEAP Administrator`,
                 type: 'onboarding_approval',
             });
         }
@@ -248,7 +250,7 @@ exports.OnboardingService = OnboardingService = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         auth_service_1.AuthService,
         gitlab_service_1.GitlabService,
-        bookstack_service_1.BookstackService,
+        wiki_service_1.WikiService,
         n8n_service_1.N8nService,
         audit_service_1.AuditService])
 ], OnboardingService);

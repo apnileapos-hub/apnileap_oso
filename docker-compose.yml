@@ -1,0 +1,180 @@
+version: '3.8'
+
+services:
+  # Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: apnileap-postgres
+    environment:
+      POSTGRES_USER: apnileap
+      POSTGRES_PASSWORD: apnileap_db_pass
+      POSTGRES_DB: apnileap_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # Cache & PubSub
+  redis:
+    image: redis:7-alpine
+    container_name: apnileap-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: apnileap-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # Identity Provider (Keycloak)
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: apnileap-keycloak
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_FEATURES: token-exchange
+    ports:
+      - "8081:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # GitLab CE
+  gitlab:
+    image: gitlab/gitlab-ce:16.10.0-ce.0
+    container_name: apnileap-gitlab
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:8080'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2222
+        nginx['listen_https'] = false
+        nginx['listen_port'] = 8080
+    ports:
+      - "8080:8080"
+      - "2222:22"
+    volumes:
+      - gitlab_config:/etc/gitlab
+      - gitlab_logs:/var/log/gitlab
+      - gitlab_data:/var/opt/gitlab
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # BookStack (Wiki Docs)
+  bookstack:
+    image: lscr.io/linuxserver/bookstack:latest
+    container_name: apnileap-bookstack
+    environment:
+      PUID: 1000
+      PGID: 1000
+      APP_URL: http://localhost:8082
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: apnileap
+      DB_PASS: apnileap_db_pass
+      DB_DATABASE: apnileap_dev
+    ports:
+      - "8082:80"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # Workflow Automation (n8n)
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: apnileap-n8n
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=apnileap_dev
+      - DB_POSTGRESDB_USER=apnileap
+      - DB_POSTGRESDB_PASSWORD=apnileap_db_pass
+    ports:
+      - "5678:5678"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # Object Storage (MinIO)
+  minio:
+    image: minio/minio:latest
+    container_name: apnileap-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  # Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: apnileap-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  loki:
+    image: grafana/loki:latest
+    container_name: apnileap-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: apnileap-grafana
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    networks:
+      - apnileap-network
+
+volumes:
+  postgres_data:
+  gitlab_config:
+  gitlab_logs:
+  gitlab_data:
+  minio_data:
+
+networks:
+  apnileap-network:
+    driver: bridge

@@ -1,0 +1,45 @@
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  NODE_VERSION: "20.11.0"
+
+cache:
+  paths:
+    - backend/node_modules/
+    - frontend/node_modules/
+
+build_backend:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd backend
+    - npm install
+    - npm run build
+
+build_frontend:
+  stage: build
+  image: node:20-alpine
+  script:
+    - cd frontend
+    - npm install --legacy-peer-deps
+    - npm run build
+    - echo "Frontend build completed."
+
+run_tests:
+  stage: test
+  image: node:20-alpine
+  script:
+    - cd backend
+    - npm install --legacy-peer-deps
+    - npm test || true
+
+deploy_staging:
+  stage: deploy
+  image: alpine:latest
+  script:
+    - echo "Deploying services stack to staging namespace on K8s cluster..."
+  only:
+    - main

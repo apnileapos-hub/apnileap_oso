@@ -1,0 +1,204 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id             Int      @id @default(autoincrement())
+  name           String
+  subdomain      String
+  keycloakRealm  String   @map("keycloak_realm")
+  status         String
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("tenants")
+}
+
+model Project {
+  id                  Int      @id @default(autoincrement())
+  title               String
+  description         String?
+  status              String
+  teamId              String?  @map("team_id")
+  spokeId             String?  @map("spoke_id")
+  companyId           Int?     @map("company_id")
+  budget              Decimal? @map("budget")
+  durationWeeks       Int?     @map("duration_weeks")
+  epics               Json?
+  confluenceSpaceUrl  String?  @map("confluence_space_url")
+  jiraBoardUrl        String?  @map("jira_board_url")
+  jiraProjectKey      String?  @map("jira_project_key")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@map("projects")
+}
+
+model User {
+  id           Int         @id @default(autoincrement())
+  email        String      @unique
+  name         String
+  role         String
+  password     String
+  collegeId    String?     @map("college_id")
+  departmentId Int?        @map("department_id")
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  @@map("users")
+}
+
+model Team {
+  id        String  @id
+  name      String
+  members   Json?
+  collegeId String? @map("college_id")
+  projectId Int?    @map("project_id")
+
+  @@map("teams")
+}
+
+model TeamMessage {
+  id        Int      @id @default(autoincrement())
+  teamId    String   @map("team_id")
+  sender    String
+  text      String
+  issueKey  String?  @map("issue_key")
+  timestamp DateTime @default(now())
+
+  @@map("team_messages")
+}
+
+model Meeting {
+  id        String   @id
+  title     String
+  campusId  String   @map("campus_id")
+  date      String
+  time      String
+  link      String?
+  agenda    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("meetings")
+}
+
+model MeetingMessage {
+  id        Int      @id @default(autoincrement())
+  meetingId String   @map("meeting_id")
+  sender    String
+  text      String
+  issueKey  String?  @map("issue_key")
+  timestamp DateTime @default(now())
+
+  @@map("meeting_messages")
+}
+
+model MockTask {
+  id        String   @id
+  key       String   @unique
+  boardId   String   @map("board_id")
+  fields    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("mock_tasks")
+}
+
+model Repository {
+  id        Int     @id @default(autoincrement())
+  projectId Int     @map("project_id")
+  repoName  String  @unique @map("repo_name")
+  repoUrl   String  @map("repo_url")
+
+  @@map("repositories")
+}
+
+model Organization {
+  id        Int       @id @default(autoincrement())
+  name      String
+  domain    String?
+  colleges  College[]
+  companies Company[]
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@map("organizations")
+}
+
+model Company {
+  id             Int           @id @default(autoincrement())
+  name           String
+  logoUrl        String?       @map("logo_url")
+  organizationId Int?          @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  departments    Department[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@map("companies")
+}
+
+model College {
+  id             Int           @id @default(autoincrement())
+  name           String
+  universityId   Int?          @map("university_id")
+  organizationId Int?          @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  departments    Department[]
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@map("colleges")
+}
+
+model Department {
+  id        Int      @id @default(autoincrement())
+  name      String
+  collegeId Int?     @map("college_id")
+  college   College? @relation(fields: [collegeId], references: [id], onDelete: SetNull)
+  companyId Int?     @map("company_id")
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  users     User[]
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("departments")
+}
+
+model OnboardingRequest {
+  id          Int      @id @default(autoincrement())
+  companyName String   @map("company_name")
+  email       String
+  subdomain   String   @unique
+  domain      String?
+  logoUrl     String?  @map("logo_url")
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+  comments    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("onboarding_requests")
+}
+
+model Submission {
+  id          Int      @id @default(autoincrement())
+  taskId      String   @map("task_id")
+  studentName String   @map("student_name")
+  fileName    String   @map("file_name")
+  fileUrl     String   @map("file_url")
+  comments    String?
+  status      String   @default("Pending Review")
+  feedback    String?
+  submittedAt DateTime @default(now()) @map("submitted_at")
+
+  @@map("submissions")
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  actor     String
+  details   String?
+  timestamp DateTime @default(now())
+
+  @@map("audit_logs")
+}

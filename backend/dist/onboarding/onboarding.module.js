@@ -13,13 +13,14 @@ const onboarding_controller_1 = require("./onboarding.controller");
 const prisma_module_1 = require("../prisma/prisma.module");
 const auth_module_1 = require("../auth/auth.module");
 const gitlab_module_1 = require("../gitlab/gitlab.module");
+const wiki_module_1 = require("../wiki/wiki.module");
 const n8n_module_1 = require("../n8n/n8n.module");
 let OnboardingModule = class OnboardingModule {
 };
 exports.OnboardingModule = OnboardingModule;
 exports.OnboardingModule = OnboardingModule = __decorate([
     (0, common_1.Module)({
-        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule, gitlab_module_1.GitlabModule, BookstackModule, n8n_module_1.N8nModule],
+        imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule, gitlab_module_1.GitlabModule, wiki_module_1.WikiModule, n8n_module_1.N8nModule],
         controllers: [onboarding_controller_1.OnboardingController],
         providers: [onboarding_service_1.OnboardingService],
     })

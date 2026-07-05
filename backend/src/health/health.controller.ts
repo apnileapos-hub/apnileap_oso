@@ -3,7 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { RabbitmqService } from '../rabbitmq/rabbitmq.service';
 import { GitlabService } from '../gitlab/gitlab.service';
-import { BookstackService } from '../bookstack/bookstack.service';
+import { WikiService } from '../wiki/wiki.service';
 import { KeycloakService } from '../keycloak/keycloak.service';
 import { MinioService } from '../minio/minio.service';
 import { N8nService } from '../n8n/n8n.service';
@@ -15,7 +15,7 @@ export class HealthController {
     private readonly redis: RedisService,
     private readonly rabbitmq: RabbitmqService,
     private readonly gitlab: GitlabService,
-    private readonly bookstack: BookstackService,
+    private readonly wiki: WikiService,
     private readonly keycloak: KeycloakService,
     private readonly minio: MinioService,
     private readonly n8n: N8nService,
@@ -27,7 +27,7 @@ export class HealthController {
     const redisStatus = await this.redis.checkHealth();
     const rabbitmqStatus = await this.rabbitmq.checkHealth();
     const gitlabStatus = await this.gitlab.checkHealth();
-    const bookstackStatus = await this.bookstack.checkHealth();
+    const wikiStatus = await this.wiki.checkHealth();
     const keycloakStatus = await this.keycloak.checkHealth();
     const minioStatus = await this.minio.checkHealth();
     const n8nStatus = await this.n8n.checkHealth();
@@ -37,7 +37,7 @@ export class HealthController {
       redisStatus &&
       rabbitmqStatus &&
       gitlabStatus &&
-      bookstackStatus &&
+      wikiStatus &&
       keycloakStatus &&
       minioStatus &&
       n8nStatus;
@@ -49,7 +49,7 @@ export class HealthController {
         redis: { status: redisStatus ? 'up' : 'down' },
         rabbitmq: { status: rabbitmqStatus ? 'up' : 'down' },
         gitlab: { status: gitlabStatus ? 'up' : 'down' },
-        bookstack: { status: bookstackStatus ? 'up' : 'down' },
+        wiki: { status: wikiStatus ? 'up' : 'down' },
         keycloak: { status: keycloakStatus ? 'up' : 'down' },
         minio: { status: minioStatus ? 'up' : 'down' },
         n8n: { status: n8nStatus ? 'up' : 'down' },

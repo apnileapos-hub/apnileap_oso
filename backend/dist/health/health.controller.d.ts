@@ -2,7 +2,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { RedisService } from '../redis/redis.service';
 import { RabbitmqService } from '../rabbitmq/rabbitmq.service';
 import { GitlabService } from '../gitlab/gitlab.service';
-import { BookstackService } from '../bookstack/bookstack.service';
+import { WikiService } from '../wiki/wiki.service';
 import { KeycloakService } from '../keycloak/keycloak.service';
 import { MinioService } from '../minio/minio.service';
 import { N8nService } from '../n8n/n8n.service';
@@ -11,11 +11,11 @@ export declare class HealthController {
     private readonly redis;
     private readonly rabbitmq;
     private readonly gitlab;
-    private readonly bookstack;
+    private readonly wiki;
     private readonly keycloak;
     private readonly minio;
     private readonly n8n;
-    constructor(prisma: PrismaService, redis: RedisService, rabbitmq: RabbitmqService, gitlab: GitlabService, bookstack: BookstackService, keycloak: KeycloakService, minio: MinioService, n8n: N8nService);
+    constructor(prisma: PrismaService, redis: RedisService, rabbitmq: RabbitmqService, gitlab: GitlabService, wiki: WikiService, keycloak: KeycloakService, minio: MinioService, n8n: N8nService);
     getHealth(): Promise<{
         status: string;
         details: {
@@ -31,7 +31,7 @@ export declare class HealthController {
             gitlab: {
                 status: string;
             };
-            bookstack: {
+            wiki: {
                 status: string;
             };
             keycloak: {

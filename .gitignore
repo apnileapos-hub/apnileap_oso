@@ -4,3 +4,4 @@ frontend/frontend/build/
 *.log
 .DS_Store
 Thumbs.db
+backend/.env

@@ -157,18 +157,6 @@ deploy_job:
         catch (gitlabErr) {
             console.warn('[GitLab Provisioning Failed] Skipping integration setup:', gitlabErr.message);
         }
-        let bookstackBookUrl = '';
-        let bookstackShelfUrl = '';
-        try {
-            const wikiResult = await this.wikiService.provisionCompanyDocumentation(request.companyName);
-            const wikiSpaceUrl = wikiResult.spaceUrl;
-            const wikiPageUrl = wikiResult.pageUrl;
-            const bookstackBookUrl = wikiPageUrl;
-            const bookstackShelfUrl = wikiSpaceUrl;
-        }
-        catch (bookstackErr) {
-            console.warn('[BookStack Provisioning Failed] Skipping integration setup:', bookstackErr.message);
-        }
         try {
             await (0, emailService_1.sendEmail)({
                 to: request.email,
@@ -192,8 +180,8 @@ deploy_job:
             spocUser: spocUser.user,
             gitlabRepoUrl,
             gitlabBoardUrl,
-            bookstackBookUrl,
-            bookstackShelfUrl,
+            wikiPageUrl,
+            wikiSpaceUrl,
         };
         await this.n8nService.emitEvent('company.approval', n8nPayload);
         await this.prisma.onboardingRequest.update({
@@ -208,8 +196,8 @@ deploy_job:
             spocUser: spocUser.user,
             gitlabRepoUrl,
             gitlabBoardUrl,
-            bookstackBookUrl,
-            bookstackShelfUrl,
+            wikiPageUrl,
+            wikiSpaceUrl,
         };
     }
     async reject(id, comments) {

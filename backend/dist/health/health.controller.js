@@ -15,17 +15,17 @@ const prisma_service_1 = require("../prisma/prisma.service");
 const redis_service_1 = require("../redis/redis.service");
 const rabbitmq_service_1 = require("../rabbitmq/rabbitmq.service");
 const gitlab_service_1 = require("../gitlab/gitlab.service");
-const bookstack_service_1 = require("../bookstack/bookstack.service");
+const wiki_service_1 = require("../wiki/wiki.service");
 const keycloak_service_1 = require("../keycloak/keycloak.service");
 const minio_service_1 = require("../minio/minio.service");
 const n8n_service_1 = require("../n8n/n8n.service");
 let HealthController = class HealthController {
-    constructor(prisma, redis, rabbitmq, gitlab, bookstack, keycloak, minio, n8n) {
+    constructor(prisma, redis, rabbitmq, gitlab, wiki, keycloak, minio, n8n) {
         this.prisma = prisma;
         this.redis = redis;
         this.rabbitmq = rabbitmq;
         this.gitlab = gitlab;
-        this.bookstack = bookstack;
+        this.wiki = wiki;
         this.keycloak = keycloak;
         this.minio = minio;
         this.n8n = n8n;
@@ -35,7 +35,7 @@ let HealthController = class HealthController {
         const redisStatus = await this.redis.checkHealth();
         const rabbitmqStatus = await this.rabbitmq.checkHealth();
         const gitlabStatus = await this.gitlab.checkHealth();
-        const bookstackStatus = await this.bookstack.checkHealth();
+        const wikiStatus = await this.wiki.checkHealth();
         const keycloakStatus = await this.keycloak.checkHealth();
         const minioStatus = await this.minio.checkHealth();
         const n8nStatus = await this.n8n.checkHealth();
@@ -43,7 +43,7 @@ let HealthController = class HealthController {
             redisStatus &&
             rabbitmqStatus &&
             gitlabStatus &&
-            bookstackStatus &&
+            wikiStatus &&
             keycloakStatus &&
             minioStatus &&
             n8nStatus;
@@ -54,7 +54,7 @@ let HealthController = class HealthController {
                 redis: { status: redisStatus ? 'up' : 'down' },
                 rabbitmq: { status: rabbitmqStatus ? 'up' : 'down' },
                 gitlab: { status: gitlabStatus ? 'up' : 'down' },
-                bookstack: { status: bookstackStatus ? 'up' : 'down' },
+                wiki: { status: wikiStatus ? 'up' : 'down' },
                 keycloak: { status: keycloakStatus ? 'up' : 'down' },
                 minio: { status: minioStatus ? 'up' : 'down' },
                 n8n: { status: n8nStatus ? 'up' : 'down' },
@@ -75,7 +75,7 @@ exports.HealthController = HealthController = __decorate([
         redis_service_1.RedisService,
         rabbitmq_service_1.RabbitmqService,
         gitlab_service_1.GitlabService,
-        bookstack_service_1.BookstackService,
+        wiki_service_1.WikiService,
         keycloak_service_1.KeycloakService,
         minio_service_1.MinioService,
         n8n_service_1.N8nService])

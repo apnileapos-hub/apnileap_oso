@@ -8,7 +8,7 @@ import { WikiModule } from '../wiki/wiki.module';
 import { N8nModule } from '../n8n/n8n.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, GitlabModule, BookstackModule, N8nModule],
+  imports: [PrismaModule, AuthModule, GitlabModule, WikiModule, N8nModule],
   controllers: [OnboardingController],
   providers: [OnboardingService],
 })

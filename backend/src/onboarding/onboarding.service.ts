@@ -200,19 +200,7 @@ deploy_job:
       console.warn('[GitLab Provisioning Failed] Skipping integration setup:', gitlabErr.message);
     }
 
-    // 6. Automated BookStack Provisioning
-    let bookstackBookUrl = '';
-    let bookstackShelfUrl = '';
-    try {
-      const wikiResult = await this.wikiService.provisionCompanyDocumentation(request.companyName);
-      const wikiSpaceUrl = wikiResult.spaceUrl;
-      const wikiPageUrl = wikiResult.pageUrl;
-      // For backward compatibility, assign to variables used later in email
-      const bookstackBookUrl = wikiPageUrl;
-      const bookstackShelfUrl = wikiSpaceUrl;
-    } catch (bookstackErr) {
-      console.warn('[BookStack Provisioning Failed] Skipping integration setup:', bookstackErr.message);
-    }
+    // Wiki provisioning already handled above; no Bookstack steps needed
 
     // 7. Send notification email containing credentials and links
     try {
@@ -239,8 +227,8 @@ deploy_job:
       spocUser: spocUser.user,
       gitlabRepoUrl,
       gitlabBoardUrl,
-      bookstackBookUrl,
-      bookstackShelfUrl,
+      wikiPageUrl,
+      wikiSpaceUrl,
     };
     await this.n8nService.emitEvent('company.approval', n8nPayload);
 
@@ -250,7 +238,7 @@ deploy_job:
       data: { status: 'APPROVED' },
     });
 
-    // Save BookStack details in the project if a default project is linked or returned
+    // Save Wiki details in the project if a default project is linked or returned
     return {
       success: true,
       organizationId: organization.id,
@@ -259,8 +247,8 @@ deploy_job:
       spocUser: spocUser.user,
       gitlabRepoUrl,
       gitlabBoardUrl,
-      bookstackBookUrl,
-      bookstackShelfUrl,
+      wikiPageUrl,
+      wikiSpaceUrl,
     };
   }
 

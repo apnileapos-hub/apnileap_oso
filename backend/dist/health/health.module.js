@@ -10,6 +10,7 @@ exports.HealthModule = void 0;
 const common_1 = require("@nestjs/common");
 const health_controller_1 = require("./health.controller");
 const gitlab_module_1 = require("../gitlab/gitlab.module");
+const wiki_module_1 = require("../wiki/wiki.module");
 const keycloak_module_1 = require("../keycloak/keycloak.module");
 const n8n_module_1 = require("../n8n/n8n.module");
 let HealthModule = class HealthModule {
@@ -17,7 +18,7 @@ let HealthModule = class HealthModule {
 exports.HealthModule = HealthModule;
 exports.HealthModule = HealthModule = __decorate([
     (0, common_1.Module)({
-        imports: [gitlab_module_1.GitlabModule, BookstackModule, keycloak_module_1.KeycloakModule, n8n_module_1.N8nModule],
+        imports: [gitlab_module_1.GitlabModule, wiki_module_1.WikiModule, keycloak_module_1.KeycloakModule, n8n_module_1.N8nModule],
         controllers: [health_controller_1.HealthController],
     })
 ], HealthModule);

@@ -14,11 +14,11 @@ services:
       - key: PORT
         value: 5000
       - key: DATABASE_URL
-        sync: false          # Set in Render dashboard → PostgreSQL connection string
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: KEYCLOAK_BASE_URL
-        sync: false          # e.g. https://your-keycloak.onrender.com
+        sync: false
       - key: KEYCLOAK_REALM
         value: apnileap
       - key: KEYCLOAK_CLIENT_ID
@@ -26,19 +26,19 @@ services:
       - key: KEYCLOAK_CLIENT_SECRET
         sync: false
       - key: GITLAB_BASE_URL
-        sync: false          # e.g. https://your-gitlab.com
+        sync: false
       - key: GITLAB_TOKEN
         sync: false
       - key: GITLAB_GROUP_ID
         sync: false
       - key: BOOKSTACK_BASE_URL
-        sync: false          # e.g. https://your-bookstack.com
+        sync: false
       - key: BOOKSTACK_TOKEN_ID
         sync: false
       - key: BOOKSTACK_TOKEN_SECRET
         sync: false
       - key: MINIO_ENDPOINT
-        sync: false          # e.g. your-minio.onrender.com
+        sync: false
       - key: MINIO_PORT
         value: 9000
       - key: MINIO_ACCESS_KEY
@@ -48,7 +48,7 @@ services:
       - key: MINIO_USE_SSL
         value: false
       - key: N8N_WEBHOOK_URL
-        sync: false          # e.g. https://your-n8n.onrender.com/webhook
+        sync: false
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -57,22 +57,3 @@ services:
         sync: false
       - key: SMTP_PASS
         sync: false
-
-  # ── Frontend: React Static Site ────────────────────────────────────────────
-  - type: web
-    name: apnileap-frontend
-    env: static
-    rootDir: frontend
-    buildCommand: npm install --legacy-peer-deps && npm run build
-    staticPublishPath: build
-    headers:
-      - path: /*
-        name: Cache-Control
-        value: no-cache
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      - key: REACT_APP_API_URL
-        sync: false          # Set to your backend URL e.g. https://apnileap-backend.onrender.com

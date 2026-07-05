@@ -1,27 +1,79 @@
 services:
+  # ── Backend: NestJS API ────────────────────────────────────────────────────
   - type: web
-    name: apnileapos
+    name: apnileap-backend
     env: node
     plan: free
-    buildCommand: node build.js
-    startCommand: node backend/server.js
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: node dist/src/main.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 5000
       - key: DATABASE_URL
-        sync: false          # Set this to your PostgreSQL Connection String in Render dashboard
+        sync: false          # Set in Render dashboard → PostgreSQL connection string
       - key: JWT_SECRET
-        generateValue: true  # Render will automatically generate a secure session key
-      - key: JIRA_EMAIL
-        sync: false          # Set your Atlassian Email in Render dashboard
-      - key: JIRA_API_TOKEN
-        sync: false          # Set your Atlassian API Token in Render dashboard
-      - key: JIRA_BASE_URL
-        value: https://apnileapos.atlassian.net
-      - key: ATLASSIAN_ORG_ID
-        value: 3e8909b9-234a-4def-aaf9-adc97997b269
-      - key: GITHUB_TOKEN
-        sync: false          # Optional: GitHub PAT for automated repository creation
-      - key: GITHUB_ORG
-        value: apnileapos
+        generateValue: true
+      - key: KEYCLOAK_BASE_URL
+        sync: false          # e.g. https://your-keycloak.onrender.com
+      - key: KEYCLOAK_REALM
+        value: apnileap
+      - key: KEYCLOAK_CLIENT_ID
+        value: apnileap-backend
+      - key: KEYCLOAK_CLIENT_SECRET
+        sync: false
+      - key: GITLAB_BASE_URL
+        sync: false          # e.g. https://your-gitlab.com
+      - key: GITLAB_TOKEN
+        sync: false
+      - key: GITLAB_GROUP_ID
+        sync: false
+      - key: BOOKSTACK_BASE_URL
+        sync: false          # e.g. https://your-bookstack.com
+      - key: BOOKSTACK_TOKEN_ID
+        sync: false
+      - key: BOOKSTACK_TOKEN_SECRET
+        sync: false
+      - key: MINIO_ENDPOINT
+        sync: false          # e.g. your-minio.onrender.com
+      - key: MINIO_PORT
+        value: 9000
+      - key: MINIO_ACCESS_KEY
+        sync: false
+      - key: MINIO_SECRET_KEY
+        sync: false
+      - key: MINIO_USE_SSL
+        value: false
+      - key: N8N_WEBHOOK_URL
+        sync: false          # e.g. https://your-n8n.onrender.com/webhook
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+
+  # ── Frontend: React Static Site ────────────────────────────────────────────
+  - type: web
+    name: apnileap-frontend
+    env: static
+    plan: free
+    rootDir: frontend
+    buildCommand: npm install --legacy-peer-deps && npm run build
+    staticPublishPath: build
+    headers:
+      - path: /*
+        name: Cache-Control
+        value: no-cache
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: REACT_APP_API_URL
+        sync: false          # Set to your backend URL e.g. https://apnileap-backend.onrender.com

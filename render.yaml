@@ -62,7 +62,6 @@ services:
   - type: web
     name: apnileap-frontend
     env: static
-    plan: free
     rootDir: frontend
     buildCommand: npm install --legacy-peer-deps && npm run build
     staticPublishPath: build

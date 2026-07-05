@@ -157,6 +157,16 @@ deploy_job:
         catch (gitlabErr) {
             console.warn('[GitLab Provisioning Failed] Skipping integration setup:', gitlabErr.message);
         }
+        let wikiSpaceUrl = '';
+        let wikiPageUrl = '';
+        try {
+            const { spaceUrl, pageUrl } = await this.wikiService.provisionCompanyDocumentation(request.companyName);
+            wikiSpaceUrl = spaceUrl;
+            wikiPageUrl = pageUrl;
+        }
+        catch (wikiErr) {
+            console.warn('[Wiki Provisioning Failed] Skipping Wiki setup:', wikiErr.message);
+        }
         try {
             await (0, emailService_1.sendEmail)({
                 to: request.email,

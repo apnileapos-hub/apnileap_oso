@@ -200,7 +200,16 @@ deploy_job:
       console.warn('[GitLab Provisioning Failed] Skipping integration setup:', gitlabErr.message);
     }
 
-    // Wiki provisioning already handled above; no Bookstack steps needed
+    // Wiki provisioning
+    let wikiSpaceUrl = '';
+    let wikiPageUrl = '';
+    try {
+      const { spaceUrl, pageUrl } = await this.wikiService.provisionCompanyDocumentation(request.companyName);
+      wikiSpaceUrl = spaceUrl;
+      wikiPageUrl = pageUrl;
+    } catch (wikiErr) {
+      console.warn('[Wiki Provisioning Failed] Skipping Wiki setup:', wikiErr.message);
+    }
 
     // 7. Send notification email containing credentials and links
     try {

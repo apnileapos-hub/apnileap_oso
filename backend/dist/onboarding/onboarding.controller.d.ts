@@ -12,26 +12,26 @@ export declare class OnboardingController {
         id: number;
         createdAt: Date;
         updatedAt: Date;
-        comments: string | null;
-        status: string;
-        companyName: string;
         email: string;
-        subdomain: string;
         domain: string | null;
         logoUrl: string | null;
+        status: string;
+        subdomain: string;
+        companyName: string;
+        comments: string | null;
     }>;
     getRequests(page?: string, limit?: string, search?: string, status?: string): Promise<{
         items: {
             id: number;
             createdAt: Date;
             updatedAt: Date;
-            comments: string | null;
-            status: string;
-            companyName: string;
             email: string;
-            subdomain: string;
             domain: string | null;
             logoUrl: string | null;
+            status: string;
+            subdomain: string;
+            companyName: string;
+            comments: string | null;
         }[];
         total: number;
         page: number;

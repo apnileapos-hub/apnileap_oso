@@ -3,11 +3,11 @@ export declare class TeamsController {
     private readonly prisma;
     constructor(prisma: PrismaService);
     getTeams(boardId?: string): Promise<{
-        id: string;
         name: string;
+        projectId: number | null;
+        id: string;
         collegeId: string | null;
         members: import("@prisma/client/runtime/library").JsonValue | null;
-        projectId: number | null;
     }[]>;
     createTeam(body: {
         name: string;

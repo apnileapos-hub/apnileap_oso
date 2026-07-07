@@ -9516,7 +9516,19 @@ function App() {
                     className="form-input"
                     placeholder="e.g. 6 Months"
                     value={ingestDuration}
-                    onChange={(e) => setIngestDuration(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setIngestDuration(val);
+                      const match = val.match(/\d+/);
+                      if (match) {
+                        const months = parseInt(match[0]);
+                        if (months > 0) {
+                          const d = new Date();
+                          d.setMonth(d.getMonth() + months);
+                          setIngestDueDate(d.toISOString().split('T')[0]);
+                        }
+                      }
+                    }}
                     required
                     style={{ padding: "8px 12px", fontSize: "13px" }}
                   />
@@ -9657,7 +9669,19 @@ function App() {
                     className="form-input"
                     placeholder="e.g. 6 Months"
                     value={editDuration}
-                    onChange={(e) => setEditDuration(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setEditDuration(val);
+                      const match = val.match(/\d+/);
+                      if (match) {
+                        const months = parseInt(match[0]);
+                        if (months > 0) {
+                          const d = new Date();
+                          d.setMonth(d.getMonth() + months);
+                          setEditDueDate(d.toISOString().split('T')[0]);
+                        }
+                      }
+                    }}
                     required
                     style={{ padding: "8px 12px", fontSize: "13px" }}
                   />

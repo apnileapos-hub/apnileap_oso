@@ -4,9 +4,9 @@ export declare class OrganizationController {
     constructor(prisma: PrismaService);
     getOrganizations(page?: string, limit?: string, search?: string): Promise<{
         items: {
+            name: string;
             id: number;
             createdAt: Date;
-            name: string;
             domain: string | null;
         }[];
         total: number;
@@ -18,18 +18,18 @@ export declare class OrganizationController {
         name: string;
         domain?: string;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
         domain: string | null;
     }>;
     updateOrganization(id: number, body: {
         name?: string;
         domain?: string;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
         domain: string | null;
     }>;
     deleteOrganization(id: number): Promise<{
@@ -38,17 +38,17 @@ export declare class OrganizationController {
     getCompanies(page?: string, limit?: string, search?: string, orgId?: string): Promise<{
         items: ({
             organization: {
+                name: string;
                 id: number;
                 createdAt: Date;
-                name: string;
                 domain: string | null;
             };
         } & {
+            name: string;
             id: number;
             createdAt: Date;
-            name: string;
-            logoUrl: string | null;
             organizationId: number | null;
+            logoUrl: string | null;
         })[];
         total: number;
         page: number;
@@ -60,22 +60,22 @@ export declare class OrganizationController {
         logoUrl?: string;
         organizationId?: number;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
-        logoUrl: string | null;
         organizationId: number | null;
+        logoUrl: string | null;
     }>;
     updateCompany(id: number, body: {
         name?: string;
         logoUrl?: string;
         organizationId?: number;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
-        logoUrl: string | null;
         organizationId: number | null;
+        logoUrl: string | null;
     }>;
     deleteCompany(id: number): Promise<{
         success: boolean;
@@ -83,15 +83,15 @@ export declare class OrganizationController {
     getColleges(page?: string, limit?: string, search?: string, orgId?: string): Promise<{
         items: ({
             organization: {
+                name: string;
                 id: number;
                 createdAt: Date;
-                name: string;
                 domain: string | null;
             };
         } & {
+            name: string;
             id: number;
             createdAt: Date;
-            name: string;
             organizationId: number | null;
             universityId: number | null;
         })[];
@@ -105,9 +105,9 @@ export declare class OrganizationController {
         universityId?: number;
         organizationId?: number;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
         organizationId: number | null;
         universityId: number | null;
     }>;
@@ -116,9 +116,9 @@ export declare class OrganizationController {
         universityId?: number;
         organizationId?: number;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
         organizationId: number | null;
         universityId: number | null;
     }>;
@@ -128,23 +128,23 @@ export declare class OrganizationController {
     getDepartments(page?: string, limit?: string, search?: string, collegeId?: string, companyId?: string): Promise<{
         items: ({
             company: {
+                name: string;
                 id: number;
                 createdAt: Date;
-                name: string;
-                logoUrl: string | null;
                 organizationId: number | null;
+                logoUrl: string | null;
             };
             college: {
+                name: string;
                 id: number;
                 createdAt: Date;
-                name: string;
                 organizationId: number | null;
                 universityId: number | null;
             };
         } & {
+            name: string;
             id: number;
             createdAt: Date;
-            name: string;
             collegeId: number | null;
             companyId: number | null;
         })[];
@@ -158,9 +158,9 @@ export declare class OrganizationController {
         collegeId?: number;
         companyId?: number;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
         collegeId: number | null;
         companyId: number | null;
     }>;
@@ -169,9 +169,9 @@ export declare class OrganizationController {
         collegeId?: number;
         companyId?: number;
     }): Promise<{
+        name: string;
         id: number;
         createdAt: Date;
-        name: string;
         collegeId: number | null;
         companyId: number | null;
     }>;

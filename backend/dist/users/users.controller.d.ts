@@ -14,11 +14,11 @@ export declare class UsersController {
     }>;
     getUsers(page?: string, limit?: string, search?: string, role?: string, collegeId?: string): Promise<{
         items: {
-            id: number;
-            name: string;
-            email: string;
             role: string;
             password: string;
+            name: string;
+            id: number;
+            email: string;
             collegeId: string | null;
             departmentId: number | null;
         }[];
@@ -34,8 +34,8 @@ export declare class UsersController {
         role: string;
     }[]>;
     getCampusStudents(campusId: string): Promise<{
-        id: number;
         name: string;
+        id: number;
         email: string;
     }[]>;
 }

@@ -5,3 +5,4 @@ frontend/frontend/build/
 .DS_Store
 Thumbs.db
 backend/.env
+backend/apnileap-24b94a192385.json

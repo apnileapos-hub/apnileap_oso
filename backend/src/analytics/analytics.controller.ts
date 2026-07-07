@@ -55,17 +55,17 @@ export class AnalyticsController {
 
       const b2bProjects: any[] = [];
       const SPOKES_MAP: { [key: string]: string } = {
-        '3': 'KLE Spoke',
-        '101': 'COEP Spoke',
-        '102': 'MMCOEP Spoke',
-        '103': 'RIT Spoke',
-        'kle-spoke': 'KLE Spoke',
-        'coep-spoke': 'COEP Spoke',
-        'mmcoep-spoke': 'MMCOEP Spoke',
-        'rit-spoke': 'RIT Spoke',
+        '3': 'KLE Hub',
+        '101': 'COEP Hub',
+        '102': 'MMCOEP Hub',
+        '103': 'RIT Hub',
+        'kle-spoke': 'KLE Hub',
+        'coep-spoke': 'COEP Hub',
+        'mmcoep-spoke': 'MMCOEP Hub',
+        'rit-spoke': 'RIT Hub',
       };
       
-      const getSpokeName = (id: string) => SPOKES_MAP[id] || id || 'Campus Spoke';
+      const getSpokeName = (id: string) => SPOKES_MAP[id] || id || 'Campus Hub';
       const getSpokeId = (name: string) => {
         if (!name) return null;
         const n = name.toLowerCase();
@@ -133,8 +133,8 @@ export class AnalyticsController {
 
         b2bProjects.push({
           id: `proj-${p.id}`,
-          company: company?.name || 'NVIDIA',
-          logoUrl: company?.logoUrl || 'https://logo.clearbit.com/nvidia.com?size=80',
+          company: company?.name || 'Acme Corp',
+          logoUrl: company?.logoUrl || 'https://logo.clearbit.com/company.com?size=80',
           title: p.title,
           description: p.description || '',
           budget: budgetStr,
@@ -151,10 +151,10 @@ export class AnalyticsController {
 
       // 2. Fetch all spokes tasks to aggregate progress statistics
       const spokesList = [
-        { id: '3', name: 'KLE Spoke', key: 'AK' },
-        { id: '101', name: 'COEP Spoke', key: 'AK' },
-        { id: '102', name: 'MMCOEP Spoke', key: 'AK' },
-        { id: '103', name: 'RIT Spoke', key: 'AK' },
+        { id: '3', name: 'KLE Hub', key: 'AK' },
+        { id: '101', name: 'COEP Hub', key: 'AK' },
+        { id: '102', name: 'MMCOEP Hub', key: 'AK' },
+        { id: '103', name: 'RIT Hub', key: 'AK' },
       ];
 
       const spokesMetrics: any[] = [];

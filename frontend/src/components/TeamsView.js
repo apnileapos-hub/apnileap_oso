@@ -399,7 +399,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                   <div style={{ flex: 1, overflow: 'hidden' }}>
                     <div style={{ fontWeight: '600', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t.name}</div>
                     <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                      {t.members ? t.members.length : 0} members · {metrics.total} Jira tasks
+                      {t.members ? t.members.length : 0} members · {metrics.total} Tasks
                     </div>
                   </div>
                 </div>
@@ -440,7 +440,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
             <div style={{ fontSize: '64px', marginBottom: '16px' }}>👥</div>
             <h3 style={{ fontSize: '18px', color: '#fff', margin: '0 0 8px 0' }}>Welcome to Teams Workspace</h3>
             <p style={{ fontSize: '13px', maxWidth: '380px', margin: 0 }}>
-              Select an active team from the left sidebar to view direct chats, track assigned B2B projects, and manage Jira workloads.
+              Select an active team from the left sidebar to view direct chats, track assigned B2B projects, and manage Apnileap workloads.
             </p>
           </div>
         )}
@@ -708,14 +708,14 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                     )}
                   </div>
 
-                  {/* Jira Issues Table Section */}
+                  {/* Tasks Table Section */}
                   <div>
                     <h4 style={{ fontSize: '14px', color: '#fff', fontWeight: 'bold', borderBottom: '1px solid var(--border)', paddingBottom: '8px', marginBottom: '14px' }}>
-                      📋 Jira Issues Assigned to Team Members ({selectedTeamIssues.length})
+                      📋 Tasks Assigned to Team Members ({selectedTeamIssues.length})
                     </h4>
                     {selectedTeamIssues.length === 0 ? (
                       <div style={{ background: 'var(--bg-secondary)', border: '1px dashed var(--border)', borderRadius: '6px', padding: '24px', textAlign: 'center', color: 'var(--text-secondary)', fontSize: '12px' }}>
-                        No active Jira issues found for members of this team.
+                        No active Tasks found for members of this team.
                       </div>
                     ) : (
                       <div style={{ border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
@@ -783,7 +783,7 @@ export default function TeamsView({ user, issues = [], onOpenIssueDetails }) {
                       <div style={{ maxWidth: '600px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', padding: '24px', borderRadius: '8px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
                           <span style={{ color: 'var(--text-primary)', fontSize: '14px', fontWeight: '600' }}>Overall Workload</span>
-                          <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{metrics.total} Active Jira Issues</span>
+                          <span style={{ color: '#fff', fontSize: '14px', fontWeight: 'bold' }}>{metrics.total} Active Tasks</span>
                         </div>
 
                         {metrics.total > 0 ? (

@@ -27,7 +27,7 @@ export default function CreateSprintModal({ isOpen, onClose, currentBoardId, onS
 
     setLoading(true);
     try {
-      // Jira requires proper ISO-8601 formatting. Appending arbitrary time if using date input.
+      // Apnileap requires proper ISO-8601 formatting. Appending arbitrary time if using date input.
       const formattedStart = new Date(formData.startDate).toISOString();
       const formattedEnd = new Date(formData.endDate).toISOString();
 
@@ -52,7 +52,7 @@ export default function CreateSprintModal({ isOpen, onClose, currentBoardId, onS
       onClose();
     } catch (err) {
       console.error("Sprint Creation Error:", err);
-      triggerToast("Failed to create sprint. Ensure you have the correct Jira permissions.", "error");
+      triggerToast("Failed to create sprint. Ensure you have the correct Apnileap permissions.", "error");
     } finally {
       setLoading(false);
     }

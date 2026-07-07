@@ -201,25 +201,25 @@ const getSponsorCompany = (task) => {
   const summary = (task.fields?.summary || "").toLowerCase();
   const description = (task.fields?.description || "").toLowerCase();
   
-  if (summary.includes("nvidia") || description.includes("nvidia")) return { name: "NVIDIA", logo: "https://logo.clearbit.com/nvidia.com?size=32" };
+  if (summary.includes("nvidia") || description.includes("nvidia")) return { name: "Acme Corp", logo: "https://logo.clearbit.com/company.com?size=32" };
   if (summary.includes("intel") || description.includes("intel")) return { name: "Intel", logo: "https://logo.clearbit.com/intel.com?size=32" };
   if (summary.includes("google") || description.includes("google")) return { name: "Google", logo: "https://logo.clearbit.com/google.com?size=32" };
   
   // Epic parent checking
   const epic = (task.fields?.epic?.fields?.summary || task.fields?.epic?.name || "").toLowerCase();
-  if (epic.includes("nvidia")) return { name: "NVIDIA", logo: "https://logo.clearbit.com/nvidia.com?size=32" };
+  if (epic.includes("nvidia")) return { name: "Acme Corp", logo: "https://logo.clearbit.com/company.com?size=32" };
   if (epic.includes("intel")) return { name: "Intel", logo: "https://logo.clearbit.com/intel.com?size=32" };
   if (epic.includes("google")) return { name: "Google", logo: "https://logo.clearbit.com/google.com?size=32" };
   
   // Custom field color tags fallback
   const c = task.fields?.customfield_10017 || "";
-  if (c === "blue" || c === "green") return { name: "NVIDIA", logo: "https://logo.clearbit.com/nvidia.com?size=32" };
+  if (c === "blue" || c === "green") return { name: "Acme Corp", logo: "https://logo.clearbit.com/company.com?size=32" };
   if (c === "teal") return { name: "Intel", logo: "https://logo.clearbit.com/intel.com?size=32" };
   
   return null;
 };
 
-// Failsafe, high-fidelity inline SVGs and styled brand emblems for sponsor companies (NVIDIA, Intel, Google)
+// Failsafe, high-fidelity inline SVGs and styled brand emblems for sponsor companies (Acme Corp, Intel, Google)
 const CompanyLogo = ({ company, size = 38 }) => {
   const norm = (company || "").toLowerCase();
   
@@ -236,7 +236,7 @@ const CompanyLogo = ({ company, size = 38 }) => {
         justifyContent: "center",
         boxShadow: "0 0 12px rgba(118, 185, 0, 0.25)",
         flexShrink: 0
-      }} title="NVIDIA Sponsor">
+      }} title="Corporate Spoke">
         <svg viewBox="0 0 24 24" style={{ width: `${size * 0.55}px`, height: `${size * 0.55}px`, fill: "#76b900" }}>
           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5h-2v-2h2v2zm0-4h-2V7h2v6z" />
         </svg>
@@ -309,10 +309,10 @@ const CompanyLogo = ({ company, size = 38 }) => {
 };
 
 const SPOKES = {
-  "3": { name: "KLE Spoke", key: "AK", live: true },
-  "101": { name: "COEP Spoke", key: "AK", live: true },
-  "102": { name: "MMCOEP Spoke", key: "AK", live: true },
-  "103": { name: "RIT Spoke", key: "AK", live: true }
+  "3": { name: "KLE Hub", key: "AK", live: true },
+  "101": { name: "COEP Hub", key: "AK", live: true },
+  "102": { name: "MMCOEP Hub", key: "AK", live: true },
+  "103": { name: "RIT Hub", key: "AK", live: true }
 };
 
 const CAMPUS_LABELS = {
@@ -391,7 +391,7 @@ function App() {
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  const [signupCampus, setSignupCampus] = useState("3"); // Default to "3" (KLE Spoke)
+  const [signupCampus, setSignupCampus] = useState("3"); // Default to "3" (KLE Hub)
   const [signupRole, setSignupRole] = useState("Student Developer"); // "Student Developer" or "Faculty Mentor"
   const [signupError, setSignupError] = useState("");
   const [isRegistering, setIsRegistering] = useState(false);
@@ -466,7 +466,7 @@ function App() {
 
   // B2B Project Ingest Form State
   const [isIngestOpen, setIsIngestOpen] = useState(false);
-  const [ingestCompany, setIngestCompany] = useState("NVIDIA");
+  const [ingestCompany, setIngestCompany] = useState("");
   const [ingestTitle, setIngestTitle] = useState("");
   const [ingestDescription, setIngestDescription] = useState("");
   const [ingestBudget, setIngestBudget] = useState("");
@@ -476,7 +476,7 @@ function App() {
 
   // B2B Project Edit Form State
   const [editingProject, setEditingProject] = useState(null);
-  const [editCompany, setEditCompany] = useState("NVIDIA");
+  const [editCompany, setEditCompany] = useState("Acme Corp");
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editBudget, setEditBudget] = useState("");
@@ -486,10 +486,10 @@ function App() {
 
   // Chat message history state (pre-populated with premium campus conversations)
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, sender: "Rahul Sharma (KLE Spoke)", message: "Phase 1 lab equipment setup completed! Ready for mentor review.", time: "18:30", campus: "KLE Spoke" },
-    { id: 2, sender: "Sneha Joshi (COEP Spoke)", message: "Awesome Rahul! We just pushed our micro-controller architecture specs on board AK-21.", time: "18:32", campus: "COEP Spoke" },
-    { id: 3, sender: "Nikhil Rane (MMCOEP Spoke)", message: "RIT Spoke guys, did you finalize the pest detection model training? Need the API key.", time: "18:35", campus: "MMCOEP Spoke" },
-    { id: 4, sender: "Tejas Shinde (RIT Spoke)", message: "Yes Nikhil! Accuracy is at 94% on Jetson Nano. Testing in the lab now.", time: "18:38", campus: "RIT Spoke" }
+    { id: 1, sender: "Rahul Sharma (KLE Hub)", message: "Phase 1 lab equipment setup completed! Ready for mentor review.", time: "18:30", campus: "KLE Hub" },
+    { id: 2, sender: "Sneha Joshi (COEP Hub)", message: "Awesome Rahul! We just pushed our micro-controller architecture specs on board AK-21.", time: "18:32", campus: "COEP Hub" },
+    { id: 3, sender: "Nikhil Rane (MMCOEP Hub)", message: "RIT Hub guys, did you finalize the pest detection model training? Need the API key.", time: "18:35", campus: "MMCOEP Hub" },
+    { id: 4, sender: "Tejas Shinde (RIT Hub)", message: "Yes Nikhil! Accuracy is at 94% on Jetson Nano. Testing in the lab now.", time: "18:38", campus: "RIT Hub" }
   ]);
   const [newChatMessage, setNewChatMessage] = useState("");
 
@@ -508,21 +508,21 @@ function App() {
     const typed = newChatMessage;
     setNewChatMessage("");
 
-    // Simulate automated response from campus spoke students in 1.5s
+    // Simulate automated response from campus hub students in 1.5s
     setTimeout(() => {
       let replyText = "Understood! Syncing that task on our board now.";
-      let responder = "Tejas Shinde (RIT Spoke)";
+      let responder = "Tejas Shinde (RIT Hub)";
       
       const lower = typed.toLowerCase();
       if (lower.includes("kle") || lower.includes("rahul")) {
         replyText = "Awesome! We just completed the procurement. Checking the dashboard now.";
-        responder = "Rahul Sharma (KLE Spoke)";
+        responder = "Rahul Sharma (KLE Hub)";
       } else if (lower.includes("coep") || lower.includes("sneha")) {
-        replyText = "Thanks for the heads up. We are pushing our VLSI controller files onto Jira Pro.";
-        responder = "Sneha Joshi (COEP Spoke)";
+        replyText = "Thanks for the heads up. We are pushing our VLSI controller files onto Apnileap Pro.";
+        responder = "Sneha Joshi (COEP Hub)";
       } else if (lower.includes("mmcoep") || lower.includes("nikhil")) {
         replyText = "Got it! Syncing our model results onto board AK-59.";
-        responder = "Nikhil Rane (MMCOEP Spoke)";
+        responder = "Nikhil Rane (MMCOEP Hub)";
       }
 
       setChatMessages(prev => [...prev, {
@@ -530,7 +530,7 @@ function App() {
         sender: responder,
         message: replyText,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        campus: responder.includes("KLE") ? "KLE Spoke" : responder.includes("COEP") ? "COEP Spoke" : responder.includes("MMCOEP") ? "MMCOEP Spoke" : "RIT Spoke"
+        campus: responder.includes("KLE") ? "KLE Hub" : responder.includes("COEP") ? "COEP Hub" : responder.includes("MMCOEP") ? "MMCOEP Hub" : "RIT Hub"
       }]);
     }, 1500);
   };
@@ -714,7 +714,7 @@ function App() {
       const selectedPersona = signupCampus === "3" ? "spoke-kle" : signupCampus === "101" ? "spoke-coep" : signupCampus === "102" ? "spoke-mmcoep" : "spoke-rit";
       
       const campusPrefix = signupCampus === "3" ? "KLE" : signupCampus === "101" ? "COEP" : signupCampus === "102" ? "MMCOEP" : "RIT";
-      const selectedRole = signupRole === "Faculty Mentor" ? `${campusPrefix} Spoke Coordinator` : "Student Developer";
+      const selectedRole = signupRole === "Faculty Mentor" ? `${campusPrefix} Hub Coordinator` : "Student Developer";
 
       const response = await axios.post("http://localhost:5000/api/register", {
         email: signupEmail,
@@ -761,7 +761,7 @@ function App() {
     // Select the correct password for each demo account
     let password = "moderator123";
     if (email.includes("student")) password = "student123";
-    else if (email.includes("sponsor") || email.includes("nvidia")) password = "nvidia123";
+    else if (email.includes("sponsor") || email.includes("nvidia")) password = "company123";
     else if (email.includes("kle")) password = "kle123";
     else if (email.includes("coep") && !email.includes("mmcoep")) password = "coep123";
     else if (email.includes("mmcoep")) password = "mmcoep123";
@@ -919,7 +919,7 @@ function App() {
   };
 
   const handleDeleteProject = async (projectId) => {
-    if (!window.confirm("Are you sure you want to persistently delete this B2B corporate project? This will remove all campus spoke allocations!")) {
+    if (!window.confirm("Are you sure you want to persistently delete this Corporate Spoke project? This will remove all campus hub allocations!")) {
       return;
     }
     try {
@@ -1023,36 +1023,36 @@ function App() {
   };
 
   const handleDeleteTeam = async (teamId) => {
-    if (!window.confirm("Are you sure you want to disband and delete this Spoke Team persistently?")) {
+    if (!window.confirm("Are you sure you want to disband and delete this Hub Team persistently?")) {
       return;
     }
     try {
       const res = await axios.delete(`http://localhost:5000/api/teams/${teamId}`);
       if (res.data && res.data.success) {
-        triggerToast("Spoke Team successfully disbanded.");
+        triggerToast("Hub Team successfully disbanded.");
         fetchSpokeTeams(currentBoardId);
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Failed to disband Spoke Team.", "error");
+      triggerToast("Failed to disband Hub Team.", "error");
     }
   };
 
   // Fetch Tasks from Real API
-  const fetchJiraTasks = async (silent = false, customBoardId = null) => {
+  const fetchApnileapTasks = async (silent = false, customBoardId = null) => {
     if (!silent) setIsLoading(true);
     setHasError(false);
     try {
       const boardIdToFetch = customBoardId || currentBoardId;
       const response = await axios.get(`http://localhost:5000/tasks?boardId=${boardIdToFetch}`);
       if (Array.isArray(response.data)) {
-        // Adapt Jira issues dynamically - pulls exact assignee, reporter, and due date
+        // Adapt Tasks dynamically - pulls exact assignee, reporter, and due date
         const normalized = response.data.map((item) => ({
-          id: item.id || `jira-${Date.now()}-${Math.random()}`,
-          key: item.key || `JIRA-${item.id}`,
+          id: item.id || `apni-${Date.now()}-${Math.random()}`,
+          key: item.key || `APNI-${item.id}`,
           fields: {
             summary: item.fields?.summary || "No Summary Provided",
-            description: item.fields?.description || "No description set in Jira.",
+            description: item.fields?.description || "No description set in Apnileap.",
             status: { name: item.fields?.status?.name || "Backlog" },
             priority: { name: item.fields?.priority?.name || "Medium" },
             issueType: item.fields?.issuetype?.name || "Task",
@@ -1111,7 +1111,7 @@ function App() {
         setTasks(normalized);
         setConnectionStatus("Connected");
         if (!silent) {
-          triggerToast("Successfully synchronized with Live Jira API!");
+          triggerToast("Successfully synchronized with Live Apnileap API!");
         }
         return normalized;
       } else {
@@ -1122,7 +1122,7 @@ function App() {
       setConnectionStatus("Offline");
       setHasError(true);
       if (!silent) {
-        triggerToast("Failed to connect to Jira backend. Make sure server is started.", "error");
+        triggerToast("Failed to connect to Apnileap backend. Make sure server is started.", "error");
       }
     } finally {
       setIsLoading(false);
@@ -1221,15 +1221,15 @@ function App() {
     }
   };
 
-  // Spoke Coordinator accepts B2B Project assignment (Spoke)
+  // Hub Coordinator accepts B2B Project assignment (Spoke)
   const handleAcceptProject = async (projectId) => {
     setIsRespondingToProject(true);
     try {
       const res = await axios.post(`http://localhost:5000/spoke/project/${projectId}/accept`, { targetBoardId: currentBoardId });
       if (res.data && res.data.success) {
-        triggerToast(" Project accepted! Jira workspace successfully provisioned with 3 standard Phase tasks!");
+        triggerToast(" Project accepted! Workspace successfully provisioned with 3 standard Phase tasks!");
         fetchModeratorProjects(false);
-        fetchJiraTasks(false); // Refresh Jira board immediately
+        fetchApnileapTasks(false); // Refresh Task board immediately
       }
     } catch (err) {
       console.error("Acceptance Error:", err);
@@ -1239,7 +1239,7 @@ function App() {
     }
   };
 
-  // Spoke Coordinator declines B2B Project assignment (Spoke)
+  // Hub Coordinator declines B2B Project assignment (Spoke)
   const handleDeclineProject = async (projectId) => {
     setIsRespondingToProject(true);
     try {
@@ -1270,7 +1270,7 @@ function App() {
         setIsLoading(false);
         fetchMeetings(false);
       } else {
-        fetchJiraTasks(false);
+        fetchApnileapTasks(false);
         fetchSpokeMembers(currentBoardId);
         fetchSpokeTeams(currentBoardId);
         fetchModeratorProjects(true); // Fetch moderator projects silently to check for proposed B2B assignments
@@ -1305,7 +1305,7 @@ function App() {
       } else if (activeWorkspace === "meetings") {
         fetchMeetings(true);
       } else {
-        fetchJiraTasks(true);
+        fetchApnileapTasks(true);
         fetchSpokeMembers(currentBoardId);
         fetchSpokeTeams(currentBoardId);
         fetchHubMetrics(true); // Poll hub metrics silently for leaderboards!
@@ -1316,7 +1316,7 @@ function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeWorkspace, currentBoardId]);
 
-  // Ensures real Jira users are editable and filterable seamlessly.
+  // Ensures real Apnileap users are editable and filterable seamlessly.
   const activeAssignees = useMemo(() => {
     const list = [];
     if (currentUser && currentUser.accountId) {
@@ -1463,16 +1463,16 @@ function App() {
     }));
   }, [filteredTasks]);
 
-  // Aggregated Leaderboard ranking KLE, COEP, MMCOEP, RIT Spokes dynamically
+  // Aggregated Leaderboard ranking KLE, COEP, MMCOEP, RIT Hubs dynamically
   const leaderboardData = useMemo(() => {
     if (hubMetrics && Array.isArray(hubMetrics.spokes) && hubMetrics.spokes.length > 0) {
       return [...hubMetrics.spokes].sort((a, b) => b.done - a.done);
     }
     return [
-      { id: "3", name: "KLE Spoke", done: 12, total: 18, completionRate: 67 },
-      { id: "101", name: "COEP Spoke", done: 8, total: 15, completionRate: 53 },
-      { id: "102", name: "MMCOEP Spoke", done: 5, total: 12, completionRate: 42 },
-      { id: "103", name: "RIT Spoke", done: 3, total: 10, completionRate: 30 }
+      { id: "3", name: "KLE Hub", done: 12, total: 18, completionRate: 67 },
+      { id: "101", name: "COEP Hub", done: 8, total: 15, completionRate: 53 },
+      { id: "102", name: "MMCOEP Hub", done: 5, total: 12, completionRate: 42 },
+      { id: "103", name: "RIT Hub", done: 3, total: 10, completionRate: 30 }
     ].sort((a, b) => b.done - a.done);
   }, [hubMetrics]);
 
@@ -1604,21 +1604,21 @@ function App() {
       });
     });
     
-    triggerToast(`Transitioning ${taskKey} to ${newStatus} in Jira...`);
+    triggerToast(`Transitioning ${taskKey} to ${newStatus} in Apnileap...`);
     
     // 2. Perform live API status transition
     axios.post(`http://localhost:5000/tasks/${taskKey}/transition`, { statusName: newStatus })
       .then(() => {
-        triggerToast(`Successfully transitioned ${taskKey} to ${newStatus} in Jira!`);
+        triggerToast(`Successfully transitioned ${taskKey} to ${newStatus} in Apnileap!`);
       })
       .catch(err => {
         console.error("Transition API Error:", err);
-        triggerToast(`Failed to transition issue ${taskKey} in Jira. Reverting...`, "error");
-        fetchJiraTasks(true); // Silent fetch to revert back to true Jira state
+        triggerToast(`Failed to transition issue ${taskKey} in Apnileap. Reverting...`, "error");
+        fetchApnileapTasks(true); // Silent fetch to revert back to true Apnileap state
       });
   };
 
-  // Create Task Action inside Jira Project
+  // Create Task Action inside Apnileap Project
   const handleCreateTask = async (e) => {
     e.preventDefault();
     if (!newSummary.trim()) {
@@ -1644,7 +1644,7 @@ function App() {
     setIsLoading(true);
     try {
       const res = await axios.post("http://localhost:5000/tasks", payload);
-      triggerToast(`Created task ${res.data.key} in Jira successfully!`);
+      triggerToast(`Created task ${res.data.key} in Apnileap successfully!`);
       
       // Reset Form
       setNewSummary("");
@@ -1657,17 +1657,17 @@ function App() {
       setNewDueDate("");
       setIsCreateOpen(false);
       
-      // Silent fetch from Jira to update board
-      await fetchJiraTasks(true);
+      // Silent fetch from Apnileap to update board
+      await fetchApnileapTasks(true);
     } catch (err) {
       console.error("Create issue error:", err);
-      triggerToast("Failed to create issue in Jira.", "error");
+      triggerToast("Failed to create issue in Apnileap.", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Update Task fields inside Modal with live PUT to Jira
+  // Update Task fields inside Modal with live PUT to Apnileap
   const handleUpdateTaskDetail = async (updatedTask, changedField) => {
     // Optimistic update
     setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
@@ -1675,9 +1675,9 @@ function App() {
 
     try {
       if (changedField === "status") {
-        triggerToast(`Transitioning ${updatedTask.key} to ${updatedTask.fields.status.name} in Jira...`);
+        triggerToast(`Transitioning ${updatedTask.key} to ${updatedTask.fields.status.name} in Apnileap...`);
         await axios.post(`http://localhost:5000/tasks/${updatedTask.key}/transition`, { statusName: updatedTask.fields.status.name });
-        triggerToast(`Successfully transitioned ${updatedTask.key} to ${updatedTask.fields.status.name} in Jira!`);
+        triggerToast(`Successfully transitioned ${updatedTask.key} to ${updatedTask.fields.status.name} in Apnileap!`);
       } else {
         const payload = {};
         if (changedField === "summary") payload.summary = updatedTask.fields.summary;
@@ -1687,18 +1687,18 @@ function App() {
         if (changedField === "reporter") payload.reporter = updatedTask.fields.reporter?.accountId || null;
         if (changedField === "priority") payload.priority = updatedTask.fields.priority?.name || null;
 
-        triggerToast(`Saving ${changedField} updates for ${updatedTask.key} in Jira...`);
+        triggerToast(`Saving ${changedField} updates for ${updatedTask.key} in Apnileap...`);
         await axios.put(`http://localhost:5000/tasks/${updatedTask.key}`, payload);
-        triggerToast(`Successfully saved ${changedField} for ${updatedTask.key} in Jira!`);
+        triggerToast(`Successfully saved ${changedField} for ${updatedTask.key} in Apnileap!`);
       }
     } catch (err) {
       console.error("Update Issue API Error:", err);
-      triggerToast(`Failed to update ${changedField} in Jira. Reverting...`, "error");
-      fetchJiraTasks(true); // Silent reload to revert state
+      triggerToast(`Failed to update ${changedField} in Apnileap. Reverting...`, "error");
+      fetchApnileapTasks(true); // Silent reload to revert state
     }
   };
 
-  // Toggle standard Jira issue impediment flag
+  // Toggle standard Apnileap issue impediment flag
   const handleToggleBlockerFlag = async (task) => {
     const nextFlagged = !task.fields.flagged;
     
@@ -1730,15 +1730,15 @@ function App() {
       triggerToast(nextFlagged ? `Flagging issue ${task.key} as BLOCKED...` : `Clearing blocker flag for ${task.key}...`, "warning");
       await axios.put(`http://localhost:5000/tasks/${task.key}/flag`, { flagged: nextFlagged });
       triggerToast(nextFlagged ? `Issue ${task.key} is now flagged as blocked!` : `Successfully cleared blocker flag for ${task.key}!`);
-      await fetchJiraTasks(true);
+      await fetchApnileapTasks(true);
     } catch (err) {
       console.error(err);
-      triggerToast("Failed to update blocker status in Jira. Reverting...", "error");
-      await fetchJiraTasks(true);
+      triggerToast("Failed to update blocker status in Apnileap. Reverting...", "error");
+      await fetchApnileapTasks(true);
     }
   };
 
-  // Log spent time on a task in Jira
+  // Log spent time on a task in Apnileap
   const handleLogWorkSpent = async (taskKey, timeSpentString, logComment) => {
     if (!timeSpentString.trim()) {
       triggerToast("Please specify time spent (e.g. 1h 30m, 45m)", "warning");
@@ -1747,7 +1747,7 @@ function App() {
     
     setIsLoading(true);
     try {
-      triggerToast(`Logging ${timeSpentString} spent time to issue ${taskKey} in Jira...`);
+      triggerToast(`Logging ${timeSpentString} spent time to issue ${taskKey} in Apnileap...`);
       await axios.post(`http://localhost:5000/tasks/${taskKey}/worklog`, { timeSpent: timeSpentString, comment: logComment });
       triggerToast(`Successfully logged ${timeSpentString} to issue ${taskKey}!`);
       
@@ -1758,7 +1758,7 @@ function App() {
       const logsRes = await axios.get(`http://localhost:5000/tasks/${taskKey}/worklog`);
       setWorklogHistory(logsRes.data || []);
       
-      await fetchJiraTasks(true);
+      await fetchApnileapTasks(true);
       
       // Update selectedTask details with new timetracking metrics
       const updatedParent = tasks.find(t => t.key === taskKey);
@@ -1767,7 +1767,7 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Failed to log work in Jira.", "error");
+      triggerToast("Failed to log work in Apnileap.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -1850,7 +1850,7 @@ function App() {
       if (res.data && res.data.success) {
         triggerToast(`Submission marked as ${newStatus} successfully!`);
         fetchAllSubmissions(); // Refresh global queue
-        fetchJiraTasks(true); // Refresh JIRA/mock tasks to reflect Done or Blocked flags
+        fetchApnileapTasks(true); // Refresh Tasks to reflect Done or Blocked flags
         fetchHubMetrics(true); // Refresh hub metrics silently to update velocity/leaderboard!
       }
     } catch (err) {
@@ -1866,7 +1866,7 @@ function App() {
       if (res.data && res.data.success) {
         triggerToast("Submission history deleted successfully!");
         fetchAllSubmissions(); // Refresh global queue
-        fetchJiraTasks(true); // Refresh tasks
+        fetchApnileapTasks(true); // Refresh tasks
         fetchHubMetrics(true); // Refresh hub metrics
       }
     } catch (err) {
@@ -1875,7 +1875,7 @@ function App() {
     }
   };
 
-  // Create a child subtask inside Jira parent issue
+  // Create a child subtask inside Apnileap parent issue
   const handleCreateSubtask = async (parentKey, subtaskSummary, assigneeId = null, parentIssueType = null) => {
     if (!subtaskSummary.trim()) {
       triggerToast("Please enter a task summary", "warning");
@@ -1886,7 +1886,7 @@ function App() {
     try {
       const isEpic = parentIssueType && parentIssueType.toLowerCase() === "epic";
       const label = isEpic ? "child task" : "child subtask";
-      triggerToast(`Creating ${label} under ${parentKey} in Jira...`);
+      triggerToast(`Creating ${label} under ${parentKey} in Apnileap...`);
       
       await axios.post(`http://localhost:5000/tasks/${parentKey}/subtask`, {
         summary: subtaskSummary,
@@ -1899,7 +1899,7 @@ function App() {
       setSubtaskAssigneeId("");
       
       // Fetch fresh board tasks
-      const latestTasks = await fetchJiraTasks(true);
+      const latestTasks = await fetchApnileapTasks(true);
       
       // Refresh the selected task modal view to include the new subtask
       if (Array.isArray(latestTasks)) {
@@ -1910,13 +1910,13 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Failed to create child task in Jira.", "error");
+      triggerToast("Failed to create child task in Apnileap.", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Link two tickets on the board in Jira
+  // Link two tickets on the board in Apnileap
   const handleLinkIssues = async (sourceKey, targetKey, relationType) => {
     if (!targetKey) {
       triggerToast("Please select a target issue to link with", "warning");
@@ -1925,13 +1925,13 @@ function App() {
     
     setIsLoading(true);
     try {
-      triggerToast(`Linking issue ${sourceKey} to ${targetKey} in Jira...`);
+      triggerToast(`Linking issue ${sourceKey} to ${targetKey} in Apnileap...`);
       await axios.post(`http://localhost:5000/tasks/links`, { linkType: relationType, sourceKey, targetKey });
-      triggerToast(`Issues successfully linked in Jira!`);
+      triggerToast(`Issues successfully linked in Apnileap!`);
       
       setLinkTargetKey("");
       
-      await fetchJiraTasks(true);
+      await fetchApnileapTasks(true);
       
       // Refresh selected task inside modal view to reflect links
       const updatedParent = tasks.find(t => t.key === sourceKey);
@@ -1940,13 +1940,13 @@ function App() {
       }
     } catch (err) {
       console.error(err);
-      triggerToast("Failed to link issues in Jira.", "error");
+      triggerToast("Failed to link issues in Apnileap.", "error");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Update Custom labels string array in Jira
+  // Update Custom labels string array in Apnileap
   const handleUpdateLabels = async (taskKey, newLabelsArray) => {
     try {
       // 1. Optimistic update
@@ -1965,30 +1965,30 @@ function App() {
       }
 
       await axios.put(`http://localhost:5000/tasks/${taskKey}/labels`, { labels: newLabelsArray });
-      triggerToast(`Saved tags for ${taskKey} in Jira!`);
+      triggerToast(`Saved tags for ${taskKey} in Apnileap!`);
     } catch (err) {
       console.error(err);
-      triggerToast("Failed to save labels in Jira.", "error");
-      await fetchJiraTasks(true);
+      triggerToast("Failed to save labels in Apnileap.", "error");
+      await fetchApnileapTasks(true);
     }
   };
 
-  // Delete Task Action from Jira
+  // Delete Task Action from Apnileap
   const handleDeleteTask = async (taskId, taskKey) => {
     setIsLoading(true);
     try {
-      triggerToast(`Deleting issue ${taskKey} from Jira...`, "warning");
+      triggerToast(`Deleting issue ${taskKey} from Apnileap...`, "warning");
       await axios.delete(`http://localhost:5000/tasks/${taskKey}`);
-      triggerToast(`Permanently deleted issue ${taskKey} from Jira!`, "warning");
+      triggerToast(`Permanently deleted issue ${taskKey} from Apnileap!`, "warning");
       setSelectedTask(null);
-      await fetchJiraTasks(true);
+      await fetchApnileapTasks(true);
     } catch (err) {
       console.error("Delete Task API Error:", err);
       const jiraErr = err.response?.data?.details?.errorMessages?.[0] || err.response?.data?.message || null;
       if (jiraErr) {
-        triggerToast(`Jira Error: ${jiraErr}`, "error");
+        triggerToast(`Apnileap Error: ${jiraErr}`, "error");
       } else {
-        triggerToast(`Failed to delete issue ${taskKey} in Jira.`, "error");
+        triggerToast(`Failed to delete issue ${taskKey} in Apnileap.`, "error");
       }
     } finally {
       setIsLoading(false);
@@ -1998,15 +1998,15 @@ function App() {
   // Open Email Composer Modal with Real Sender Profile Signature
   const handleOpenEmailComposer = (task) => {
     const assigneeName = task.fields.assignee?.displayName || "Team Member";
-    // Check if the task assignee has a real email address fetched from Jira, or leave empty for editing!
+    // Check if the task assignee has a real email address fetched from Apnileap, or leave empty for editing!
     const assigneeEmail = task.fields.assignee?.email || "";
     
     setEmailTask(task);
     setEmailRecipient(assigneeEmail);
     setEmailSubject(`[URGENT REMINDER] Upcoming deadline for task ${task.key}`);
     
-    const senderName = currentUser?.displayName || "Jira Administrator";
-    const bodyText = `Hi ${assigneeName},\n\nThis is a friendly reminder that task ${task.key} ("${task.fields.summary}") has an active due date of ${task.fields.dueDate || "N/A"} and is currently in status "${task.fields.status?.name}".\n\nPlease update the status or notify us if any adjustment is needed.\n\nBest regards,\n${senderName} (Jira Dashboard)`;
+    const senderName = currentUser?.displayName || "Apnileap Administrator";
+    const bodyText = `Hi ${assigneeName},\n\nThis is a friendly reminder that task ${task.key} ("${task.fields.summary}") has an active due date of ${task.fields.dueDate || "N/A"} and is currently in status "${task.fields.status?.name}".\n\nPlease update the status or notify us if any adjustment is needed.\n\nBest regards,\n${senderName} (Apnileap Dashboard)`;
     
     setEmailBody(bodyText);
     setSelectedTask(null); // Close detail modal
@@ -2431,7 +2431,7 @@ function App() {
         </div>
       );
     } else if (portalModal === "industries") {
-      title = "Select Corporate Partner Workspace";
+      title = "Select Corporate Spoke Workspace";
       content = (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "16px" }}>
           <button
@@ -2459,7 +2459,7 @@ function App() {
           </button>
           <button
             onClick={() => {
-              handleQuickConnect("sponsor@nvidia.com");
+              handleQuickConnect("sponsor@company.com");
               setPortalModal(null);
             }}
             style={{
@@ -2478,7 +2478,7 @@ function App() {
               gap: "8px"
             }}
           >
-            <FaDesktop /> NVIDIA Corporate Sponsorship Portal
+            <FaDesktop /> Corporate Spokeship Portal
           </button>
         </div>
       );
@@ -4024,7 +4024,7 @@ function App() {
                 maxWidth: "340px",
                 margin: "0 0 30px 0"
               }}>
-                A robust multi-tenant Agile collaboration suite powered by live Jira Cloud. Experience absolute campus workspace isolation with central Moderator ingestion pathways.
+                A robust multi-tenant Agile collaboration suite powered by live Apnileap Cloud. Experience absolute campus workspace isolation with central Moderator ingestion pathways.
               </p>
 
               {/* Quick Connect demo panel inside left visual panel */}
@@ -4159,7 +4159,7 @@ function App() {
                   </button>
                 </div>
 
-                {/* Corporate Partners Header */}
+                {/* Corporate Spokes Header */}
                 <span style={{
                   display: "block",
                   fontSize: "9px",
@@ -4171,10 +4171,10 @@ function App() {
                   borderTop: "1px solid rgba(255, 255, 255, 0.08)",
                   paddingTop: "10px"
                 }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaBriefcase style={{ color: "#6366f1" }} /> Corporate Partners</span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaBriefcase style={{ color: "#6366f1" }} /> Corporate Spokes</span>
                 </span>
 
-                {/* Corporate Partners Grid */}
+                {/* Corporate Spokes Grid */}
                 <div style={{
                   display: "grid",
                   gridTemplateColumns: "1fr",
@@ -4183,7 +4183,7 @@ function App() {
                 }}>
                   <button
                     type="button"
-                    onClick={() => handleQuickConnect("sponsor@nvidia.com")}
+                    onClick={() => handleQuickConnect("sponsor@company.com")}
                     style={{
                       padding: "8px",
                       borderRadius: "6px",
@@ -4195,7 +4195,7 @@ function App() {
                       cursor: "pointer",
                       transition: "var(--transition-smooth)"
                     }}
-                    title="Connect as NVIDIA Corporate Partner"
+                    title="Connect as Corporate Spoke"
                     onMouseEnter={(e) => {
                       e.currentTarget.style.background = "rgba(118, 185, 0, 0.35)";
                     }}
@@ -4203,7 +4203,7 @@ function App() {
                       e.currentTarget.style.background = "rgba(118, 185, 0, 0.2)";
                     }}
                   >
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaDesktop /> NVIDIA Sponsor Quick Connect</span>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaDesktop /> Corporate Spoke Quick Connect</span>
                   </button>
                 </div>
 
@@ -4291,7 +4291,7 @@ function App() {
             {/* Footer trademark or copyright */}
             <div style={{ position: "relative", zIndex: 10 }}>
               <span style={{ fontSize: "11px", color: "rgba(255, 255, 255, 0.6)", fontWeight: "500" }}>
-                Powered by Jira Cloud API Integration
+                Powered by Apnileap Cloud API Integration
               </span>
             </div>
           </div>
@@ -4320,7 +4320,7 @@ function App() {
                       Sign In
                     </h3>
                     <p style={{ fontSize: "13.5px", color: "var(--text-muted)", lineHeight: "1.5" }}>
-                      Enter your campus spoke or administrative email to connect.
+                      Enter your campus hub or administrative email to connect.
                     </p>
                   </div>
 
@@ -4415,7 +4415,7 @@ function App() {
                             ? "Executive Administrator"
                             : recognizedPersona === "moderator"
                             ? "Central Moderator"
-                            : `${recognizedPersona.replace("spoke-", "").toUpperCase()} Spoke Coordinator`}
+                            : `${recognizedPersona.replace("spoke-", "").toUpperCase()} Hub Coordinator`}
                         </div>
                       )}
                     </div>
@@ -4522,7 +4522,7 @@ function App() {
                       {isLoggingIn ? (
                         <>
                           <FaSyncAlt className="pulse-glow" style={{ animation: "pulseGlow 1.5s infinite linear" }} />
-                          <span>Connecting to Live Jira Hub...</span>
+                          <span>Connecting to Live Apnileap Hub...</span>
                         </>
                       ) : (
                         <>
@@ -4557,7 +4557,7 @@ function App() {
                       Campus Registration
                     </h3>
                     <p style={{ fontSize: "13.5px", color: "var(--text-muted)", lineHeight: "1.5" }}>
-                      Create a persistent account to track agile sprints, submit deliverables, or manage campus spoke projects.
+                      Create a persistent account to track agile sprints, submit deliverables, or manage campus hub projects.
                     </p>
                   </div>
 
@@ -4769,7 +4769,7 @@ function App() {
                           }}
                         >
                           <option value="Student Developer">Student Developer</option>
-                          <option value="Faculty Mentor">Faculty Mentor (Spoke Coordinator)</option>
+                          <option value="Faculty Mentor">Faculty Mentor (Hub Coordinator)</option>
                         </select>
                         <div style={{
                           position: "absolute",
@@ -4784,7 +4784,7 @@ function App() {
                       </div>
                     </div>
 
-                    {/* Select Campus Spoke */}
+                    {/* Select Campus Hub */}
                     <div>
                       <label style={{
                         display: "block",
@@ -4795,7 +4795,7 @@ function App() {
                         textTransform: "uppercase",
                         letterSpacing: "0.8px"
                       }}>
-                        Select Campus Spoke
+                        Select Campus Hub
                       </label>
                       <div style={{ position: "relative" }}>
                         <FaGraduationCap style={{
@@ -4825,10 +4825,10 @@ function App() {
                             transition: "var(--transition-smooth)"
                           }}
                         >
-                          <option value="3">KLE Spoke (Hub Campus)</option>
-                          <option value="101">COEP Spoke</option>
-                          <option value="102">MMCOEP Spoke</option>
-                          <option value="103">RIT Spoke</option>
+                          <option value="3">KLE Hub (Hub Campus)</option>
+                          <option value="101">COEP Hub</option>
+                          <option value="102">MMCOEP Hub</option>
+                          <option value="103">RIT Hub</option>
                         </select>
                         <div style={{
                           position: "absolute",
@@ -5078,7 +5078,7 @@ function App() {
                   <FaCalendarAlt size={20} />
                 </div>
               </>
-            ) : sessionUser?.role === "Corporate Partner" ? (
+            ) : sessionUser?.role === "Corporate Spoke" ? (
               <div
                 onClick={() => {
                   setActiveWorkspace(currentPersona);
@@ -5118,7 +5118,7 @@ function App() {
               </>
             )}
 
-            {sessionUser?.role !== "Corporate Partner" && (
+            {sessionUser?.role !== "Corporate Spoke" && (
               <>
                 <div
                   onClick={() => {
@@ -5253,7 +5253,7 @@ function App() {
             )}
 
             {/* Section 1: ACTIVE VIEW MODE (Hidden if viewing Hub or Moderator or Sponsor) */}
-            {activeWorkspace !== "hub" && activeWorkspace !== "moderator" && activeWorkspace !== "meetings" && sessionUser?.role !== "Corporate Partner" && (
+            {activeWorkspace !== "hub" && activeWorkspace !== "moderator" && activeWorkspace !== "meetings" && sessionUser?.role !== "Corporate Spoke" && (
               <>
                 <div style={{ fontSize: "9px", fontWeight: "850", textTransform: "uppercase", color: "var(--sidebar-text-dim)", letterSpacing: "1px", paddingLeft: "12px", marginTop: "8px", marginBottom: "4px" }}>
                   Views
@@ -5378,7 +5378,7 @@ function App() {
               </div>
               <p style={{ color: "var(--sidebar-text-muted)", fontSize: "10px", lineHeight: "1.3" }}>
                 {hasError 
-                  ? "Jira API server offline. Check logs."
+                  ? "Apnileap API server offline. Check logs."
                   : "Live tracking active. Auto-refreshing."}
               </p>
             </div>
@@ -5401,7 +5401,7 @@ function App() {
               />
               <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
                 <span style={{ fontWeight: "600", fontSize: "13px", color: "var(--sidebar-text-main)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {sessionUser?.displayName || currentUser?.displayName || "Jira Administrator"}
+                  {sessionUser?.displayName || currentUser?.displayName || "Apnileap Administrator"}
                 </span>
                 <span style={{ color: "var(--sidebar-text-muted)", fontSize: "10px" }}>
                   {sessionUser?.role || "Active Session"}
@@ -5452,8 +5452,8 @@ function App() {
                 : activeWorkspace === "meetings"
                 ? "Collaboration & Sync Meetings"
                 : activeView === "dashboard"
-                ? `${activeWorkspace === "playground" ? "Playground" : SPOKES[currentBoardId]?.name || "Spoke"} Analytics Console`
-                : `${activeWorkspace === "playground" ? "Playground" : SPOKES[currentBoardId]?.name || "Spoke"} Sprint Kanban Board`}
+                ? `${activeWorkspace === "playground" ? "Playground" : SPOKES[currentBoardId]?.name || "Hub"} Analytics Console`
+                : `${activeWorkspace === "playground" ? "Playground" : SPOKES[currentBoardId]?.name || "Hub"} Sprint Kanban Board`}
             </h1>
             <p style={{ color: "var(--text-muted)", fontSize: "14px", marginTop: "4px" }}>
               {activeWorkspace === "hub"
@@ -5511,7 +5511,7 @@ function App() {
 
             {/* Live Refresh button */}
             <button
-              onClick={() => activeWorkspace === "hub" ? fetchHubMetrics(false) : activeWorkspace === "moderator" ? fetchModeratorProjects(false) : fetchJiraTasks(false)}
+              onClick={() => activeWorkspace === "hub" ? fetchHubMetrics(false) : activeWorkspace === "moderator" ? fetchModeratorProjects(false) : fetchApnileapTasks(false)}
               className="btn-secondary"
               disabled={isLoading || (activeWorkspace === "hub" && isHubLoading) || (activeWorkspace === "moderator" && isModeratorLoading)}
               style={{ padding: "10.5px 12px", border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: "10px", boxShadow: "0 2px 4px rgba(0, 0, 0, 0.02)" }}
@@ -5726,7 +5726,7 @@ function App() {
             borderColor: "rgba(239, 68, 68, 0.2)"
           }}>
             <FaExclamationTriangle size={48} color="#ef4444" className="pulse-glow" style={{ borderRadius: "50%" }} />
-            <h2 style={{ fontSize: "20px", fontWeight: "700" }}>Jira Backend Connection Failed</h2>
+            <h2 style={{ fontSize: "20px", fontWeight: "700" }}>Apnileap Backend Connection Failed</h2>
             <p style={{ color: "var(--text-muted)", fontSize: "14px", maxWidth: "450px", lineHeight: "1.6" }}>
               The dashboard was unable to fetch tasks because the local Express server is not running on port 5000. 
             </p>
@@ -5735,7 +5735,7 @@ function App() {
               npm start
             </div>
             <button
-              onClick={() => activeWorkspace === "hub" ? fetchHubMetrics(false) : fetchJiraTasks(false)}
+              onClick={() => activeWorkspace === "hub" ? fetchHubMetrics(false) : fetchApnileapTasks(false)}
               className="btn-primary"
               style={{ marginTop: "10px" }}
             >
@@ -5772,7 +5772,7 @@ function App() {
             }}
             onDeleteClick={(proj) => handleDeleteProject(proj.id)}
           />
-        ) : sessionUser?.role === "Corporate Partner" ? (
+        ) : sessionUser?.role === "Corporate Spoke" ? (
           <CorporateSponsorDashboardView
             projects={moderatorProjects}
             loading={isModeratorLoading}
@@ -5780,7 +5780,7 @@ function App() {
             onSubmitProposal={async (payload) => {
               try {
                 const res = await axios.post("http://localhost:5000/moderator/projects", {
-                  company: sessionUser?.displayName?.replace(" Sponsor", "") || "NVIDIA",
+                  company: sessionUser?.displayName?.replace(" Sponsor", "") || "Acme Corp",
                   ...payload
                 });
                 if (res.data && res.data.success) {
@@ -5844,7 +5844,7 @@ function App() {
                     borderRadius: "6px",
                     textTransform: "uppercase"
                   }}>
-                    Awaiting Spoke Decision
+                    Awaiting Hub Decision
                   </span>
                 </div>
 
@@ -5884,7 +5884,7 @@ function App() {
                   <div style={{ display: "flex", justifyContent: "flex-end", borderTop: "1px solid var(--border-glass)", paddingTop: "14px", marginTop: "4px" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)", fontSize: "13.5px", fontStyle: "italic", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--border-glass)", padding: "10px 18px", borderRadius: "8px" }}>
                       <span>ℹ️</span>
-                      <span>Accepting or declining proposals is restricted to Spoke Coordinators. (Read-Only Mode)</span>
+                      <span>Accepting or declining proposals is restricted to Hub Coordinators. (Read-Only Mode)</span>
                     </div>
                   </div>
                 ) : (
@@ -5917,7 +5917,7 @@ function App() {
                         cursor: "pointer"
                       }}
                     >
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaCheck /> Accept Project & Provision Jira Board</span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaCheck /> Accept Project & Provision Apnileap Board</span>
                     </button>
                   </div>
                 )}
@@ -6097,7 +6097,7 @@ function App() {
                           Welcome Back, {sessionUser?.displayName}!
                         </h2>
                         <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--text-muted)" }}>
-                          Student Developer at <strong style={{ color: "var(--primary)" }}>{SPOKES[currentBoardId]?.name || "Our Campus Spoke"}</strong>. Track your active sprint tasks, review mentor feedback, and submit your deliverables.
+                          Student Developer at <strong style={{ color: "var(--primary)" }}>{SPOKES[currentBoardId]?.name || "Our Campus Hub"}</strong>. Track your active sprint tasks, review mentor feedback, and submit your deliverables.
                         </p>
                       </div>
                       <span style={{
@@ -6611,7 +6611,7 @@ function App() {
                                     display: "flex",
                                     justifyContent: "space-between"
                                   }}>
-                                    <span style={{ color: "var(--text-dim)" }}>Jira key: <strong style={{ color: "var(--text-main)", fontFamily: "var(--mono)" }}>{epicKey || "PNLP-3"}</strong></span>
+                                    <span style={{ color: "var(--text-dim)" }}>Apnileap key: <strong style={{ color: "var(--text-main)", fontFamily: "var(--mono)" }}>{epicKey || "PNLP-3"}</strong></span>
                                     <span style={{ color: "var(--text-dim)" }}>Deadline: <strong style={{ color: "var(--text-main)" }}>{proj.proposedDueDate}</strong></span>
                                   </div>
                                 </div>
@@ -6677,7 +6677,7 @@ function App() {
                           gap: "8px"
                         }}
                       >
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><FaUsers /></span> Spoke Team Directory
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}><FaUsers /></span> Hub Team Directory
                       </button>
                       <button
                         type="button"
@@ -7051,7 +7051,7 @@ function App() {
                             </div>
                           </div>
 
-                          {/* Dynamic Campus Spoke Leaderboard */}
+                          {/* Dynamic Campus Hub Leaderboard */}
                           <div className="glass-panel" style={{
                             padding: "24px",
                             display: "flex",
@@ -7237,7 +7237,7 @@ function App() {
                       </div>
                     )}
 
-                    {/* TAB 2: 👥 SPOKE TEAM DIRECTORY */}
+                    {/* TAB 2: 👥 HUB TEAM DIRECTORY */}
                     {activeCoordinatorTab === "team" && (
                       <div className="fade-in" style={{
                         display: "grid",
@@ -7250,7 +7250,7 @@ function App() {
                           {/* Directory list */}
                           <div className="glass-panel" style={{ padding: "24px" }}>
                             <h3 style={{ fontSize: "16px", fontWeight: "800", marginBottom: "16px", color: "var(--text-main)" }}>
-                              <span><FaUsers style={{ marginRight: "6px" }} /> {SPOKES[currentBoardId]?.name || "Campus Spoke"} Member Pool ({spokeMembers.length})</span>
+                              <span><FaUsers style={{ marginRight: "6px" }} /> {SPOKES[currentBoardId]?.name || "Campus Hub"} Member Pool ({spokeMembers.length})</span>
                             </h3>
                             <div style={{ overflowX: "auto" }}>
                               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "13px", color: "var(--text-main)", textAlign: "left" }}>
@@ -7316,7 +7316,7 @@ function App() {
                               <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaPlus /> Add Student Team Member</span>
                             </h3>
                             <p style={{ fontSize: "12.5px", color: "var(--text-muted)", lineHeight: "1.4", marginBottom: "18px" }}>
-                              Register a new student developer to the campus spoke. They will instantly appear in directories and become assignable on Kanban boards.
+                              Register a new student developer to the campus hub. They will instantly appear in directories and become assignable on Kanban boards.
                             </p>
                             <form onSubmit={async (e) => {
                               e.preventDefault();
@@ -7402,7 +7402,7 @@ function App() {
                           </div>
                         </div>
 
-                        {/* Right Column: Spoke Teams & Creation Form */}
+                        {/* Right Column: Hub Teams & Creation Form */}
                         <div style={{ display: "flex", flexDirection: "column", gap: "30px" }}>
                           {/* Active Teams directory cards */}
                           <div className="glass-panel" style={{ padding: "24px" }}>
@@ -7547,13 +7547,13 @@ function App() {
                             )}
                           </div>
 
-                          {/* <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaPlus /> Create Spoke Team</span> checkbox builder form */}
+                          {/* <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaPlus /> Create Hub Team</span> checkbox builder form */}
                           <div className="glass-panel" style={{
                             padding: "24px",
                             background: "var(--bg-card)"
                           }}>
                             <h3 style={{ fontSize: "15px", fontWeight: "800", color: "var(--text-main)", marginBottom: "12px", marginTop: 0 }}>
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaPlus /> Create Spoke Team</span>
+                              <span style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}><FaPlus /> Create Hub Team</span>
                             </h3>
                             <p style={{ fontSize: "12px", color: "var(--text-muted)", lineHeight: "1.4", marginBottom: "16px" }}>
                               Combine student developers into a persistent collaborative team and select a Faculty Coordinator to guide them.
@@ -7662,7 +7662,7 @@ function App() {
                                 className="btn-primary"
                                 style={{ padding: "10px 18px", fontSize: "12.5px", marginTop: "4px", width: "100%", justifyContent: "center" }}
                               >
-                                {isCreatingTeam ? "Creating Spoke Team..." : "Create Spoke Team"}
+                                {isCreatingTeam ? "Creating Hub Team..." : "Create Hub Team"}
                               </button>
                             </form>
                           </div>
@@ -7745,7 +7745,7 @@ function App() {
                             })
                           ) : (
                             <div className="glass-panel" style={{ padding: "30px", textAlign: "center", color: "var(--text-dim)", fontStyle: "italic", fontSize: "13px" }}>
-                              No active corporate projects have been allocated to your campus spoke yet.
+                              No active corporate projects have been allocated to your campus hub yet.
                             </div>
                           )}
                         </div>
@@ -7806,7 +7806,7 @@ function App() {
                                 triggerToast(` Sprint task "${newSprintTaskTitle}" successfully provisioned and assigned!`);
                                 setNewSprintTaskTitle("");
                                 setNewSprintTaskDesc("");
-                                fetchJiraTasks(true);
+                                fetchApnileapTasks(true);
                                 fetchHubMetrics(true); // Update portfolio stats
                               }
                             } catch (err) {
@@ -7860,7 +7860,7 @@ function App() {
                               >
                                 <option value="">-- Choose Team or Developer --</option>
                                 {spokeTeams.length > 0 && (
-                                  <optgroup label="Collaborative Spoke Teams" style={{ background: "#111827", color: "var(--primary)", fontWeight: "bold" }}>
+                                  <optgroup label="Collaborative Hub Teams" style={{ background: "#111827", color: "var(--primary)", fontWeight: "bold" }}>
                                     {spokeTeams.map(team => (
                                       <option key={team._id} value={team._id} style={{ color: "white" }}>
                                         <span><FaUsers style={{ marginRight: "6px" }} /> {team.name} ({team.members.length} ({team.members.length} Members)</span>
@@ -9319,7 +9319,7 @@ function App() {
                     Automating Campus Provisioning...
                   </h3>
                   <p style={{ color: "var(--text-muted)", fontSize: "13px", marginTop: "8px", maxWidth: "340px", lineHeight: "1.6" }}>
-                    Calling Live Atlassian Jira Cloud REST APIs, generating standard workstreams, and provisioning Epics & Child Tasks...
+                    Calling Live Atlassian Apnileap Cloud REST APIs, generating standard workstreams, and provisioning Epics & Child Tasks...
                   </p>
                 </div>
               </div>
@@ -9355,13 +9355,13 @@ function App() {
                   onChange={(e) => setAssignTargetCampus(e.target.value)}
                   style={{ width: "100%", padding: "10px 14px", height: "42px", fontSize: "14px" }}
                 >
-                  <option value="3">KLE Spoke (Live Jira - Key: AK)</option>
-                  <option value="101">COEP Spoke (Live Jira - Key: AK)</option>
-                  <option value="102">MMCOEP Spoke (Live Jira - Key: AK)</option>
-                  <option value="103">RIT Spoke (Live Jira - Key: AK)</option>
+                  <option value="3">KLE Hub (Live Apnileap - Key: AK)</option>
+                  <option value="101">COEP Hub (Live Apnileap - Key: AK)</option>
+                  <option value="102">MMCOEP Hub (Live Apnileap - Key: AK)</option>
+                  <option value="103">RIT Hub (Live Apnileap - Key: AK)</option>
                 </select>
                 <p style={{ fontSize: "11px", color: "var(--text-dim)", marginTop: "6px", lineHeight: "1.4" }}>
-                  All Spoke campuses are 100% active and connected directly to their backing Agile boards in your Atlassian Jira Cloud instance.
+                  All Spoke campuses are 100% active and connected directly to their backing Agile boards in your Atlassian Apnileap Cloud instance.
                 </p>
               </div>
 
@@ -9381,23 +9381,15 @@ function App() {
                 </p>
               </div>
 
-              {/* Standard FIP Workstreams Preview */}
+              {/* AI Auto-Provisioned Workstreams Preview */}
               <div className="glass-panel" style={{ padding: "16px", background: "rgba(255,255,255,0.01)", border: "1px solid rgba(255,255,255,0.03)", borderRadius: "10px" }}>
                 <h4 style={{ fontSize: "11.5px", fontWeight: "800", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>
-                  Standard Auto-Provisioned Workstreams
+                  AI-Generated Project Phases
                 </h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: "8px", fontSize: "12.5px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-main)" }}>
-                    <span style={{ color: "var(--primary)", fontWeight: "bold" }}>1.</span>
-                    <span>Phase 1: Lab Infrastructure Setup & Hardware Procurement</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-main)" }}>
-                    <span style={{ color: "var(--primary)", fontWeight: "bold" }}>2.</span>
-                    <span>Phase 2: Faculty Upskilling & Student Cohort Selection</span>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-main)" }}>
-                    <span style={{ color: "var(--primary)", fontWeight: "bold" }}>3.</span>
-                    <span>Phase 3: Development, Industry Mentorship & Evaluation</span>
+                    <span style={{ color: "var(--primary)", fontWeight: "bold" }}>🤖</span>
+                    <span>The system will automatically parse the Gemini AI JSON output to create detailed Tasks and assign them directly to the chosen Hub!</span>
                   </div>
                 </div>
               </div>
@@ -9422,7 +9414,7 @@ function App() {
                     boxShadow: "0 4px 12px rgba(239, 68, 68, 0.2)"
                   }}
                 >
-                  Automate Provisioning
+                  🤖 Auto-Assign AI Phases
                 </button>
               </div>
             </form>
@@ -9466,16 +9458,16 @@ function App() {
             <form onSubmit={handleIngestProjectSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Company / Partner Sponsor</label>
-                <select
-                  className="form-select"
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Industry Partner Name"
+                  autoComplete="off"
                   value={ingestCompany}
                   onChange={(e) => setIngestCompany(e.target.value)}
-                  style={{ width: "100%", height: "38px" }}
-                >
-                  <option value="NVIDIA">NVIDIA</option>
-                  <option value="Intel">Intel</option>
-                  <option value="Google">Google</option>
-                </select>
+                  required
+                  style={{ padding: "8px 12px", fontSize: "13px", width: "100%", boxSizing: "border-box" }}
+                />
               </div>
 
               <div>
@@ -9492,15 +9484,15 @@ function App() {
               </div>
 
               <div>
-                <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Project Description</label>
+                <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Software Requirements Specification (SRS)</label>
                 <textarea
                   className="form-input"
-                  placeholder="Detailed scope and deliverables of the company sponsorship program..."
+                  placeholder="Paste the full SRS document here. Our AI will automatically study this and design the project phases..."
                   value={ingestDescription}
                   onChange={(e) => setIngestDescription(e.target.value)}
                   required
-                  rows={3}
-                  style={{ padding: "8px 12px", fontSize: "13px", resize: "none" }}
+                  rows={6}
+                  style={{ padding: "8px 12px", fontSize: "13px", resize: "vertical" }}
                 />
               </div>
 
@@ -9565,7 +9557,7 @@ function App() {
                   }}
                   disabled={isIngesting}
                 >
-                  {isIngesting ? "Ingesting..." : "Confirm Ingest"}
+                  {isIngesting ? "AI is designing phases..." : "Confirm Ingest"}
                 </button>
               </div>
             </form>
@@ -9608,16 +9600,15 @@ function App() {
             <form onSubmit={handleUpdateProjectSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <div>
                 <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Company / Partner Sponsor</label>
-                <select
-                  className="form-select"
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Acme Corp, Intel, Google..."
                   value={editCompany}
                   onChange={(e) => setEditCompany(e.target.value)}
-                  style={{ width: "100%", height: "38px" }}
-                >
-                  <option value="NVIDIA">NVIDIA</option>
-                  <option value="Intel">Intel</option>
-                  <option value="Google">Google</option>
-                </select>
+                  required
+                  style={{ padding: "8px 12px", fontSize: "13px", width: "100%", boxSizing: "border-box" }}
+                />
               </div>
 
               <div>
@@ -9744,19 +9735,19 @@ function App() {
               Platform System Settings
             </h3>
             <p style={{ fontSize: "12.5px", color: "var(--text-muted)", marginBottom: "24px" }}>
-              Configure Atlassian Jira credentials, SMTP gateway settings, and manage cache.
+              Configure Atlassian Apnileap credentials, SMTP gateway settings, and manage cache.
             </p>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "20px", maxHeight: "450px", overflowY: "auto", paddingRight: "4px" }}>
-              {/* Jira section */}
+              {/* Apnileap section */}
               <div>
                 <h4 style={{ fontSize: "12px", fontWeight: "800", color: "var(--primary)", textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "12px" }}>
-                  Atlassian Jira Credentials
+                  Atlassian Apnileap Credentials
                 </h4>
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <div>
-                    <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>JIRA Cloud Domain</label>
-                    <input type="text" className="form-input" value="https://apnileapos.atlassian.net" disabled style={{ padding: "8px 12px", fontSize: "12.5px", opacity: 0.7 }} />
+                    <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Task Server Domain</label>
+                    <input type="text" className="form-input" value="https://tasks.apnileap.com" disabled style={{ padding: "8px 12px", fontSize: "12.5px", opacity: 0.7 }} />
                   </div>
                   <div>
                     <label style={{ display: "block", fontSize: "10.5px", fontWeight: "700", color: "var(--text-muted)", marginBottom: "6px" }}>Auth Email Address</label>
@@ -10010,28 +10001,28 @@ function App() {
                 </thead>
                 <tbody>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>KLE Spoke (Hub)</td>
+                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>KLE Hub (Hub)</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>35 Students</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>4 Mentors</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>2 Projects</td>
                     <td style={{ textAlign: "right", padding: "12px 10px", fontWeight: "700", color: "var(--status-done-text)" }}>66%</td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>COEP Spoke</td>
+                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>COEP Hub</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>24 Students</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>3 Mentors</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>2 Projects</td>
                     <td style={{ textAlign: "right", padding: "12px 10px", fontWeight: "700", color: "var(--status-progress-text)" }}>33%</td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>MMCOEP Spoke</td>
+                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>MMCOEP Hub</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>18 Students</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>2 Mentors</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>1 Project</td>
                     <td style={{ textAlign: "right", padding: "12px 10px", fontWeight: "700", color: "var(--status-backlog-text)" }}>0%</td>
                   </tr>
                   <tr style={{ borderBottom: "1px solid var(--border-subtle)" }}>
-                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>RIT Spoke</td>
+                    <td style={{ padding: "12px 10px", fontWeight: "700", color: "var(--text-main)" }}>RIT Hub</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>20 Students</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>3 Mentors</td>
                     <td style={{ textAlign: "center", padding: "12px 10px", color: "var(--text-muted)" }}>1 Project</td>
@@ -10043,7 +10034,7 @@ function App() {
               <div style={{ background: "var(--bg-subtle)", padding: "16px", borderRadius: "8px", border: "1px solid var(--border-subtle)", marginTop: "8px" }}>
                 <h4 style={{ fontWeight: "700", fontSize: "13px", color: "var(--text-main)", marginBottom: "6px" }}>Top Performing Cohort</h4>
                 <p style={{ fontSize: "12.5px", color: "var(--text-muted)", lineHeight: "1.4" }}>
-                  <strong>KLE Spoke</strong> is leading portfolio progress with <strong>66% avg completion rate</strong> across scheduled milestones on the NVIDIA Edge AI project.
+                  <strong>KLE Hub</strong> is leading portfolio progress with <strong>66% avg completion rate</strong> across scheduled milestones on the Demo Edge AI project.
                 </p>
               </div>
             </div>
@@ -10498,7 +10489,7 @@ function DraggableCard({ task, index, onClick }) {
             <div style={{
               fontSize: "11px",
               fontWeight: "750",
-              color: sponsor ? (sponsor.name === "NVIDIA" ? "#76b900" : sponsor.name === "Intel" ? "#0068b5" : "#4285f4") : "var(--primary)",
+              color: sponsor ? (sponsor.name === "Acme Corp" ? "#76b900" : sponsor.name === "Intel" ? "#0068b5" : "#4285f4") : "var(--primary)",
               marginBottom: "8px",
               textTransform: "uppercase",
               letterSpacing: "0.2px",
@@ -10784,7 +10775,7 @@ function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerT
             Global Executive Portfolio & Agile Hub
           </h2>
           <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--text-muted)", lineHeight: "1.5" }}>
-            Oversee multi-tenant academic deliverables, critical spoke escalations, and B2B corporate sponsorship allocations.
+            Oversee multi-tenant academic deliverables, critical spoke escalations, and Corporate Spoke sponsorship allocations.
           </p>
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
@@ -10996,10 +10987,10 @@ function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerT
                 <thead>
                   <tr style={{ borderBottom: "1.5px solid var(--border-glass)" }}>
                     <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", width: "40%" }}>Workstream / Standard Epic</th>
-                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>KLE Spoke (Live)</th>
-                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>COEP Spoke</th>
-                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>MMCOEP Spoke</th>
-                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>RIT Spoke</th>
+                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>KLE Hub (Live)</th>
+                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>COEP Hub</th>
+                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>MMCOEP Hub</th>
+                    <th style={{ padding: "12px 16px", color: "var(--text-muted)", fontWeight: "700", textAlign: "center" }}>RIT Hub</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -11072,13 +11063,13 @@ function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerT
             />
           </div>
 
-          {/* 💼 Active Corporate Partnerships Tracker */}
+          {/* 💼 Active Corporate Spokeships Tracker */}
           <div className="glass-panel" style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "20px" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", borderBottom: "1px solid var(--border-glass)", paddingBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <span style={{ fontSize: "20px", display: "inline-flex", alignItems: "center" }}><FaBriefcase /></span>
                 <h3 style={{ margin: 0, fontSize: "15px", fontWeight: "850", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-muted)" }}>
-                  Corporate Partnerships & Campus Deployments Ledger
+                  Corporate Spokeships & Campus Deployments Ledger
                 </h3>
               </div>
               <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
@@ -11204,7 +11195,7 @@ function HubDashboardView({ metrics, loading, onRefresh, onIngestClick, triggerT
                               {!isProposed ? (
                                 <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "11px", color: "var(--text-dim)" }}>
-                                    <span>Jira Epic: <strong style={{ color: "var(--text-main)", fontFamily: "var(--mono)" }}>{alloc.assignedKey || "Epic Provisioned"}</strong></span>
+                                    <span>Apnileap Epic: <strong style={{ color: "var(--text-main)", fontFamily: "var(--mono)" }}>{alloc.assignedKey || "Epic Provisioned"}</strong></span>
                                     <span style={{
                                       fontWeight: "800",
                                       color: daysClassColor,
@@ -11410,7 +11401,7 @@ function ModeratorDashboardView({ projects, loading, onRefresh, onAssignClick, o
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap", gap: "12px" }}>
             <div>
               <h3 style={{ fontSize: "18px", fontWeight: "700", color: "var(--text-main)" }}>Project Intake Board</h3>
-              <p style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "4px" }}>Review budget scope, and instantly automate provisioning to campus Jira spaces.</p>
+              <p style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "4px" }}>Review budget scope, and instantly automate provisioning to campus Apnileap spaces.</p>
             </div>
             <div style={{ display: "flex", gap: "10px" }}>
               <button
@@ -11631,7 +11622,7 @@ function ModeratorDashboardView({ projects, loading, onRefresh, onAssignClick, o
                   <span>Automated Deadline Auditor Scanner</span>
                 </h3>
                 <p style={{ fontSize: "12.5px", color: "var(--text-muted)", marginTop: "6px", lineHeight: "1.5" }}>
-                  Run a real-time audit across all active campus spoke spaces. The scanner checks the child deliverables progress, identifies breaches, marks project states, and prepares urgent warning email alerts for campus coordinators.
+                  Run a real-time audit across all active campus hub spaces. The scanner checks the child deliverables progress, identifies breaches, marks project states, and prepares urgent warning email alerts for campus coordinators.
                 </p>
               </div>
               <button
@@ -11910,8 +11901,8 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
     );
   }
 
-  // Resolve company name, e.g. "NVIDIA Sponsor" -> "NVIDIA"
-  const companyName = sessionUser?.displayName?.replace(" Sponsor", "") || "NVIDIA";
+  // Resolve company name, e.g. "Corporate Spoke" -> "Acme Corp"
+  const companyName = sessionUser?.displayName?.replace(" Sponsor", "") || "Acme Corp";
 
   // Filter B2B projects submitted by this specific sponsor's company
   const sponsorProjects = projects.filter(p => 
@@ -11989,7 +11980,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
       }}>
         <div>
           <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "900", color: "var(--text-main)", letterSpacing: "-0.5px" }}>
-            Corporate Partner Sponsorship Portal
+            Corporate Spoke Sponsorship Portal
           </h2>
           <p style={{ margin: "4px 0 0 0", fontSize: "13px", color: "var(--text-muted)", lineHeight: "1.5" }}>
             Propose new corporate projects, monitor active campus sponsorships, and track student engineering deliverables.
@@ -12130,7 +12121,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
       {activeTab === "portfolio" && (
         <div className="glass-panel" style={{ padding: "24px" }}>
           <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: "var(--text-main)" }}>
-            Corporate Sponsorship Portfolio
+            Corporate Spokeship Portfolio
           </h3>
           <p style={{ margin: "0 0 20px 0", fontSize: "13px", color: "var(--text-dim)" }}>
             Live real-time monitoring of campus deliveries, allocated scopes, and student milestones progress.
@@ -12202,7 +12193,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
                                   fontSize: "12px"
                                 }}>
                                   <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "750" }}>
-                                    <span style={{ color: "var(--primary)", display: "inline-flex", alignItems: "center", gap: "6px" }}><FaBuilding /> {targetSpoke?.name || "Campus Spoke"}</span>
+                                    <span style={{ color: "var(--primary)", display: "inline-flex", alignItems: "center", gap: "6px" }}><FaBuilding /> {targetSpoke?.name || "Campus Hub"}</span>
                                     <span style={{ fontFamily: "var(--mono)", color: "var(--text-main)" }}>{alloc.assignedKey || "Key Assigned"}</span>
                                   </div>
                                   <div style={{ display: "flex", justifyContent: "space-between", marginTop: "4px", fontSize: "11px", color: "var(--text-dim)" }}>
@@ -12216,7 +12207,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
                         ) : (
                           <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-dim)", fontSize: "12.5px" }}>
                             <span><FaClock /></span>
-                            <em>Proposed. Awaiting Central Moderator assignment to active campus spokes.</em>
+                            <em>Proposed. Awaiting Central Moderator assignment to active campus hubs.</em>
                           </div>
                         )}
                       </td>
@@ -12504,7 +12495,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
                 FIP Campus Budget Share
               </h3>
               <p style={{ fontSize: "12.5px", color: "var(--text-muted)", lineHeight: "1.6" }}>
-                This card represents the total budget committed by **{companyName}** across the campus spokes. Allocations are partitioned to direct-hire and hardware deployment subsidies for active B2B deliverables.
+                This card represents the total budget committed by **{companyName}** across the campus hubs. Allocations are partitioned to direct-hire and hardware deployment subsidies for active B2B deliverables.
               </p>
             </div>
             
@@ -12541,7 +12532,7 @@ function CorporateSponsorDashboardView({ projects, loading, onRefresh, onSubmitP
 function MeetingsPortalView({ meetings, loading, onRefresh, spokes, triggerToast, moderatorProjects = [] }) {
   const getSpokeProjectStatus = (spokeName) => {
     const activeProjs = moderatorProjects.filter(p => p.assignedTo === spokeName && (p.status === "Active" || p.status.startsWith("Assigned") || p.status.includes("BREACHED")));
-    const proposedProjs = moderatorProjects.filter(p => p.assignedTo === spokeName && p.status === "Proposed");
+    const proposedProjs = moderatorProjects.filter(p => p.status === "Proposed" || p.status === "Proposal");
     
     if (activeProjs.length > 0) {
       return `Active: ${activeProjs.map(p => p.company).join(", ")}`;

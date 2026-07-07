@@ -15,7 +15,7 @@ export const InviteToMeetingModal = ({ meeting, currentUser, onClose, onInviteSu
     try {
       // Determine what role we are allowed to invite based on current user role
       let endpoint = '';
-      if (currentUser.role === 'Central Moderator' || currentUser.role === 'Corporate Sponsor' || currentUser.role.includes('Coordinator')) {
+      if (currentUser.role === 'Central Moderator' || currentUser.role === 'Corporate Spoke' || currentUser.role.includes('Coordinator')) {
         // Coordinators can invite Mentors
         endpoint = `http://localhost:5000/mentors/${meeting.campusId}`;
       } else if (currentUser.role === 'MENTOR') {

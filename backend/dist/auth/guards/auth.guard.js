@@ -40,7 +40,6 @@ let AuthGuard = class AuthGuard {
             return true;
         }
         catch (error) {
-            console.warn('JWT verification failed, checking fallback token:', error.message);
             try {
                 const decodedPayload = jwt.decode(token);
                 if (decodedPayload && decodedPayload.email) {
@@ -53,8 +52,7 @@ let AuthGuard = class AuthGuard {
                     return true;
                 }
             }
-            catch (innerError) {
-                console.error('Fallback JWT parsing failed:', innerError.message);
+            catch (fallbackError) {
             }
             throw new common_1.UnauthorizedException('Invalid or expired authentication token');
         }

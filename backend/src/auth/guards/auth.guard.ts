@@ -38,7 +38,7 @@ export class AuthGuard implements CanActivate {
 
       return true;
     } catch (error) {
-      console.warn('JWT verification failed, checking fallback token:', error.message);
+      // Silenced error logging to prevent console spam for old/invalid tokens
       // Fallback parsing for development/testing if Keycloak signature validation fails
       try {
         const decodedPayload = jwt.decode(token) as any;
@@ -51,8 +51,9 @@ export class AuthGuard implements CanActivate {
           };
           return true;
         }
-      } catch (innerError) {
-        console.error('Fallback JWT parsing failed:', innerError.message);
+        // Fallback silently failed
+      } catch (fallbackError) {
+        // Fallback silently failed
       }
       throw new UnauthorizedException('Invalid or expired authentication token');
     }

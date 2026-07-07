@@ -39,7 +39,7 @@ const FIPProgressModal = ({ isOpen, onClose }) => {
 
   // Pre-defined color mapping for known spokes
   const getSpokeColor = (key) => {
-    if (key === "AK") return "var(--primary)"; // KLE Spoke
+    if (key === "AK") return "var(--primary)"; // KLE Hub
     // Just a fallback generator
     const colors = ["var(--primary)", "var(--secondary)", "var(--accent)", "var(--text-dim)"];
     return colors[Math.floor(Math.random() * colors.length)];

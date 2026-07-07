@@ -11,10 +11,10 @@ export class MeetingsService {
   ) {}
 
   private readonly SPOKES = {
-    '3': { name: 'KLE Spoke', key: 'AK', boardId: 75 },
-    '101': { name: 'COEP Spoke', key: 'AK', boardId: 76 },
-    '102': { name: 'MMCOEP Spoke', key: 'AK', boardId: 77 },
-    '103': { name: 'RIT Spoke', key: 'AK', boardId: 78 },
+    '3': { name: 'KLE Hub', key: 'AK', boardId: 75 },
+    '101': { name: 'COEP Hub', key: 'AK', boardId: 76 },
+    '102': { name: 'MMCOEP Hub', key: 'AK', boardId: 77 },
+    '103': { name: 'RIT Hub', key: 'AK', boardId: 78 },
   };
 
   private readonly CAMPUS_TEAM_MEMBERS = {
@@ -125,7 +125,7 @@ export class MeetingsService {
 
     const spoke = this.SPOKES[meeting.campusId];
     if (!spoke) {
-      throw new BadRequestException('Invalid campus spoke associated with meeting');
+      throw new BadRequestException('Invalid campus hub associated with meeting');
     }
 
     // Query active sprint tasks to search for overdue/blocked items
@@ -297,7 +297,7 @@ export class MeetingsService {
       </div>
     `;
 
-    const textBody = `Meeting: ${meeting.title}\nCampus Spoke: ${spoke.name}\nTime: ${meeting.date} at ${meeting.time}\n\nOverdue Tasks: ${overdueTasks.length}\nBlocked Tasks: ${blockedTasks.length}`;
+    const textBody = `Meeting: ${meeting.title}\nCampus Hub: ${spoke.name}\nTime: ${meeting.date} at ${meeting.time}\n\nOverdue Tasks: ${overdueTasks.length}\nBlocked Tasks: ${blockedTasks.length}`;
 
     const info = await sendEmail({
       to: finalTo,

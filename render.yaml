@@ -32,39 +32,39 @@ services:
       - key: KEYCLOAK_CLIENT_ID
         value: apnileap-backend
       - key: KEYCLOAK_CLIENT_SECRET
-        sync: false
+        value: mock-secret
       - key: GITLAB_BASE_URL
-        sync: false
+        value: https://gitlab.com
       - key: GITLAB_TOKEN
         sync: false
       - key: GITLAB_GROUP_ID
-        sync: false
+        value: "1"
       - key: WIKIJ_BASE_URL
-        sync: false
+        value: http://localhost:8082
       - key: WIKIJ_API_TOKEN
-        sync: false
+        value: mock-token
       - key: REDIS_URL
-        sync: false
+        value: rediss://red-d952injtqb8s73eav0g0:pmchON9bQYNHsFNZm755CaS7BQryGavg@oregon-keyvalue.render.com:6379
       - key: MINIO_ENDPOINT
-        sync: false
+        value: localhost
       - key: MINIO_PORT
         value: 9000
       - key: MINIO_ACCESS_KEY
-        sync: false
+        value: mock-key
       - key: MINIO_SECRET_KEY
-        sync: false
+        value: mock-secret
       - key: MINIO_USE_SSL
         value: false
       - key: N8N_WEBHOOK_URL
-        sync: false
+        value: http://localhost:5678
       - key: SMTP_HOST
-        sync: false
+        value: smtp.example.com
       - key: SMTP_PORT
         value: 587
       - key: SMTP_USER
-        sync: false
+        value: mock-user
       - key: SMTP_PASS
-        sync: false
+        value: mock-pass
 
   # ── Frontend: React Static Site ────────────────────────────────────────────
   - type: web
@@ -83,4 +83,7 @@ services:
         destination: /index.html
     envVars:
       - key: REACT_APP_API_URL
-        sync: false
+        fromService:
+          type: web
+          name: apnileap-backend
+          envVarKey: RENDER_EXTERNAL_URL

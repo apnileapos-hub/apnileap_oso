@@ -21,6 +21,7 @@ exports.TasksModule = TasksModule = __decorate([
         imports: [prisma_module_1.PrismaModule, auth_module_1.AuthModule, gitlab_module_1.GitlabModule],
         controllers: [tasks_controller_1.TasksController],
         providers: [tasks_service_1.TasksService],
+        exports: [tasks_service_1.TasksService],
     })
 ], TasksModule);
 //# sourceMappingURL=tasks.module.js.map

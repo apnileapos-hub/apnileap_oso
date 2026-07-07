@@ -9,5 +9,6 @@ import { GitlabModule } from '../gitlab/gitlab.module';
   imports: [PrismaModule, AuthModule, GitlabModule],
   controllers: [TasksController],
   providers: [TasksService],
+  exports: [TasksService],
 })
 export class TasksModule {}

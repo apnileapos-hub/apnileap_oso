@@ -19,10 +19,10 @@ let MeetingsService = class MeetingsService {
         this.prisma = prisma;
         this.auditService = auditService;
         this.SPOKES = {
-            '3': { name: 'KLE Spoke', key: 'AK', boardId: 75 },
-            '101': { name: 'COEP Spoke', key: 'AK', boardId: 76 },
-            '102': { name: 'MMCOEP Spoke', key: 'AK', boardId: 77 },
-            '103': { name: 'RIT Spoke', key: 'AK', boardId: 78 },
+            '3': { name: 'KLE Hub', key: 'AK', boardId: 75 },
+            '101': { name: 'COEP Hub', key: 'AK', boardId: 76 },
+            '102': { name: 'MMCOEP Hub', key: 'AK', boardId: 77 },
+            '103': { name: 'RIT Hub', key: 'AK', boardId: 78 },
         };
         this.CAMPUS_TEAM_MEMBERS = {
             '3': [
@@ -119,7 +119,7 @@ let MeetingsService = class MeetingsService {
         }
         const spoke = this.SPOKES[meeting.campusId];
         if (!spoke) {
-            throw new common_1.BadRequestException('Invalid campus spoke associated with meeting');
+            throw new common_1.BadRequestException('Invalid campus hub associated with meeting');
         }
         const tasks = await this.prisma.mockTask.findMany({
             where: { boardId: meeting.campusId },
@@ -276,7 +276,7 @@ let MeetingsService = class MeetingsService {
         </div>
       </div>
     `;
-        const textBody = `Meeting: ${meeting.title}\nCampus Spoke: ${spoke.name}\nTime: ${meeting.date} at ${meeting.time}\n\nOverdue Tasks: ${overdueTasks.length}\nBlocked Tasks: ${blockedTasks.length}`;
+        const textBody = `Meeting: ${meeting.title}\nCampus Hub: ${spoke.name}\nTime: ${meeting.date} at ${meeting.time}\n\nOverdue Tasks: ${overdueTasks.length}\nBlocked Tasks: ${blockedTasks.length}`;
         const info = await (0, emailService_1.sendEmail)({
             to: finalTo,
             subject: `🚨 [Warning Digest] Campus Sync Prep: ${meeting.title} (${spoke.name})`,

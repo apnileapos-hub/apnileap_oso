@@ -55,26 +55,7 @@ services:
     networks:
       - apnileap-network
 
-  # GitLab CE
-  gitlab:
-    image: gitlab/gitlab-ce:16.10.0-ce.0
-    container_name: apnileap-gitlab
-    environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://localhost:8080'
-        gitlab_rails['gitlab_shell_ssh_port'] = 2222
-        nginx['listen_https'] = false
-        nginx['listen_port'] = 8080
-    ports:
-      - "8080:8080"
-      - "2222:22"
-    volumes:
-      - gitlab_config:/etc/gitlab
-      - gitlab_logs:/var/log/gitlab
-      - gitlab_data:/var/opt/gitlab
-    restart: unless-stopped
-    networks:
-      - apnileap-network
+
 
   # BookStack (Wiki Docs)
   bookstack:
@@ -84,6 +65,7 @@ services:
       PUID: 1000
       PGID: 1000
       APP_URL: http://localhost:8082
+      APP_KEY: base64:dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q=
       DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: apnileap
@@ -170,9 +152,7 @@ services:
 
 volumes:
   postgres_data:
-  gitlab_config:
-  gitlab_logs:
-  gitlab_data:
+
   minio_data:
 
 networks:

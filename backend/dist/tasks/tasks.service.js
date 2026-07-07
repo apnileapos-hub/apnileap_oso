@@ -21,10 +21,10 @@ let TasksService = class TasksService {
         this.gitlabService = gitlabService;
         this.auditService = auditService;
         this.SPOKES = {
-            '3': { name: 'KLE Spoke', key: 'AK', boardId: 75 },
-            '101': { name: 'COEP Spoke', key: 'AK', boardId: 76 },
-            '102': { name: 'MMCOEP Spoke', key: 'AK', boardId: 77 },
-            '103': { name: 'RIT Spoke', key: 'AK', boardId: 78 },
+            '3': { name: 'KLE Hub', key: 'AK', boardId: 75 },
+            '101': { name: 'COEP Hub', key: 'AK', boardId: 76 },
+            '102': { name: 'MMCOEP Hub', key: 'AK', boardId: 77 },
+            '103': { name: 'RIT Hub', key: 'AK', boardId: 78 },
         };
         this.CAMPUS_LABELS = {
             '3': 'kle-spoke',

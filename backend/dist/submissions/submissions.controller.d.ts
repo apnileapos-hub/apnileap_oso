@@ -15,35 +15,35 @@ export declare class SubmissionsController {
         success: boolean;
         submission: {
             id: number;
-            status: string;
-            comments: string | null;
-            fileName: string;
             taskId: string;
             studentName: string;
+            fileName: string;
             fileUrl: string;
+            comments: string | null;
+            status: string;
             feedback: string | null;
             submittedAt: Date;
         };
     }>;
     getTaskSubmissions(taskId: string): Promise<{
         id: number;
-        status: string;
-        comments: string | null;
-        fileName: string;
         taskId: string;
         studentName: string;
+        fileName: string;
         fileUrl: string;
+        comments: string | null;
+        status: string;
         feedback: string | null;
         submittedAt: Date;
     }[]>;
     getAllSubmissions(): Promise<{
         id: number;
-        status: string;
-        comments: string | null;
-        fileName: string;
         taskId: string;
         studentName: string;
+        fileName: string;
         fileUrl: string;
+        comments: string | null;
+        status: string;
         feedback: string | null;
         submittedAt: Date;
     }[]>;
@@ -54,12 +54,12 @@ export declare class SubmissionsController {
         success: boolean;
         submission: {
             id: number;
-            status: string;
-            comments: string | null;
-            fileName: string;
             taskId: string;
             studentName: string;
+            fileName: string;
             fileUrl: string;
+            comments: string | null;
+            status: string;
             feedback: string | null;
             submittedAt: Date;
         };

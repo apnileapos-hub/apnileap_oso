@@ -303,7 +303,7 @@ const CompanyLogo = ({ company, size = 38 }) => {
       fontSize: `${size * 0.4}px`,
       flexShrink: 0
     }}>
-      {company.substring(0, 1).toUpperCase()}
+      {(company || "?").substring(0, 1).toUpperCase()}
     </div>
   );
 };
